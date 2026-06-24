@@ -708,6 +708,16 @@ export function CorporateDashboard({ corporate, onNavigate }) {
           <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)' }}>{corporate.company_name}</h2>
           <div className="text-muted">{corporate.contact_person} · <span className="badge badge-teal">{corporate.subscription_tier?.toUpperCase()}</span></div>
         </div>
+        <button type="button" onClick={() => {
+          localStorage.removeItem('ssu_corporate')
+          onNavigate('corporate-login')
+        }} style={{
+          background: 'none', border: '1.5px solid var(--grey-200)', borderRadius: 7,
+          padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--grey-400)',
+          cursor: 'pointer', fontFamily: 'inherit'
+        }}>
+          Log out
+        </button>
       </div>
 
       <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Search</button>

@@ -36,14 +36,30 @@ export default function CVUploadSection({ onExtracted }) {
       // Convert to text for API
       const cvText = atob(base64)
 
-      const response = await fetch('/api/extract-cv', {
+      const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
+      if (!apiKey) throw new Error('API key not configured')
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: cvText })
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: 'Read this CV. Extract top 8 skills with proof points. Return ONLY a JSON array, no markdown: [{"subFunction":"skill area","proficiency":"familiar or proficient or expert","specialisation":"specific area","proofPoint":"one achievement under 140 chars no company names","customDepth":"specific tool"}]. CV: ' + cvText.slice(0, 4000)
+          }]
+        })
       })
-      const result = await response.json()
-      if (!result.success) throw new Error(result.error)
-      const parsed = result.data
+      if (!response.ok) throw new Error('API error ' + response.status)
+      const data = await response.json()
+      const rawText = data.content?.[0]?.text || ''
+      const clean = rawText.replace(/```json|```/g, '').trim()
+      const parsed = JSON.parse(clean)
 
       if (Array.isArray(parsed) && parsed.length > 0) {
         onExtracted({ skill_tree: parsed })

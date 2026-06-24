@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES } from '../data/formData'
+import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
 import SkillTreeSelector from '../components/SkillTreeSelector'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
@@ -94,7 +94,8 @@ export function PostJD({ corporate, onNavigate }) {
     work_mode: '', location: '', relocation_support: '',
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
     must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
-    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], gender_preference: 'No preference — open to all'
+    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], gender_preference: 'No preference — open to all',
+    max_notice_period: '', min_years_in_function: '', languages_required: [], travel_required: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -373,6 +374,58 @@ ${jdText}`
         <textarea className="form-textarea" maxLength={200} placeholder="What makes this opportunity worth a senior professional's time?"
           value={form.why_role} onChange={e => set('why_role', e.target.value)} />
         <div className="form-hint">Optional but highly recommended — senior candidates read this first</div>
+      </div>
+
+      {/* NOTICE PERIOD */}
+      <div className="form-group">
+        <label className="form-label">Maximum Notice Period Acceptable</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {['Immediate', 'Up to 30 days', '30 to 60 days', '60 to 90 days', 'More than 90 days', 'No restriction'].map(opt => (
+            <button key={opt} type="button"
+              className={`tag ${form.max_notice_period === opt ? 'selected' : ''}`}
+              onClick={() => set('max_notice_period', opt)}>{opt}</button>
+          ))}
+        </div>
+        <div className="form-hint">Candidates with longer notice periods will not appear in your matches.</div>
+      </div>
+
+      {/* MIN YEARS IN FUNCTION */}
+      <div className="form-group">
+        <label className="form-label">Minimum Years in This Function</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input className="form-input" type="number" min="0" max="40" placeholder="e.g. 8" style={{ maxWidth: 100 }}
+            value={form.min_years_in_function} onChange={e => set('min_years_in_function', e.target.value)} />
+          <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>years minimum</span>
+        </div>
+        <div className="form-hint">Total years specifically in {form.job_function || 'the required function'} — not total career experience.</div>
+      </div>
+
+      {/* LANGUAGES REQUIRED */}
+      <div className="form-group">
+        <label className="form-label">Languages Required</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {['Hindi', 'English', 'Tamil', 'Telugu', 'Kannada', 'Malayalam', 'Marathi', 'Bengali', 'Gujarati', 'Punjabi'].map(lang => (
+            <button key={lang} type="button"
+              className={`tag ${form.languages_required.includes(lang) ? 'selected' : ''}`}
+              onClick={() => {
+                const arr = form.languages_required
+                set('languages_required', arr.includes(lang) ? arr.filter(l => l !== lang) : [...arr, lang])
+              }}>{lang}</button>
+          ))}
+        </div>
+        <div className="form-hint">Only candidates who know all selected languages will appear in matches.</div>
+      </div>
+
+      {/* TRAVEL REQUIRED */}
+      <div className="form-group">
+        <label className="form-label">International Travel Required?</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {['Yes, frequently', 'Occasionally', 'No'].map(opt => (
+            <button key={opt} type="button"
+              className={`tag ${form.travel_required === opt ? 'selected' : ''}`}
+              onClick={() => set('travel_required', opt)}>{opt}</button>
+          ))}
+        </div>
       </div>
 
       {/* GENDER PREFERENCE */}
@@ -658,6 +711,44 @@ async function matchCandidates(jd, corporate) {
       const needsMen = jd.gender_preference.toLowerCase().includes('men')
       if (needsWomen && c.gender !== 'Female') return false
       if (needsMen && c.gender !== 'Male') return false
+    }
+
+    // Notice period filter
+    if (jd.max_notice_period && jd.max_notice_period !== 'No restriction' && c.notice_period) {
+      const noticeOrder = ['Immediate', 'Up to 30 days', '30 to 60 days', '60 to 90 days', 'More than 90 days']
+      const maxIdx = noticeOrder.indexOf(jd.max_notice_period)
+      const candidateIdx = noticeOrder.indexOf(c.notice_period)
+      if (maxIdx >= 0 && candidateIdx > maxIdx) return false
+    }
+
+    // Minimum years in function filter
+    if (jd.min_years_in_function && c.years_in_function) {
+      if (c.years_in_function < parseInt(jd.min_years_in_function)) return false
+    }
+
+    // Languages filter — candidate must know all required languages
+    if (jd.languages_required?.length > 0 && c.languages?.length > 0) {
+      const hasAll = jd.languages_required.every(lang => c.languages.includes(lang))
+      if (!hasAll) return false
+    }
+
+    // CTC filter — candidate min expected must be within corporate budget
+    if (jd.ctc_fixed_max && c.min_expected_ctc) {
+      if (c.min_expected_ctc > parseFloat(jd.ctc_fixed_max) * 1.2) return false
+    }
+
+    // Location filter
+    if (jd.location && c.preferred_locations?.cities?.length > 0) {
+      const NCR = ['Delhi', 'Noida', 'Gurgaon', 'Faridabad', 'Ghaziabad']
+      const candidateCities = c.preferred_locations.cities
+      const openToNearby = c.preferred_locations.openToNearby
+      const isSpecialLocation = ['Pan-India / National Role', 'Remote / Work from Home', 'Flexible / Any Location'].includes(jd.location)
+      if (!isSpecialLocation) {
+        const candidateWantsAny = candidateCities.includes('Pan-India / National Role') || candidateCities.includes('Flexible / Any Location') || candidateCities.includes('Remote / Work from Home')
+        const directMatch = candidateCities.includes(jd.location)
+        const ncrMatch = NCR.includes(jd.location) && openToNearby && NCR.some(city => candidateCities.includes(city))
+        if (!candidateWantsAny && !directMatch && !ncrMatch) return false
+      }
     }
 
     let score = 0

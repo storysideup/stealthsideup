@@ -286,8 +286,17 @@ JD: ${jdText.slice(0, 3000)}`
         <label className="form-label">Industry Hiring For</label>
         <select className="form-select" value={form.industry} onChange={e => set('industry', e.target.value)}>
           <option value="">Select industry...</option>
-          {INDUSTRIES.flatMap(g => g.items).map(i => <option key={i} value={i}>{i}</option>)}
+          {INDUSTRIES.map(g => (
+            <optgroup key={g.sector} label={g.sector}>
+              {g.items.map(i => <option key={i} value={i}>{i}</option>)}
+            </optgroup>
+          ))}
+          <option value="Other">Other</option>
         </select>
+        {form.industry === 'Other' && (
+          <input className="form-input" style={{ marginTop: 8 }} placeholder="Please specify industry..."
+            value={form.industry_other || ''} onChange={e => set('industry_other', e.target.value)} />
+        )}
       </div>
 
       <div className="form-group">

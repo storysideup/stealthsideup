@@ -141,7 +141,8 @@ export const ORG_TYPES = [
   "Indian Startup — Early stage (Series A/B, under 5 years)",
   "Indian Startup — Growth stage (Series C+, 5–10 years)",
   "MNC / International company",
-  "Any of the above"
+  "Any of the above",
+  "Other"
 ]
 
 export const CTC_BANDS = [

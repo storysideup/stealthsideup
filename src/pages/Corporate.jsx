@@ -416,12 +416,12 @@ export function CorporateDashboard({ corporate, onNavigate }) {
         </div>
       </div>
 
-      <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Search+ Post a New Search</button>
+      <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Search</button>
 
       {loading ? <div className="spinner" /> : jds.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: 32 }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-          <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 16 }}>No active JDs yet. Post your first role to start matching.</p>
+          <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 16 }}>No active searches yet. Post your first search to start matching.</p>
         </div>
       ) : (
         <>

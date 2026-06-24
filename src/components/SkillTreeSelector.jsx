@@ -133,9 +133,13 @@ export default function SkillTreeSelector({ functionName, value = [], onChange, 
 
   return (
     <div>
-      {/* 6-month rule reminder */}
-      <div style={{ background: '#fff8f0', border: '1px solid #f5c4a3', borderRadius: 8, padding: '10px 13px', marginBottom: 16, fontSize: 12, color: '#4b5563', lineHeight: 1.6 }}>
-        <strong style={{ color: 'var(--orange)' }}>Important:</strong> Only select skills you have actively worked on for <strong>6 months or more</strong>. Exposure or awareness does not qualify — this must be hands-on experience.
+      {/* Context-aware instruction */}
+      <div style={{ background: mode === 'corporate' ? 'var(--teal-light)' : '#fff8f0', border: mode === 'corporate' ? '1px solid var(--teal-border)' : '1px solid #f5c4a3', borderRadius: 8, padding: '10px 13px', marginBottom: 16, fontSize: 12, color: '#4b5563', lineHeight: 1.6 }}>
+        {mode === 'corporate' ? (
+          <span>Select the skills you need this person to have. These will be matched against candidate profiles — be as specific as possible for better matches.</span>
+        ) : (
+          <span><strong style={{ color: 'var(--orange)' }}>Important:</strong> Only select skills you have actively worked on for <strong>6 months or more</strong>. Exposure or awareness does not qualify — this must be hands-on experience.</span>
+        )}
       </div>
 
       {/* Selected entries */}
@@ -161,12 +165,12 @@ export default function SkillTreeSelector({ functionName, value = [], onChange, 
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
           }}>
           <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>
-          Add a skill area
+          {mode === 'corporate' ? '+ Add a skill requirement' : '+ Add a skill area'}
         </button>
       ) : (
         <div style={{ border: '1.5px solid var(--grey-200)', borderRadius: 10, padding: 14, background: 'var(--grey-50)' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>
-            Select a skill area within {functionName}
+            {mode === 'corporate' ? 'Select a skill requirement within' : 'Select a skill area within'} {functionName}
           </div>
           <div className="tag-cloud" style={{ marginBottom: 12 }}>
             {subFunctions.filter(sf => !selectedSubFunctions.includes(sf)).map(sf => (

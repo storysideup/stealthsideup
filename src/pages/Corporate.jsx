@@ -93,7 +93,7 @@ export function PostJD({ corporate, onNavigate }) {
     work_mode: '', location: '', relocation_support: '',
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
     must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
-    stealth_mode: false, job_function: ''
+    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -168,11 +168,36 @@ ${jdText}`
   }
 
   if (success) return (
-    <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
+    <div className="page" style={{ paddingTop: 32 }}>
       <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0F4F47" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 10 }}>Search Posted!</h2>
-      <p style={{ color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 28 }}>We are now matching anonymous profiles against your search criteria. You will see matched candidates in your dashboard.</p>
-      <button className="btn-primary" onClick={() => onNavigate('corporate-dashboard')}>View My Mandates →</button>
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6, textAlign: 'center' }}>Your Search is Live</h2>
+      <p style={{ color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 24, textAlign: 'center', fontSize: 14 }}>
+        We are now matching anonymous profiles against your criteria in the background.
+      </p>
+
+      <div className="card card-teal" style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>What happens next</div>
+        {[
+          { step: '1', text: 'StealthSideUp matches your search criteria against anonymous candidate profiles — function, seniority, industry, skills, location and CTC.' },
+          { step: '2', text: 'You see matched profiles on your dashboard — anonymised. No names, no employers, no contact details.' },
+          { step: '3', text: 'You express interest in a profile. The candidate receives a WhatsApp notification from StorySideUp.' },
+          { step: '4', text: 'If the candidate says yes, StorySideUp facilitates the introduction and shares their contact details with you.' },
+          { step: '5', text: 'If the candidate declines, their identity is never revealed. You simply see "Not interested".' },
+        ].map(({ step, text }) => (
+          <div key={step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--teal)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{step}</div>
+            <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.6 }}>{text}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: '#fff8f0', border: '1px solid #f5c4a3', borderRadius: 10, padding: '12px 14px', marginBottom: 24 }}>
+        <div style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.6 }}>
+          <strong style={{ color: 'var(--orange)' }}>Important:</strong> All candidate contact is facilitated by StorySideUp. You will never contact a candidate directly without their consent. This is what makes the platform trusted by senior professionals.
+        </div>
+      </div>
+
+      <button className="btn-primary" onClick={() => onNavigate('corporate-dashboard')}>View My Dashboard →</button>
     </div>
   )
 
@@ -349,6 +374,16 @@ ${jdText}`
         <div className="form-hint">Optional but highly recommended — senior candidates read this first</div>
       </div>
 
+      {/* END DATE */}
+      <div className="form-group">
+        <label className="form-label">Search Valid Till <span className="required">*</span></label>
+        <input className="form-input" type="date"
+          min={new Date().toISOString().split('T')[0]}
+          value={form.end_date}
+          onChange={e => set('end_date', e.target.value)} />
+        <div className="form-hint">After this date the search closes automatically and no new candidates are matched. Default is 60 days — adjust as needed.</div>
+      </div>
+
       {/* STEALTH MODE TOGGLE — after all basics filled */}
       <div className="form-group">
         <label className="form-label">How do you want to post this search?</label>
@@ -412,7 +447,8 @@ export function CorporateDashboard({ corporate, onNavigate }) {
 
   const loadJds = async () => {
     setLoading(true)
-    const { data } = await supabase.from('jds').select('*').eq('corporate_id', corporate.id).eq('is_active', true).order('created_at', { ascending: false })
+    const today = new Date().toISOString().split('T')[0]
+    const { data } = await supabase.from('jds').select('*').eq('corporate_id', corporate.id).eq('is_active', true).or(`end_date.is.null,end_date.gte.${today}`).order('created_at', { ascending: false })
     setJds(data || [])
     if (data?.length) await loadMatches(data)
     setLoading(false)
@@ -541,7 +577,8 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                     <span className="badge badge-green">Active</span>
                   </div>
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 10 }}>{jd.function} · {jd.seniority_level}</div>
+                <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 6 }}>{jd.function} · {jd.seniority_level}</div>
+                {jd.end_date && <div style={{ fontSize: 11, color: 'var(--grey-400)', marginBottom: 10 }}>Valid till {new Date(jd.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
                   <div style={{ background: 'var(--teal-pale)', borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
                     <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)' }}>{matched.length}</div>

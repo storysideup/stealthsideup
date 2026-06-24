@@ -23,28 +23,38 @@ function SkillEntry({ functionName, subFunction, onRemove, onChange, entry }) {
 
       {/* Proficiency */}
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Proficiency Level</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+          {mode === 'corporate' ? 'Level Required' : 'Proficiency Level'}
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {PROFICIENCY_LEVELS.map(level => (
-            <button key={level.value} type="button"
-              onClick={() => onChange({ ...entry, proficiency: level.value })}
-              style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 12px',
-                border: entry.proficiency === level.value ? '2px solid var(--teal)' : '1.5px solid var(--grey-200)',
-                borderRadius: 8, background: entry.proficiency === level.value ? 'white' : 'white',
-                cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
-              }}>
-              <div style={{
-                width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 1,
-                border: entry.proficiency === level.value ? '5px solid var(--teal)' : '2px solid var(--grey-300)',
-                background: 'white', transition: 'all 0.15s'
-              }} />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: entry.proficiency === level.value ? 'var(--teal)' : 'var(--grey-800)' }}>{level.label}</div>
-                <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 1, lineHeight: 1.4 }}>{level.desc}</div>
-              </div>
-            </button>
-          ))}
+          {PROFICIENCY_LEVELS.map(level => {
+            const corpDescs = {
+              familiar: 'Open to candidates with working knowledge of this area',
+              proficient: 'Need someone who can deliver this independently',
+              expert: 'Need someone who has built or owned this at an organisational level'
+            }
+            const displayDesc = mode === 'corporate' ? corpDescs[level.value] : level.desc
+            return (
+              <button key={level.value} type="button"
+                onClick={() => onChange({ ...entry, proficiency: level.value })}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 12px',
+                  border: entry.proficiency === level.value ? '2px solid var(--teal)' : '1.5px solid var(--grey-200)',
+                  borderRadius: 8, background: 'white',
+                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
+                }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 1,
+                  border: entry.proficiency === level.value ? '5px solid var(--teal)' : '2px solid var(--grey-300)',
+                  background: 'white', transition: 'all 0.15s'
+                }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: entry.proficiency === level.value ? 'var(--teal)' : 'var(--grey-800)' }}>{level.label}</div>
+                  <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 1, lineHeight: 1.4 }}>{displayDesc}</div>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 

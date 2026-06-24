@@ -93,7 +93,7 @@ export function PostJD({ corporate, onNavigate }) {
     work_mode: '', location: '', relocation_support: '',
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
     must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
-    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -381,7 +381,7 @@ ${jdText}`
           min={new Date().toISOString().split('T')[0]}
           value={form.end_date}
           onChange={e => set('end_date', e.target.value)} />
-        <div className="form-hint">After this date the search closes automatically and no new candidates are matched. Default is 60 days — adjust as needed.</div>
+        <div className="form-hint">After this date the search closes automatically and no new candidates are matched. Default is 10 days — adjust as needed for your timeline.</div>
       </div>
 
       {/* STEALTH MODE TOGGLE — after all basics filled */}

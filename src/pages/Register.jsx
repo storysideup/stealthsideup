@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillTreeSelector from '../components/SkillTreeSelector'
 import { CandidateLocationPicker } from '../components/LocationPicker'
+import CareerHistory from '../components/CareerHistory'
 import {
   FUNCTIONS, SKILLS_BY_FUNCTION, INDUSTRIES, INSTITUTES,
   CURRENT_EMPLOYMENT_TYPES, DESIRED_EMPLOYMENT_TYPES, DEGREES,
@@ -131,7 +132,7 @@ export default function Register({ onNavigate }) {
     ctc_fixed: '', ctc_variable: '', ctc_joining_bonus: '', ctc_esops: '', ctc_allowances: '',
     freelance_sector: '', freelance_engagement_size: '', freelance_years: '',
     previous_industries: [], average_tenure: '', career_b2b_b2c: '',
-    skill_keywords: [], skill_tree: [], headline: '', declaration_agreed: false,
+    skill_keywords: [], skill_tree: [], career_history: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
@@ -214,6 +215,7 @@ export default function Register({ onNavigate }) {
         relocation_cities: form.relocation_cities,
         blocked_companies: form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [],
         preferred_locations: form.preferred_locations,
+        career_history: form.career_history,
         is_active: true
       }
       const { error: dbErr } = await supabase.from('candidates').upsert(payload, { onConflict: 'contact' })

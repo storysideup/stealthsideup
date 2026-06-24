@@ -207,3 +207,26 @@ Object.entries(CITIES_BY_ZONE).forEach(([zone, cities]) => {
 export const NCR_CITIES = ["Delhi", "Noida", "Gurgaon", "Faridabad", "Ghaziabad"]
 export const MUMBAI_REGION = ["Mumbai", "Pune", "Nashik"]
 export const BENGALURU_REGION = ["Bengaluru", "Mysuru"]
+
+export const ROLE_TENURES = [
+  "Less than 1 year",
+  "1 to 3 years", 
+  "3 to 5 years",
+  "5 years or more"
+]
+
+export const CAREER_ROLE_TYPES = [
+  "Individual Contributor",
+  "Team of 1 to 5",
+  "Team of 5 to 15",
+  "Team of 15 to 50",
+  "Team of 50 plus"
+]
+
+export const GENDER_PREFERENCE = [
+  "No preference — open to all",
+  "Preference for women candidates",
+  "Preference for men candidates",
+  "Role specifically requires women",
+  "Role specifically requires men"
+]

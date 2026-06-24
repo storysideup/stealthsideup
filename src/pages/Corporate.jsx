@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES } from '../data/formData'
 import SkillTreeSelector from '../components/SkillTreeSelector'
 import { CityPicker } from '../components/LocationPicker'
+import { CareerHistoryDisplay } from '../components/CareerHistory'
 
 // ── CORPORATE LOGIN ──────────────────────────────────────
 export function CorporateLogin({ onNavigate, onCorporateLogin }) {
@@ -93,7 +94,7 @@ export function PostJD({ corporate, onNavigate }) {
     work_mode: '', location: '', relocation_support: '',
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
     must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
-    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], gender_preference: 'No preference — open to all'
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -374,6 +375,31 @@ ${jdText}`
         <div className="form-hint">Optional but highly recommended — senior candidates read this first</div>
       </div>
 
+      {/* GENDER PREFERENCE */}
+      <div className="form-group">
+        <label className="form-label">Gender Preference</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {['No preference — open to all', 'Preference for women candidates', 'Preference for men candidates', 'Role specifically requires women', 'Role specifically requires men'].map(opt => (
+            <button key={opt} type="button"
+              onClick={() => set('gender_preference', opt)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 13px',
+                border: form.gender_preference === opt ? '2px solid var(--teal)' : '1.5px solid var(--grey-200)',
+                borderRadius: 8, background: form.gender_preference === opt ? 'var(--teal-light)' : 'white',
+                cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
+              }}>
+              <div style={{
+                width: 14, height: 14, borderRadius: '50%', flexShrink: 0,
+                border: form.gender_preference === opt ? '4px solid var(--teal)' : '2px solid var(--grey-300)',
+                background: 'white'
+              }} />
+              <span style={{ fontSize: 13, color: form.gender_preference === opt ? 'var(--teal)' : 'var(--grey-800)', fontWeight: form.gender_preference === opt ? 600 : 400 }}>{opt}</span>
+            </button>
+          ))}
+        </div>
+        <div className="form-hint" style={{ marginTop: 8 }}>Used only as a matching filter — never shown to candidates on their profile.</div>
+      </div>
+
       {/* END DATE */}
       <div className="form-group">
         <label className="form-label">Search Valid Till <span className="required">*</span></label>
@@ -485,7 +511,16 @@ export function CorporateDashboard({ corporate, onNavigate }) {
     await supabase.from('interests').insert({
       jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'saved'
     })
-    alert('Profile saved to your shortlist.')
+    alert('Profile shortlisted. You can express interest when ready.')
+  }
+
+  const handleNotFit = async (jdId, candidateId) => {
+    await supabase.from('interests').insert({
+      jd_id: jdId, candidate_id: candidateId, corporate_id: corporate.id, status: 'not_fit'
+    })
+    // Refresh matches to remove this candidate from view
+    const updated = await matchCandidates(activeJd, corporate)
+    setMatches(m => ({ ...m, [jdId]: updated.filter(c => c.id !== candidateId) }))
   }
 
   if (!corporate) return null
@@ -535,9 +570,22 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                     {c.skill_keywords.slice(0, 5).map(s => <span key={s} className="badge badge-teal">{s}</span>)}
                   </div>
                 )}
+
+                {/* Career history */}
+                {c.career_history?.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Career Arc</div>
+                    <CareerHistoryDisplay careerHistory={c.career_history} />
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest</button>
-                  <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Save</button>
+                  <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Shortlist</button>
+                  <button type="button" onClick={() => handleNotFit(activeJd.id, c.id)}
+                    style={{ padding: '8px 14px', fontSize: 13, borderRadius: 6, border: '1.5px solid var(--grey-200)', background: 'white', color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Not a fit
+                  </button>
                 </div>
               </div>
             ))}
@@ -603,6 +651,14 @@ async function matchCandidates(jd, corporate) {
   return candidates.filter(c => {
     // Block check — don't show if corporate is in blocked list
     if (c.blocked_companies?.some(b => b.toLowerCase().includes(corporate.company_name.toLowerCase()))) return false
+
+    // Gender preference filter
+    if (jd.gender_preference && jd.gender_preference !== 'No preference — open to all') {
+      const needsWomen = jd.gender_preference.toLowerCase().includes('women')
+      const needsMen = jd.gender_preference.toLowerCase().includes('men')
+      if (needsWomen && c.gender !== 'Female') return false
+      if (needsMen && c.gender !== 'Male') return false
+    }
 
     let score = 0
 

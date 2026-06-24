@@ -133,7 +133,7 @@ export default function Home({ onNavigate }) {
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>For Companies</div>
           <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 15px', marginBottom: 14 }}>
             <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.7, margin: 0 }}>
-              Post structured JDs and reach senior passive talent who are invisible on every other platform. Standard or stealth — your choice. Pay only when a candidate says yes.
+              Post structured searches and reach senior passive talent who are invisible on every other platform. Standard or stealth — your choice. Use tokens to express interest — tokens are restored when a candidate says yes.
             </p>
           </div>
           <button onClick={() => onNavigate('corporate-login')} style={{

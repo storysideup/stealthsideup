@@ -655,29 +655,88 @@ export function CorporateDashboard({ corporate, onNavigate }) {
               <strong style={{ color: 'var(--teal)' }}>{candidateList.length}</strong> anonymous profiles match this role
             </div>
             {candidateList.map((c, i) => (
-              <div key={c.id} className="card" style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <div>
+              <div key={c.id} className="card" style={{ marginBottom: 16 }}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span className="badge badge-teal">SSU-{String(i + 1001).padStart(4, '0')}</span>
-                    {c.job_search_status?.includes('Actively') && <span className="badge badge-green" style={{ marginLeft: 6 }}>Active</span>}
+                    {c.job_search_status?.includes('Actively') && <span className="badge badge-green">Active</span>}
+                    {c.current_employment_type && <span className="badge badge-grey">{c.current_employment_type}</span>}
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--orange)' }}>{c.ctc_total ? `₹${c.ctc_total}L` : '—'}</span>
                 </div>
-                <p style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--grey-600)', lineHeight: 1.5, marginBottom: 10 }}>"{c.headline}"</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                  {c.years_experience && <span className="badge badge-grey">{c.years_experience} yrs</span>}
-                  {c.current_industry && <span className="badge badge-grey">{c.current_industry}</span>}
-                  {c.role_type && <span className="badge badge-grey">{c.role_type}</span>}
-                  {c.team_size && <span className="badge badge-grey">Team: {c.team_size}</span>}
-                  {c.work_preference && <span className="badge badge-grey">{c.work_preference}</span>}
+
+                {/* Headline */}
+                <p style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--grey-600)', lineHeight: 1.5, marginBottom: 12, borderLeft: '3px solid var(--orange)', paddingLeft: 10 }}>"{c.headline}"</p>
+
+                {/* Key stats grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                  {[
+                    { label: 'Experience', value: c.years_experience ? c.years_experience + ' years' : null },
+                    { label: 'In Function', value: c.years_in_function ? c.years_in_function + ' yrs in role' : null },
+                    { label: 'Current CTC', value: c.ctc_total ? '₹' + c.ctc_total + 'L' : null },
+                    { label: 'Min Expected', value: c.min_expected_ctc ? '₹' + c.min_expected_ctc + 'L' : null },
+                    { label: 'Notice Period', value: c.notice_period || null },
+                    { label: 'Work Pref', value: c.work_preference || null },
+                    { label: 'B2B / B2C', value: c.career_b2b_b2c || null },
+                    { label: 'Travel', value: c.open_to_travel || null },
+                  ].filter(item => item.value).map(({ label, value }) => (
+                    <div key={label} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '7px 10px' }}>
+                      <div style={{ fontSize: 10, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--grey-800)' }}>{value}</div>
+                    </div>
+                  ))}
                 </div>
-                {c.skill_keywords?.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
-                    {c.skill_keywords.slice(0, 5).map(s => <span key={s} className="badge badge-teal">{s}</span>)}
+
+                {/* Industries */}
+                {(c.current_industry || c.previous_industries?.length > 0) && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Industry Background</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {c.current_industry && <span className="badge badge-teal">{c.current_industry} (current)</span>}
+                      {c.previous_industries?.slice(0, 3).map(ind => <span key={ind} className="badge badge-grey">{ind}</span>)}
+                    </div>
                   </div>
                 )}
 
-                {/* Career history */}
+                {/* Location preferences */}
+                {c.preferred_locations?.cities?.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Open to Locations</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {c.preferred_locations.cities.map(city => <span key={city} className="badge badge-grey">{city}</span>)}
+                      {c.preferred_locations.openToNearby && <span className="badge badge-teal">Open to nearby</span>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Languages */}
+                {c.languages?.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Languages</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {c.languages.map(l => <span key={l} className="badge badge-grey">{l}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Skills with proof points */}
+                {c.skill_tree?.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Skills & Proof Points</div>
+                    {c.skill_tree.slice(0, 4).map((skill, si) => (
+                      <div key={si} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '8px 10px', marginBottom: 6 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: skill.proofPoint ? 4 : 0 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-800)' }}>{skill.subFunction}</span>
+                          {skill.proficiency && <span className="badge badge-teal" style={{ fontSize: 10 }}>{skill.proficiency}</span>}
+                        </div>
+                        {skill.specialisation && <div style={{ fontSize: 11, color: 'var(--grey-600)', marginBottom: skill.proofPoint ? 3 : 0 }}>{skill.specialisation}</div>}
+                        {skill.proofPoint && <div style={{ fontSize: 11, color: 'var(--orange)', fontStyle: 'italic' }}>"{skill.proofPoint}"</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Career arc */}
                 {c.career_history?.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Career Arc</div>
@@ -685,7 +744,18 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: 8 }}>
+                {/* Org type open to */}
+                {c.org_type_open_to?.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Open to Org Types</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {c.org_type_open_to.map(o => <span key={o} className="badge badge-grey" style={{ fontSize: 10 }}>{o}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
                   <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest</button>
                   <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Shortlist</button>
                   <button type="button" onClick={() => handleNotFit(activeJd.id, c.id)}

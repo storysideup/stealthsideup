@@ -104,6 +104,8 @@ export function PostJD({ corporate, onNavigate }) {
   const [extracting, setExtracting] = useState(false)
   const [extractError, setExtractError] = useState('')
   const [extracted, setExtracted] = useState(false)
+  const [aiFields, setAiFields] = useState([])
+  const [eduPref, setEduPref] = useState({ min_degree: '', institute_pref: '' })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const skillOptions = form.job_function && SKILLS_BY_FUNCTION[form.job_function] ? SKILLS_BY_FUNCTION[form.job_function] : []
@@ -141,26 +143,27 @@ JD: ${jdText.slice(0, 3000)}`
       const rawText = data.content?.[0]?.text || ''
       const clean = rawText.replace(/\`\`\`json|\`\`\`/g, '').trim()
       const parsed = JSON.parse(clean)
-      setForm(f => ({
-        ...f,
-        role_title: parsed.role_title || f.role_title,
-        job_function: parsed.job_function || f.job_function,
-        seniority_level: parsed.seniority_level || f.seniority_level,
-        role_type: parsed.role_type || f.role_type,
-        role_context: parsed.role_context || f.role_context,
-        why_role: parsed.why_role || f.why_role,
-        employment_type: parsed.employment_type || f.employment_type,
-        location: parsed.location || f.location,
-        ctc_fixed_min: parsed.ctc_fixed_min ? String(parsed.ctc_fixed_min) : f.ctc_fixed_min,
-        ctc_fixed_max: parsed.ctc_fixed_max ? String(parsed.ctc_fixed_max) : f.ctc_fixed_max,
-        skill_tree_requirement: parsed.skills?.length > 0 ? parsed.skills.map(s => ({
-          subFunction: s.subFunction || '',
-          proficiency: s.proficiency || 'proficient',
-          specialisation: s.specialisation || '',
-          depth: [],
-          customDepth: ''
-        })) : f.skill_tree_requirement,
-      }))
+      const filled = []
+      const updates = {}
+      if (parsed.role_title) { updates.role_title = parsed.role_title; filled.push('role_title') }
+      if (parsed.job_function) { updates.job_function = parsed.job_function; filled.push('job_function') }
+      if (parsed.seniority_level) { updates.seniority_level = parsed.seniority_level; filled.push('seniority_level') }
+      if (parsed.role_type) { updates.role_type = parsed.role_type; filled.push('role_type') }
+      if (parsed.role_context) { updates.role_context = parsed.role_context; filled.push('role_context') }
+      if (parsed.why_role) { updates.why_role = parsed.why_role; filled.push('why_role') }
+      if (parsed.employment_type) { updates.employment_type = parsed.employment_type; filled.push('employment_type') }
+      if (parsed.location) { updates.location = parsed.location; filled.push('location') }
+      if (parsed.ctc_fixed_min) { updates.ctc_fixed_min = String(parsed.ctc_fixed_min); filled.push('ctc_fixed_min') }
+      if (parsed.ctc_fixed_max) { updates.ctc_fixed_max = String(parsed.ctc_fixed_max); filled.push('ctc_fixed_max') }
+      if (parsed.skills?.length > 0) {
+        updates.skill_tree_requirement = parsed.skills.map(s => ({
+          subFunction: s.subFunction || '', proficiency: s.proficiency || 'proficient',
+          specialisation: s.specialisation || '', depth: [], customDepth: ''
+        }))
+        filled.push('skills')
+      }
+      setAiFields(filled)
+      setForm(f => ({ ...f, ...updates }))
       setExtracted(true)
     } catch (e) {
       setExtractError('Could not extract: ' + (e.message || 'Unknown error') + '. Please fill the form manually.')
@@ -173,7 +176,7 @@ JD: ${jdText.slice(0, 3000)}`
       setError('Role title, function and seniority level are required'); return
     }
     setLoading(true); setError('')
-    const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true })
+    const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true, min_degree_required: eduPref.min_degree, institute_preference: eduPref.institute_pref })
     if (err) { setError(err.message); setLoading(false); return }
     setSuccess(true); setLoading(false)
   }
@@ -211,6 +214,11 @@ JD: ${jdText.slice(0, 3000)}`
       <button className="btn-primary" onClick={() => onNavigate('corporate-dashboard')}>View My Dashboard →</button>
     </div>
   )
+
+  const aiBg = (field) => aiFields.includes(field) ? { background: '#e8f4f2', borderColor: '#0f4f47' } : {}
+  const AiBadge = ({ field }) => aiFields.includes(field) ? (
+    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 4, padding: '2px 6px', marginLeft: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>AI filled</span>
+  ) : <span style={{ fontSize: 10, color: 'var(--orange)', marginLeft: 8, fontWeight: 600 }}>⚠ Fill this</span>
 
   return (
     <div className="page">
@@ -262,13 +270,13 @@ JD: ${jdText.slice(0, 3000)}`
       )}
 
       <div className="form-group">
-        <label className="form-label">Role Title <span className="required">*</span></label>
-        <input className="form-input" placeholder="e.g. Head of Sales — West India" value={form.role_title} onChange={e => set('role_title', e.target.value)} />
+        <label className="form-label">Role Title <span className="required">*</span>{extracted && <AiBadge field="role_title" />}</label>
+        <input className="form-input" style={aiBg('role_title')} placeholder="e.g. Head of Sales — West India" value={form.role_title} onChange={e => set('role_title', e.target.value)} />
       </div>
 
       <div className="form-group">
-        <label className="form-label">Function <span className="required">*</span></label>
-        <select className="form-select" value={form.job_function} onChange={e => { set('job_function', e.target.value); set('must_have_skills', []); set('good_to_have_skills', []); set('skill_tree_requirement', []) }}>
+        <label className="form-label">Function <span className="required">*</span>{extracted && <AiBadge field="job_function" />}</label>
+        <select className="form-select" style={aiBg('job_function')} value={form.job_function} onChange={e => { set('job_function', e.target.value); set('must_have_skills', []); set('good_to_have_skills', []); set('skill_tree_requirement', []) }}>
           <option value="">Select function...</option>
           {FUNCTIONS.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
@@ -433,6 +441,33 @@ JD: ${jdText.slice(0, 3000)}`
             <button key={opt} type="button"
               className={`tag ${form.travel_required === opt ? 'selected' : ''}`}
               onClick={() => set('travel_required', opt)}>{opt}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* EDUCATION PREFERENCE */}
+      <div className="form-group">
+        <label className="form-label">Minimum Education Required</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {['No preference', 'Graduation / Degree', 'Post Graduation', 'MBA / PGDM', 'PhD / Doctorate'].map(opt => (
+            <button key={opt} type="button"
+              className={`tag ${eduPref.min_degree === opt ? 'selected' : ''}`}
+              onClick={() => setEduPref(e => ({ ...e, min_degree: opt }))}>
+              {opt}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Institute Preference</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {['No preference', 'Premier institutes only (IIM / IIT / XLRI / ISB etc.)', 'Any recognised institute'].map(opt => (
+            <button key={opt} type="button"
+              className={`tag ${eduPref.institute_pref === opt ? 'selected' : ''}`}
+              onClick={() => setEduPref(e => ({ ...e, institute_pref: opt }))}>
+              {opt}
+            </button>
           ))}
         </div>
       </div>

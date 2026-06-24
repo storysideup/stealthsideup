@@ -248,7 +248,7 @@ export function PostJD({ corporate, onNavigate }) {
         <label className="form-label">Role Context <span className="required">*</span></label>
         <textarea className="form-textarea" maxLength={300} placeholder="What is this role expected to achieve in year one? What does success look like? Max 300 words."
           value={form.role_context} onChange={e => set('role_context', e.target.value)} />
-        <div className="form-hint flex-between"><span>Be specific — generic JDs get ignored by senior candidates</span><span>{form.role_context.length}/300</span></div>
+        <div className="form-hint flex-between"><span>What will this person own in their first year? What does success look like in this role?</span><span>{form.role_context.length}/300</span></div>
       </div>
 
       <div className="form-group">

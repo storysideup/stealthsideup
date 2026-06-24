@@ -2,6 +2,7 @@ import React from 'react'
 import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillTreeSelector from '../components/SkillTreeSelector'
+import { CandidateLocationPicker } from '../components/LocationPicker'
 import {
   FUNCTIONS, SKILLS_BY_FUNCTION, INDUSTRIES, INSTITUTES,
   CURRENT_EMPLOYMENT_TYPES, DESIRED_EMPLOYMENT_TYPES, DEGREES,
@@ -132,6 +133,7 @@ export default function Register({ onNavigate }) {
     previous_industries: [], average_tenure: '', career_b2b_b2c: '',
     skill_keywords: [], skill_tree: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
+    preferred_locations: { cities: [], openToNearby: true },
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
   })
 
@@ -211,6 +213,7 @@ export default function Register({ onNavigate }) {
         relocation: form.relocation,
         relocation_cities: form.relocation_cities,
         blocked_companies: form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [],
+        preferred_locations: form.preferred_locations,
         is_active: true
       }
       const { error: dbErr } = await supabase.from('candidates').upsert(payload, { onConflict: 'contact' })
@@ -427,7 +430,7 @@ export default function Register({ onNavigate }) {
 
             <div className="form-group">
               <label className="form-label">Current CTC Breakup <span className="required">*</span></label>
-              <div className="form-hint" style={{ marginBottom: 10 }}>All figures in Lakhs per annum (₹L)</div>
+              <div className="form-hint" style={{ marginBottom: 10 }}>All figures in Lakhs <strong>per annum</strong> (₹L). E.g. 25 means ₹25 Lakhs per year.</div>
               {[
                 { key: 'ctc_fixed', label: 'Fixed / Base Salary' },
                 { key: 'ctc_variable', label: 'Variable / Bonus' },
@@ -538,12 +541,12 @@ export default function Register({ onNavigate }) {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Open to Relocation?</label>
-            <TagSelect options={['Yes, anywhere in India','Yes, selectively','No','Open to international relocation']} value={form.relocation ? [form.relocation] : []} onChange={v => set('relocation', v[v.length-1] || '')} max={1} />
-            {form.relocation === 'Yes, selectively' && (
-              <input className="form-input" style={{ marginTop: 8 }} placeholder="Preferred cities (e.g. Mumbai, Bengaluru)"
-                value={form.relocation_cities} onChange={e => set('relocation_cities', e.target.value)} />
-            )}
+            <label className="form-label">Preferred Work Locations</label>
+            <div className="form-hint" style={{ marginBottom: 10 }}>Select all cities or zones you are open to working in</div>
+            <CandidateLocationPicker
+              value={form.preferred_locations}
+              onChange={v => set('preferred_locations', v)}
+            />
           </div>
 
           <div className="form-group">

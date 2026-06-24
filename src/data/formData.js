@@ -166,3 +166,44 @@ export const JOB_SEARCH_STATUSES = [
   "Passively open (the right role would make me consider moving)",
   "Just exploring (not in a hurry, happy where I am)"
 ]
+
+export const CITIES_BY_ZONE = {
+  "North India": [
+    "Delhi", "Noida", "Gurgaon", "Faridabad", "Ghaziabad",
+    "Chandigarh", "Jaipur", "Lucknow", "Agra", "Amritsar", "Dehradun"
+  ],
+  "West India": [
+    "Mumbai", "Pune", "Ahmedabad", "Surat", "Nagpur",
+    "Indore", "Vadodara", "Nashik", "Aurangabad"
+  ],
+  "South India": [
+    "Bengaluru", "Chennai", "Hyderabad", "Kochi", "Coimbatore",
+    "Mysuru", "Vizag", "Thiruvananthapuram", "Mangaluru"
+  ],
+  "East India": [
+    "Kolkata", "Bhubaneswar", "Patna", "Guwahati", "Ranchi", "Jamshedpur"
+  ],
+  "Central India": [
+    "Bhopal", "Raipur", "Jabalpur", "Varanasi", "Kanpur"
+  ],
+}
+
+export const ZONES = Object.keys(CITIES_BY_ZONE)
+
+export const ALL_CITIES = Object.values(CITIES_BY_ZONE).flat()
+
+export const SPECIAL_LOCATIONS = [
+  "Pan-India / National Role",
+  "Remote / Work from Home",
+  "Flexible / Any Location",
+  "International"
+]
+
+export const CITY_TO_ZONE = {}
+Object.entries(CITIES_BY_ZONE).forEach(([zone, cities]) => {
+  cities.forEach(city => { CITY_TO_ZONE[city] = zone })
+})
+
+export const NCR_CITIES = ["Delhi", "Noida", "Gurgaon", "Faridabad", "Ghaziabad"]
+export const MUMBAI_REGION = ["Mumbai", "Pune", "Nashik"]
+export const BENGALURU_REGION = ["Bengaluru", "Mysuru"]

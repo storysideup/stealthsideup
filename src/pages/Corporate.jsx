@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES } from '../data/formData'
 import SkillTreeSelector from '../components/SkillTreeSelector'
+import { CityPicker } from '../components/LocationPicker'
 
 // ── CORPORATE LOGIN ──────────────────────────────────────
 export function CorporateLogin({ onNavigate, onCorporateLogin }) {
@@ -197,8 +198,8 @@ export function PostJD({ corporate, onNavigate }) {
       </div>
 
       <div className="form-group">
-        <label className="form-label">Location</label>
-        <input className="form-input" placeholder="e.g. Mumbai" value={form.location} onChange={e => set('location', e.target.value)} />
+        <label className="form-label">Role Location</label>
+        <CityPicker value={form.location} onChange={v => set('location', v)} />
       </div>
 
       <div className="form-group">
@@ -209,12 +210,13 @@ export function PostJD({ corporate, onNavigate }) {
       </div>
 
       <div className="form-group">
-        <label className="form-label">CTC Budget (Fixed, in ₹L)</label>
+        <label className="form-label">Fixed CTC Budget — ₹ Lakhs per annum</label>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input className="form-input" type="number" placeholder="Min" value={form.ctc_fixed_min} onChange={e => set('ctc_fixed_min', e.target.value)} />
+          <input className="form-input" type="number" placeholder="Min e.g. 25" value={form.ctc_fixed_min} onChange={e => set('ctc_fixed_min', e.target.value)} />
           <span style={{ color: 'var(--grey-400)' }}>to</span>
-          <input className="form-input" type="number" placeholder="Max" value={form.ctc_fixed_max} onChange={e => set('ctc_fixed_max', e.target.value)} />
+          <input className="form-input" type="number" placeholder="Max e.g. 35" value={form.ctc_fixed_max} onChange={e => set('ctc_fixed_max', e.target.value)} />
         </div>
+        <div className="form-hint">Annual figures only. E.g. 25 means ₹25 Lakhs per annum.</div>
       </div>
 
       <div className="form-group">

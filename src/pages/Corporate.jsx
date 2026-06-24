@@ -98,9 +98,64 @@ export function PostJD({ corporate, onNavigate }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [jdText, setJdText] = useState('')
+  const [extracting, setExtracting] = useState(false)
+  const [extractError, setExtractError] = useState('')
+  const [extracted, setExtracted] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const skillOptions = form.job_function && SKILLS_BY_FUNCTION[form.job_function] ? SKILLS_BY_FUNCTION[form.job_function] : []
+
+  const handleExtractJD = async () => {
+    if (!jdText.trim() || jdText.trim().length < 50) {
+      setExtractError('Please paste a more detailed JD — at least a few sentences'); return
+    }
+    setExtracting(true); setExtractError('')
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `Extract structured information from this job description. Return ONLY a JSON object with these exact keys, no markdown, no explanation:
+{
+  "role_title": "exact job title",
+  "job_function": "one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Procurement & Sourcing, Design & Creative, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L, Administration & Facilities, Production & Manufacturing, Engineering (Civil / Mechanical / Electrical), Research & Development, Customer Success & Service, Content & Editorial, Training & Facilitation, Investor Relations & Corporate Finance, Import / Export & International Trade",
+  "seniority_level": "one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)",
+  "role_type": "Individual Contributor or Team Manager",
+  "role_context": "2-3 sentences describing what this person will own and what success looks like — max 300 characters",
+  "why_role": "1-2 sentences on why this is an exciting opportunity — max 200 characters",
+  "employment_type": "Full-time or Freelance / Contract or Fractional"
+}
+
+JD text:
+${jdText}`
+          }]
+        })
+      })
+      const data = await response.json()
+      const text = data.content?.[0]?.text || ''
+      const clean = text.replace(/```json|```/g, '').trim()
+      const parsed = JSON.parse(clean)
+      setForm(f => ({
+        ...f,
+        role_title: parsed.role_title || f.role_title,
+        job_function: parsed.job_function || f.job_function,
+        seniority_level: parsed.seniority_level || f.seniority_level,
+        role_type: parsed.role_type || f.role_type,
+        role_context: parsed.role_context || f.role_context,
+        why_role: parsed.why_role || f.why_role,
+        employment_type: parsed.employment_type || f.employment_type,
+      }))
+      setExtracted(true)
+    } catch (e) {
+      setExtractError('Could not extract details. Please fill the form manually or try again.')
+    }
+    setExtracting(false)
+  }
 
   const handleSubmit = async () => {
     if (!form.role_title || !form.job_function || !form.seniority_level) {
@@ -133,6 +188,42 @@ export function PostJD({ corporate, onNavigate }) {
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--teal)' }}>{corporate.company_name}</div>
         </div>
       </div>
+
+      {/* JD EXTRACTION */}
+      {!extracted ? (
+        <div style={{ background: '#f9fafb', border: '1.5px solid var(--grey-200)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-800)', marginBottom: 4 }}>
+            ⚡ Have an existing JD? Let AI fill the form for you
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 10, lineHeight: 1.6 }}>
+            Paste your job description below — we will extract the role title, function, seniority, context and more automatically. You can review and edit everything after.
+          </div>
+          <textarea
+            style={{ width: '100%', border: '1.5px solid var(--grey-200)', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', minHeight: 100, outline: 'none', resize: 'vertical', marginBottom: 10 }}
+            placeholder="Paste your JD here..."
+            value={jdText}
+            onChange={e => setJdText(e.target.value)}
+          />
+          {extractError && <div className="error-msg" style={{ marginBottom: 8 }}>{extractError}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn-primary btn-sm" onClick={handleExtractJD} disabled={extracting}>
+              {extracting ? 'Extracting...' : '⚡ Extract & Fill Form'}
+            </button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setExtracted(true)}>
+              Fill manually
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600 }}>
+            {jdText ? '✓ Form pre-filled from your JD — review and edit below' : '✓ Filling form manually'}
+          </div>
+          <button type="button" onClick={() => { setExtracted(false); setJdText('') }} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Start over
+          </button>
+        </div>
+      )}
 
       <div className="form-group">
         <label className="form-label">Role Title <span className="required">*</span></label>

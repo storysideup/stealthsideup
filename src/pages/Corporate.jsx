@@ -114,34 +114,14 @@ export function PostJD({ corporate, onNavigate }) {
     }
     setExtracting(true); setExtractError('')
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/extract-jd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `Extract structured information from this job description. Return ONLY a JSON object with these exact keys, no markdown, no explanation:
-{
-  "role_title": "exact job title",
-  "job_function": "one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Procurement & Sourcing, Design & Creative, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L, Administration & Facilities, Production & Manufacturing, Engineering (Civil / Mechanical / Electrical), Research & Development, Customer Success & Service, Content & Editorial, Training & Facilitation, Investor Relations & Corporate Finance, Import / Export & International Trade",
-  "seniority_level": "one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)",
-  "role_type": "Individual Contributor or Team Manager",
-  "role_context": "2-3 sentences describing what this person will own and what success looks like — max 300 characters",
-  "why_role": "1-2 sentences on why this is an exciting opportunity — max 200 characters",
-  "employment_type": "Full-time or Freelance / Contract or Fractional"
-}
-
-JD text:
-${jdText}`
-          }]
-        })
+        body: JSON.stringify({ text: jdText })
       })
-      const data = await response.json()
-      const text = data.content?.[0]?.text || ''
-      const clean = text.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean)
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error)
+      const parsed = result.data
       setForm(f => ({
         ...f,
         role_title: parsed.role_title || f.role_title,
@@ -151,6 +131,9 @@ ${jdText}`
         role_context: parsed.role_context || f.role_context,
         why_role: parsed.why_role || f.why_role,
         employment_type: parsed.employment_type || f.employment_type,
+        location: parsed.location || f.location,
+        ctc_fixed_min: parsed.ctc_fixed_min ? String(parsed.ctc_fixed_min) : f.ctc_fixed_min,
+        ctc_fixed_max: parsed.ctc_fixed_max ? String(parsed.ctc_fixed_max) : f.ctc_fixed_max,
       }))
       setExtracted(true)
     } catch (e) {

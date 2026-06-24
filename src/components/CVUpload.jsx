@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { SKILL_TREE } from '../data/skillTree'
 
 export default function CVUploadSection({ onExtracted }) {
   const [uploading, setUploading] = useState(false)
@@ -34,54 +33,17 @@ export default function CVUploadSection({ onExtracted }) {
         reader.readAsDataURL(file)
       })
 
-      // Get all skill options across all functions for the prompt
-      const allSubFunctions = Object.entries(SKILL_TREE).map(([func, subs]) => ({
-        function: func,
-        subFunctions: Object.keys(subs)
-      }))
+      // Convert to text for API
+      const cvText = atob(base64)
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/extract-cv', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: file.type === 'application/pdf' ? 'document' : 'text',
-                ...(file.type === 'application/pdf'
-                  ? { source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
-                  : { text: atob(base64) }
-                )
-              },
-              {
-                type: 'text',
-                text: `Read this CV carefully. Extract the candidate's skills and for each skill provide a one-line proof point from their actual work experience.
-
-Return ONLY a JSON array — no markdown, no explanation:
-[
-  {
-    "subFunction": "exact sub-function name from this list only: ${allSubFunctions.flatMap(f => f.subFunctions).slice(0, 30).join(', ')}",
-    "proficiency": "familiar or proficient or expert",
-    "specialisation": "most relevant specialisation if clear from CV",
-    "proofPoint": "one specific achievement that proves this skill — under 150 chars, no company names, use numbers where possible",
-    "customDepth": "any specific tool or platform not in standard lists"
-  }
-]
-
-Maximum 8 skill entries. Only include skills with clear evidence in the CV. Do not invent or assume skills.`
-              }
-            ]
-          }]
-        })
+        body: JSON.stringify({ text: cvText })
       })
-
-      const data = await response.json()
-      const text = data.content?.[0]?.text || ''
-      const clean = text.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean)
+      const result = await response.json()
+      if (!result.success) throw new Error(result.error)
+      const parsed = result.data
 
       if (Array.isArray(parsed) && parsed.length > 0) {
         onExtracted({ skill_tree: parsed })

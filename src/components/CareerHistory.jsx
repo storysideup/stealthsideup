@@ -1,4 +1,4 @@
-import { INDUSTRIES, CAREER_ROLE_TYPES, ROLE_TENURES, FUNCTIONS, SKILLS_BY_FUNCTION } from '../data/formData'
+import { INDUSTRIES, CAREER_ROLE_TYPES, ROLE_TENURES, FUNCTIONS, SKILLS_BY_FUNCTION, REASONS_FOR_LEAVING, REASONS_FOR_LOOKING } from '../data/formData'
 
 const EMPTY_ROLE = {
   industry: '',
@@ -119,7 +119,7 @@ function RoleCard({ role, index, onChange, label }) {
       )}
 
       {/* Tenure */}
-      <div>
+      <div style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Tenure in This Role</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {ROLE_TENURES.map(t => (
@@ -130,6 +130,54 @@ function RoleCard({ role, index, onChange, label }) {
               {t}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Salary hike received */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>
+          Last Salary Hike Received
+          <span style={{ fontSize: 10, fontWeight: 400, marginLeft: 6, textTransform: 'none', color: 'var(--grey-400)' }}>in % (optional)</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="number" min="0" max="100" placeholder="e.g. 15"
+            className="form-input" style={{ maxWidth: 100, fontSize: 14 }}
+            value={role.salary_hike || ''}
+            onChange={e => set('salary_hike', e.target.value)} />
+          <span style={{ fontSize: 14, color: 'var(--grey-400)' }}>%</span>
+        </div>
+      </div>
+
+      {/* Reason for leaving / looking */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>
+          {index === 0 ? 'Why Are You Looking?' : 'Why Did You Leave?'}
+          <span style={{ fontSize: 10, fontWeight: 400, marginLeft: 6, textTransform: 'none', color: 'var(--grey-400)' }}>select all that apply — visible only to you</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {(index === 0 ? REASONS_FOR_LOOKING : REASONS_FOR_LEAVING).map(reason => {
+            const selected = (role.reasons || []).includes(reason)
+            return (
+              <button key={reason} type="button"
+                onClick={() => {
+                  const current = role.reasons || []
+                  set('reasons', selected ? current.filter(r => r !== reason) : [...current, reason])
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                  border: selected ? '1.5px solid var(--teal)' : '1.5px solid var(--grey-200)',
+                  borderRadius: 7, background: selected ? 'var(--teal-light)' : 'white',
+                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
+                }}>
+                <div style={{
+                  width: 14, height: 14, borderRadius: 3, flexShrink: 0,
+                  border: selected ? '4px solid var(--teal)' : '2px solid var(--grey-300)',
+                  background: 'white'
+                }} />
+                <span style={{ fontSize: 12, color: selected ? 'var(--teal)' : 'var(--grey-700)', fontWeight: selected ? 600 : 400 }}>{reason}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>

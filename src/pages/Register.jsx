@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase'
 import SkillTreeSelector from '../components/SkillTreeSelector'
 import { CandidateLocationPicker } from '../components/LocationPicker'
 import CareerHistory from '../components/CareerHistory'
+import CVUploadSection from '../components/CVUpload'
 import {
   FUNCTIONS, SKILLS_BY_FUNCTION, INDUSTRIES, INSTITUTES,
+  NOTICE_PERIODS, LANGUAGES,
   CURRENT_EMPLOYMENT_TYPES, DESIRED_EMPLOYMENT_TYPES, DEGREES,
   TENURES, AVG_TENURES, TEAM_SIZES, GEOGRAPHIES,
   SENIORITY_LEVELS, ORG_TYPES, JOB_SEARCH_STATUSES, FREELANCE_ENGAGEMENT_SIZES
@@ -135,6 +137,8 @@ export default function Register({ onNavigate }) {
     skill_keywords: [], skill_tree: [], career_history: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
+    notice_period: '', min_expected_ctc: '', years_in_function: '',
+    languages: [], open_to_travel: '', has_passport: '',
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
   })
 
@@ -216,6 +220,12 @@ export default function Register({ onNavigate }) {
         blocked_companies: form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [],
         preferred_locations: form.preferred_locations,
         career_history: form.career_history,
+        notice_period: form.notice_period,
+        min_expected_ctc: parseFloat(form.min_expected_ctc) || null,
+        years_in_function: parseInt(form.years_in_function) || null,
+        languages: form.languages,
+        open_to_travel: form.open_to_travel,
+        has_passport: form.has_passport,
         is_active: true
       }
       const { error: dbErr } = await supabase.from('candidates').upsert(payload, { onConflict: 'contact' })
@@ -397,6 +407,8 @@ export default function Register({ onNavigate }) {
         {formStep === 2 && <>
           <div className="section-header">C — Your Current Role</div>
 
+
+
           {!isFreelance ? <>
             <div className="form-group">
               <label className="form-label">Current Industry <span className="required">*</span></label>
@@ -549,6 +561,46 @@ export default function Register({ onNavigate }) {
               value={form.preferred_locations}
               onChange={v => set('preferred_locations', v)}
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Notice Period <span className="required">*</span></label>
+            <TagSelect options={NOTICE_PERIODS} value={form.notice_period ? [form.notice_period] : []} onChange={v => set('notice_period', v[v.length-1] || '')} max={1} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input className="form-input" type="number" min="0" placeholder="e.g. 35" style={{ maxWidth: 140 }}
+                value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
+              <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>Lakhs per annum</span>
+            </div>
+            <div className="form-hint">The minimum you would consider moving for. Helps us filter out roles that don't meet your expectations.</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Years in Your Primary Function</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input className="form-input" type="number" min="0" max="50" placeholder="e.g. 8" style={{ maxWidth: 100 }}
+                value={form.years_in_function} onChange={e => set('years_in_function', e.target.value)} />
+              <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>years</span>
+            </div>
+            <div className="form-hint">Of your total experience, how many years have been in {form.primary_function || 'your primary function'}?</div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Languages Known</label>
+            <TagSelect options={LANGUAGES} value={form.languages} onChange={v => set('languages', v)} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Open to International Travel?</label>
+            <TagSelect options={['Yes, frequently', 'Occasionally', 'No']} value={form.open_to_travel ? [form.open_to_travel] : []} onChange={v => set('open_to_travel', v[v.length-1] || '')} max={1} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Valid Passport?</label>
+            <TagSelect options={['Yes', 'No']} value={form.has_passport ? [form.has_passport] : []} onChange={v => set('has_passport', v[v.length-1] || '')} max={1} />
           </div>
 
           <div className="form-group">

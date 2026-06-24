@@ -95,7 +95,7 @@ function SkillEntry({ functionName, subFunction, onRemove, onChange, entry }) {
 
       {/* Free text */}
       {entry.specialisation && (
-        <div>
+        <div style={{ marginBottom: mode === 'candidate' ? 10 : 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>+ Add your own</div>
           <input
             className="form-input"
@@ -104,6 +104,28 @@ function SkillEntry({ functionName, subFunction, onRemove, onChange, entry }) {
             value={entry.customDepth || ''}
             onChange={e => onChange({ ...entry, customDepth: e.target.value })}
           />
+        </div>
+      )}
+
+      {/* Proof point — candidate only */}
+      {mode === 'candidate' && entry.specialisation && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
+            Proof Point
+            <span style={{ fontSize: 10, fontWeight: 400, marginLeft: 6, textTransform: 'none', color: 'var(--grey-400)' }}>one line — no company name</span>
+          </div>
+          <input
+            className="form-input"
+            style={{ fontSize: 13, padding: '9px 12px', borderColor: entry.proofPoint ? 'var(--teal)' : undefined }}
+            placeholder='e.g. "Managed ₹3.5Cr/month ad budget, reduced CAC by 34% over 6 months"'
+            maxLength={150}
+            value={entry.proofPoint || ''}
+            onChange={e => onChange({ ...entry, proofPoint: e.target.value })}
+          />
+          <div style={{ fontSize: 10, color: 'var(--grey-400)', marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <span>This is what a company sees to decide if they want to reach out</span>
+            <span style={{ color: (entry.proofPoint || '').length > 130 ? 'var(--orange)' : 'var(--grey-400)' }}>{(entry.proofPoint || '').length}/150</span>
+          </div>
         </div>
       )}
     </div>

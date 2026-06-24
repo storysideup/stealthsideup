@@ -230,3 +230,47 @@ export const GENDER_PREFERENCE = [
   "Role specifically requires women",
   "Role specifically requires men"
 ]
+
+export const NOTICE_PERIODS = [
+  "Immediate",
+  "Up to 30 days",
+  "30 to 60 days",
+  "60 to 90 days",
+  "More than 90 days",
+  "Negotiable"
+]
+
+export const LANGUAGES = [
+  "Hindi", "English", "Tamil", "Telugu", "Kannada",
+  "Malayalam", "Marathi", "Bengali", "Gujarati", "Punjabi", "Other"
+]
+
+export const REASONS_FOR_LEAVING = [
+  "No growth or promotion opportunities",
+  "Reached a career plateau",
+  "No new learnings or challenges",
+  "Difficult reporting relationship",
+  "Culture not aligned with my values",
+  "Company went through restructuring / layoffs",
+  "Better compensation elsewhere",
+  "Better role / title / responsibilities elsewhere",
+  "Relocation — personal or family",
+  "Personal health reasons",
+  "Family responsibilities",
+  "Education / further studies",
+  "Entrepreneurship / own venture",
+  "Contract / role ended naturally"
+]
+
+export const REASONS_FOR_LOOKING = [
+  "Seeking better growth and promotion opportunities",
+  "Looking for higher compensation",
+  "Culture not aligned with my values",
+  "Want new learnings and challenges",
+  "Interested in a different industry or function",
+  "Company going through uncertainty",
+  "Better work-life balance",
+  "Relocation preference",
+  "Personal reasons",
+  "Open to the right opportunity — not actively pushing"
+]

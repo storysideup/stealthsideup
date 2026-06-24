@@ -137,7 +137,7 @@ export function PostJD({ corporate, onNavigate }) {
       }))
       setExtracted(true)
     } catch (e) {
-      setExtractError('Could not extract details. Please fill the form manually or try again.')
+      setExtractError('Could not extract: ' + (e.message || 'Unknown error') + '. Please fill the form manually.')
     }
     setExtracting(false)
   }

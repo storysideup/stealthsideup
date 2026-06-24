@@ -130,7 +130,7 @@ export default function Register({ onNavigate }) {
     ctc_fixed: '', ctc_variable: '', ctc_joining_bonus: '', ctc_esops: '', ctc_allowances: '',
     freelance_sector: '', freelance_engagement_size: '', freelance_years: '',
     previous_industries: [], average_tenure: '', career_b2b_b2c: '',
-    skill_keywords: [], skill_tree: [], headline: '',
+    skill_keywords: [], skill_tree: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
   })
@@ -202,6 +202,7 @@ export default function Register({ onNavigate }) {
         career_b2b_b2c: form.career_b2b_b2c,
         skill_keywords: form.skill_keywords,
         skill_tree: form.skill_tree,
+        declaration_agreed: form.declaration_agreed,
         headline: form.headline,
         job_search_status: form.job_search_status,
         seniority_open_to: form.seniority_open_to,
@@ -647,9 +648,21 @@ export default function Register({ onNavigate }) {
             </div>
           </div>
 
+          {/* DECLARATION */}
+          <div style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px', marginBottom: 16 }}>
+            <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.declaration_agreed}
+                onChange={e => set('declaration_agreed', e.target.checked)}
+                style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, accentColor: '#0f4f47' }} />
+              <span style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
+                I confirm that all information provided is accurate to the best of my knowledge. StealthSideUp reserves the right to suspend or permanently restrict access to the platform if any declared information is found to be materially inaccurate during or after the recruitment process.
+              </span>
+            </label>
+          </div>
+
           {error && <div className="error-msg">{error}</div>}
 
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !form.headline.trim() || !form.job_search_status}>
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !form.headline.trim() || !form.job_search_status || !form.declaration_agreed}>
             {loading ? 'Saving your profile...' : '\u2713 Submit My Profile'}
           </button>
         </>}

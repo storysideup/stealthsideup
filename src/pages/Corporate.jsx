@@ -27,20 +27,17 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   }
 
   const handleRegister = async () => {
-    if (!email || !password || !form.company_name || !form.gstin) {
-      setError('Company name, GSTIN, email and password are required'); return
-    }
-    if (!email.includes('.') || email.includes('@gmail') || email.includes('@yahoo') || email.includes('@hotmail')) {
-      setError('Please use your company email address'); return
+    if (!email || !password || !form.company_name || !form.contact_person) {
+      setError('Company name, your name, email and password are required'); return
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: btoa(password), subscription_tier: 'free', is_active: true
+      ...form, work_email: email, password_hash: btoa(password), subscription_tier: 'free', is_active: true, tokens: 3
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
     setMode('login')
     setError('')
-    alert('Account created! Please login.')
+    alert('Account created! You have been given 3 free tokens to start. Please login.')
     setLoading(false)
   }
 
@@ -60,31 +57,8 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           <input className="form-input" placeholder="Acme Technologies Pvt Ltd" value={form.company_name} onChange={e => set('company_name', e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Industry</label>
-          <select className="form-select" value={form.industry} onChange={e => set('industry', e.target.value)}>
-            <option value="">Select industry...</option>
-            {INDUSTRIES.flatMap(g => g.items).map(i => <option key={i} value={i}>{i}</option>)}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Company Type</label>
-          <select className="form-select" value={form.company_type} onChange={e => set('company_type', e.target.value)}>
-            <option value="">Select type...</option>
-            {['Large Indian Conglomerate','Mid-size Indian Company','Indian Startup — Early Stage','Indian Startup — Growth Stage','MNC / International'].map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">GSTIN <span className="required">*</span></label>
-          <input className="form-input" placeholder="22AAAAA0000A1Z5" value={form.gstin} onChange={e => set('gstin', e.target.value)} />
-          <div className="form-hint">Required for verification. Keeps the platform free of fake registrations.</div>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Your Name</label>
+          <label className="form-label">Your Name <span className="required">*</span></label>
           <input className="form-input" placeholder="Full name" value={form.contact_person} onChange={e => set('contact_person', e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Your Designation</label>
-          <input className="form-input" placeholder="Head of Talent Acquisition" value={form.designation} onChange={e => set('designation', e.target.value)} />
         </div>
       </>}
 
@@ -140,15 +114,15 @@ export function PostJD({ corporate, onNavigate }) {
   if (success) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
       <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0F4F47" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 10 }}>JD Posted!</h2>
-      <p style={{ color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 28 }}>We are now matching anonymous profiles against your JD. You will see matched candidates in your dashboard.</p>
-      <button className="btn-primary" onClick={() => onNavigate('corporate-dashboard')}>View Dashboard →</button>
+      <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 10 }}>Search Posted!</h2>
+      <p style={{ color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 28 }}>We are now matching anonymous profiles against your search criteria. You will see matched candidates in your dashboard.</p>
+      <button className="btn-primary" onClick={() => onNavigate('corporate-dashboard')}>View My Mandates →</button>
     </div>
   )
 
   return (
     <div className="page">
-      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 20 }}>Post a New Role</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 20 }}>Post a New Search</h2>
 
       <div className="form-group">
         <label className="form-label">Role Title <span className="required">*</span></label>
@@ -313,7 +287,7 @@ export function PostJD({ corporate, onNavigate }) {
 
       {error && <div className="error-msg">{error}</div>}
       <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Posting JD...' : 'Post This Role →'}
+        {loading ? 'Posting search...' : 'Post This Role →'}
       </button>
     </div>
   )
@@ -442,7 +416,7 @@ export function CorporateDashboard({ corporate, onNavigate }) {
         </div>
       </div>
 
-      <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Role</button>
+      <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Search+ Post a New Search</button>
 
       {loading ? <div className="spinner" /> : jds.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: 32 }}>
@@ -451,7 +425,7 @@ export function CorporateDashboard({ corporate, onNavigate }) {
         </div>
       ) : (
         <>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Active Roles</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Active Searches</div>
           {jds.map(jd => {
             const matched = matches[jd.id] || []
             return (

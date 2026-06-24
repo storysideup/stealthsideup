@@ -7,6 +7,9 @@ export default function CandidateProfile({ onNavigate }) {
   const [otp, setOtp] = useState(['','','','','',''])
   const [candidate, setCandidate] = useState(null)
   const [interests, setInterests] = useState([])
+  const [decliningInterest, setDecliningInterest] = useState(null)
+  const [declineReasons, setDeclineReasons] = useState([])
+  const [declineOther, setDeclineOther] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -41,15 +44,38 @@ export default function CandidateProfile({ onNavigate }) {
   }
 
   const handleRespond = async (interestId, response) => {
+    if (response === 'not_interested') {
+      setDecliningInterest(interestId)
+      return
+    }
     setLoading(true)
     await supabase.from('interests').update({
       status: response,
       candidate_response_at: new Date().toISOString()
     }).eq('id', interestId)
-    // Refresh
     const { data } = await supabase.from('interests').select('*, jds(*), corporates(*)').eq('candidate_id', candidate.id).order('created_at', { ascending: false })
     setInterests(data || [])
     setLoading(false)
+  }
+
+  const handleDeclineSubmit = async () => {
+    setLoading(true)
+    const reasons = declineOther ? [...declineReasons, 'Other: ' + declineOther] : declineReasons
+    await supabase.from('interests').update({
+      status: 'not_interested',
+      candidate_response_at: new Date().toISOString(),
+      decline_reasons: reasons
+    }).eq('id', decliningInterest)
+    setDecliningInterest(null)
+    setDeclineReasons([])
+    setDeclineOther('')
+    const { data } = await supabase.from('interests').select('*, jds(*), corporates(*)').eq('candidate_id', candidate.id).order('created_at', { ascending: false })
+    setInterests(data || [])
+    setLoading(false)
+  }
+
+  const toggleDeclineReason = (reason) => {
+    setDeclineReasons(prev => prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason])
   }
 
   const handleToggleActive = async () => {
@@ -119,6 +145,72 @@ export default function CandidateProfile({ onNavigate }) {
     const activeInterests = interests.filter(i => i.status === 'notified')
     const respondedInterests = interests.filter(i => i.status !== 'notified' && i.status !== 'saved')
     const savedInterests = interests.filter(i => i.status === 'saved')
+
+    const currentInterest = decliningInterest ? interests.find(i => i.id === decliningInterest) : null
+    const isStealthDecline = currentInterest?.jds?.stealth_mode
+
+    const DECLINE_REASONS_BASE = [
+      'Compensation seems below my expectations',
+      'Role seniority does not feel right for where I am',
+      'Industry does not match what I am looking for',
+      'Location does not work for me',
+      'Not ready to make a move right now',
+      'Already in conversations elsewhere',
+      'Not the right time personally',
+      'Need more information before deciding',
+    ]
+    const DECLINE_REASONS_NON_STEALTH = [
+      'Heard mixed things about this company work culture',
+      'Not interested in this company',
+    ]
+    const allDeclineReasons = isStealthDecline ? DECLINE_REASONS_BASE : [...DECLINE_REASONS_BASE, ...DECLINE_REASONS_NON_STEALTH]
+
+    if (decliningInterest) return (
+      <div className="page">
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Help us understand</h2>
+        <p style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 20 }}>
+          Your feedback is completely anonymous and never shared with the company. It helps us improve matches for you and others.
+        </p>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+          Why are you not taking this forward? <span style={{ color: 'var(--grey-400)', fontWeight: 400, textTransform: 'none' }}>(select all that apply)</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+          {allDeclineReasons.map(reason => (
+            <button key={reason} type="button"
+              onClick={() => toggleDeclineReason(reason)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px',
+                border: declineReasons.includes(reason) ? '2px solid var(--teal)' : '1.5px solid var(--grey-200)',
+                borderRadius: 8, background: declineReasons.includes(reason) ? 'var(--teal-light)' : 'white',
+                cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
+              }}>
+              <div style={{
+                width: 16, height: 16, borderRadius: 3, flexShrink: 0,
+                border: declineReasons.includes(reason) ? '5px solid var(--teal)' : '2px solid var(--grey-300)',
+                background: 'white'
+              }} />
+              <span style={{ fontSize: 13, color: declineReasons.includes(reason) ? 'var(--teal)' : 'var(--grey-800)', fontWeight: declineReasons.includes(reason) ? 600 : 400 }}>{reason}</span>
+            </button>
+          ))}
+        </div>
+        <div className="form-group">
+          <label className="form-label">Other reason</label>
+          <input className="form-input" placeholder="Tell us more (optional)..."
+            value={declineOther} onChange={e => setDeclineOther(e.target.value)} />
+        </div>
+        <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
+          <p style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.6, margin: 0 }}>
+            💡 Not sure about this role but open to guidance? StorySideUp offers personalised career support — coaching, search assistance, and role advisory. We can help you find what you are actually looking for.
+          </p>
+        </div>
+        <button className="btn-primary" onClick={handleDeclineSubmit} disabled={loading || (declineReasons.length === 0 && !declineOther)}>
+          {loading ? 'Submitting...' : 'Submit Feedback'}
+        </button>
+        <div className="mt-4">
+          <button className="btn-secondary" onClick={() => { setDecliningInterest(null); setDeclineReasons([]) }}>Cancel</button>
+        </div>
+      </div>
+    )
 
     return (
       <div className="page">

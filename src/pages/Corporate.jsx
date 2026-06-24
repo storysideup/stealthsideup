@@ -130,7 +130,8 @@ export function PostJD({ corporate, onNavigate }) {
           messages: [{
             role: 'user',
             content: `Extract structured information from this job description. Return ONLY a valid JSON object, no markdown, no backticks:
-{"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":null,"ctc_fixed_max":null}
+{"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":null,"ctc_fixed_max":null,"skills":[{"subFunction":"specific skill area name relevant to the function","proficiency":"proficient or expert","specialisation":"specific specialisation if clear"}]}
+Extract 3-6 most important skills from the JD for the skills array.
 JD: ${jdText.slice(0, 3000)}`
           }]
         })
@@ -152,6 +153,13 @@ JD: ${jdText.slice(0, 3000)}`
         location: parsed.location || f.location,
         ctc_fixed_min: parsed.ctc_fixed_min ? String(parsed.ctc_fixed_min) : f.ctc_fixed_min,
         ctc_fixed_max: parsed.ctc_fixed_max ? String(parsed.ctc_fixed_max) : f.ctc_fixed_max,
+        skill_tree_requirement: parsed.skills?.length > 0 ? parsed.skills.map(s => ({
+          subFunction: s.subFunction || '',
+          proficiency: s.proficiency || 'proficient',
+          specialisation: s.specialisation || '',
+          depth: [],
+          customDepth: ''
+        })) : f.skill_tree_requirement,
       }))
       setExtracted(true)
     } catch (e) {

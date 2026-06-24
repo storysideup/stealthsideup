@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { SKILL_TREE, PROFICIENCY_LEVELS } from '../data/skillTree'
 
 // Single skill entry with proficiency + depth + free text
-function SkillEntry({ functionName, subFunction, onRemove, onChange, entry }) {
+function SkillEntry({ functionName, subFunction, onRemove, onChange, entry, mode = 'candidate' }) {
   const tree = SKILL_TREE[functionName]?.[subFunction]
   const specialisations = tree?.specialisations || []
   const depthOptions = entry.specialisation ? (tree?.depth?.[entry.specialisation] || []) : []
@@ -181,6 +181,7 @@ export default function SkillTreeSelector({ functionName, value = [], onChange, 
           functionName={functionName}
           subFunction={entry.subFunction}
           entry={entry}
+          mode={mode}
           onRemove={() => removeEntry(idx)}
           onChange={(updated) => updateEntry(idx, updated)}
         />

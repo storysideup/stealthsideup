@@ -123,7 +123,16 @@ export function PostJD({ corporate, onNavigate }) {
 
   return (
     <div className="page">
-      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 20 }}>Post a New Search</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 8 }}>Post a New Search</h2>
+
+      {/* Company name confirmation */}
+      <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 16 }}>🏢</span>
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--grey-400)', marginBottom: 1 }}>Posting on behalf of</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--teal)' }}>{corporate.company_name}</div>
+        </div>
+      </div>
 
       <div className="form-group">
         <label className="form-label">Role Title <span className="required">*</span></label>
@@ -235,9 +244,23 @@ export function PostJD({ corporate, onNavigate }) {
         />
       </div>
 
-      {/* STEALTH MODE TOGGLE */}
       <div className="form-group">
-        <label className="form-label">Posting Mode</label>
+        <label className="form-label">Role Context <span className="required">*</span></label>
+        <textarea className="form-textarea" maxLength={300} placeholder="What is this role expected to achieve in year one? What does success look like? Max 300 words."
+          value={form.role_context} onChange={e => set('role_context', e.target.value)} />
+        <div className="form-hint flex-between"><span>Be specific — generic JDs get ignored by senior candidates</span><span>{form.role_context.length}/300</span></div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Why This Role / Why This Company</label>
+        <textarea className="form-textarea" maxLength={200} placeholder="What makes this opportunity worth a senior professional's time?"
+          value={form.why_role} onChange={e => set('why_role', e.target.value)} />
+        <div className="form-hint">Optional but highly recommended — senior candidates read this first</div>
+      </div>
+
+      {/* STEALTH MODE TOGGLE — after all basics filled */}
+      <div className="form-group">
+        <label className="form-label">How do you want to post this search?</label>
         <div style={{ border: '1.5px solid var(--grey-200)', borderRadius: 10, overflow: 'hidden' }}>
           <button type="button"
             onClick={() => set('stealth_mode', false)}
@@ -262,34 +285,22 @@ export function PostJD({ corporate, onNavigate }) {
           </button>
         </div>
         {!form.stealth_mode ? (
-          <div className="form-hint" style={{ marginTop: 8 }}>Your company name is visible to candidates when they receive a notification.</div>
+          <div className="form-hint" style={{ marginTop: 8 }}>
+            <strong>{corporate.company_name}</strong> will be visible to candidates in their notification.
+          </div>
         ) : (
           <div style={{ background: '#1f2937', borderRadius: 8, padding: '12px 14px', marginTop: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>Stealth Mode Active</div>
             <p style={{ fontSize: 12, color: '#d1d5db', lineHeight: 1.65 }}>
-              Your company name stays hidden. Candidates only see your industry, location, role level, and compensation. They reveal themselves first — then you decide whether to reveal your company name. If they change their mind after seeing who you are, their identity is never shown to you.
+              <strong style={{ color: 'white' }}>{corporate.company_name}</strong> will not be visible to candidates. They will only see industry, location, role level and CTC range. StorySideUp facilitates all introductions.
             </p>
           </div>
         )}
       </div>
 
-      <div className="form-group">
-        <label className="form-label">Role Context <span className="required">*</span></label>
-        <textarea className="form-textarea" maxLength={300} placeholder="What is this role expected to achieve in year one? What does success look like? Max 300 words."
-          value={form.role_context} onChange={e => set('role_context', e.target.value)} />
-        <div className="form-hint flex-between"><span>Be specific — generic JDs get ignored by senior candidates</span><span>{form.role_context.length}/300</span></div>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Why This Role / Why This Company</label>
-        <textarea className="form-textarea" maxLength={200} placeholder="What makes this opportunity worth a senior professional's time?"
-          value={form.why_role} onChange={e => set('why_role', e.target.value)} />
-        <div className="form-hint">Optional but highly recommended — senior candidates read this first</div>
-      </div>
-
       {error && <div className="error-msg">{error}</div>}
       <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Posting search...' : 'Post This Role →'}
+        {loading ? 'Posting search...' : 'Post This Search →'}
       </button>
     </div>
   )

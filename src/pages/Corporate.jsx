@@ -93,21 +93,21 @@ export function PostJD({ corporate, onNavigate }) {
     work_mode: '', location: '', relocation_support: '',
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
     must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
-    stealth_mode: false
+    stealth_mode: false, job_function: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const skillOptions = form.function && SKILLS_BY_FUNCTION[form.function] ? SKILLS_BY_FUNCTION[form.function] : []
+  const skillOptions = form.job_function && SKILLS_BY_FUNCTION[form.job_function] ? SKILLS_BY_FUNCTION[form.job_function] : []
 
   const handleSubmit = async () => {
-    if (!form.role_title || !form.function || !form.seniority_level) {
+    if (!form.role_title || !form.job_function || !form.seniority_level) {
       setError('Role title, function and seniority level are required'); return
     }
     setLoading(true); setError('')
-    const { error: err } = await supabase.from('jds').insert({ ...form, corporate_id: corporate.id, is_active: true })
+    const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true })
     if (err) { setError(err.message); setLoading(false); return }
     setSuccess(true); setLoading(false)
   }
@@ -141,7 +141,7 @@ export function PostJD({ corporate, onNavigate }) {
 
       <div className="form-group">
         <label className="form-label">Function <span className="required">*</span></label>
-        <select className="form-select" value={form.function} onChange={e => { set('function', e.target.value); set('must_have_skills', []); set('good_to_have_skills', []) }}>
+        <select className="form-select" value={form.job_function} onChange={e => { set('job_function', e.target.value); set('must_have_skills', []); set('good_to_have_skills', []); set('skill_tree_requirement', []) }}>
           <option value="">Select function...</option>
           {FUNCTIONS.map(f => <option key={f} value={f}>{f}</option>)}
         </select>
@@ -237,7 +237,7 @@ export function PostJD({ corporate, onNavigate }) {
         <label className="form-label">Skill Requirements</label>
         <div className="form-hint" style={{ marginBottom: 10 }}>Specify the skills you need — this is matched against candidate profiles</div>
         <SkillTreeSelector
-          functionName={form.function}
+          functionName={form.job_function}
           value={form.skill_tree_requirement}
           onChange={v => set('skill_tree_requirement', v)}
           mode="corporate"

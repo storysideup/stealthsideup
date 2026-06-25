@@ -112,9 +112,19 @@ export function PostJD({ corporate, onNavigate }) {
   const skillOptions = form.job_function && SKILLS_BY_FUNCTION[form.job_function] ? SKILLS_BY_FUNCTION[form.job_function] : []
 
   const handleExtractJD = async () => {
-    if (!jdText.trim() || jdText.trim().length < 50) {
+    if (!jdText.trim()) {
+      setExtractError('Please upload a JD file or paste the text'); return
+    }
+
+    // Handle file upload
+    let textToExtract = jdText
+    if (jdText.startsWith('FILE:')) {
+      const b64 = jdText.split(':NAME:')[0].replace('FILE:', '')
+      textToExtract = atob(b64).slice(0, 4000)
+    } else if (jdText.trim().length < 50) {
       setExtractError('Please paste a more detailed JD — at least a few sentences'); return
     }
+
     setExtracting(true); setExtractError('')
     try {
       const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
@@ -135,7 +145,7 @@ export function PostJD({ corporate, onNavigate }) {
             content: `Extract structured information from this job description. Return ONLY a valid JSON object, no markdown, no backticks:
 {"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":null,"ctc_fixed_max":null,"skills":[{"subFunction":"specific skill area name relevant to the function","proficiency":"proficient or expert","specialisation":"specific specialisation if clear"}]}
 Extract 3-6 most important skills from the JD for the skills array.
-JD: ${jdText.slice(0, 3000)}`
+JD: ${textToExtract.slice(0, 3000)}`
           }]
         })
       })
@@ -243,18 +253,50 @@ JD: ${jdText.slice(0, 3000)}`
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-800)', marginBottom: 4 }}>
             ⚡ Have an existing JD? Let AI fill the form for you
           </div>
-          <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 10, lineHeight: 1.6 }}>
-            Paste your job description below — we will extract the role title, function, seniority, context and more automatically. You can review and edit everything after.
+          <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 12, lineHeight: 1.6 }}>
+            Upload your JD file or paste the text — we extract everything automatically.
           </div>
+
+          {/* File upload option */}
+          <label style={{
+            display: 'block', border: jdText.startsWith('FILE:') ? '2px solid var(--teal)' : '1.5px dashed var(--grey-300)',
+            borderRadius: 8, padding: '14px', textAlign: 'center', cursor: 'pointer',
+            background: jdText.startsWith('FILE:') ? 'var(--teal-light)' : 'white', marginBottom: 10
+          }}>
+            <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }} onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = () => {
+                const b64 = reader.result.split(',')[1]
+                setJdText('FILE:' + b64 + ':NAME:' + file.name)
+              }
+              reader.readAsDataURL(file)
+            }} />
+            {jdText.startsWith('FILE:') ? (
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--teal)' }}>
+                ✓ {jdText.split(':NAME:')[1]} — ready to extract
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 20, marginBottom: 4 }}>📎</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--teal)', marginBottom: 2 }}>Upload JD file</div>
+                <div style={{ fontSize: 11, color: 'var(--grey-400)' }}>PDF, Word or text file</div>
+              </div>
+            )}
+          </label>
+
+          <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--grey-400)', marginBottom: 10 }}>— or paste text below —</div>
+
           <textarea
-            style={{ width: '100%', border: '1.5px solid var(--grey-200)', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', minHeight: 100, outline: 'none', resize: 'vertical', marginBottom: 10 }}
+            style={{ width: '100%', border: '1.5px solid var(--grey-200)', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', minHeight: 80, outline: 'none', resize: 'vertical', marginBottom: 10 }}
             placeholder="Paste your JD here..."
-            value={jdText}
+            value={jdText.startsWith('FILE:') ? '' : jdText}
             onChange={e => setJdText(e.target.value)}
           />
           {extractError && <div className="error-msg" style={{ marginBottom: 8 }}>{extractError}</div>}
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" className="btn-primary btn-sm" onClick={handleExtractJD} disabled={extracting}>
+            <button type="button" className="btn-primary btn-sm" onClick={handleExtractJD} disabled={extracting || (!jdText.trim())}>
               {extracting ? 'Extracting...' : '⚡ Extract & Fill Form'}
             </button>
             <button type="button" className="btn-secondary btn-sm" onClick={() => setExtracted(true)}>

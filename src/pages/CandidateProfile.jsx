@@ -130,7 +130,7 @@ export default function CandidateProfile({ onNavigate }) {
 
       // Update interest status
       await supabase.from('interests').update({
-        status: 'interested',
+        status: 'cv_sent',
         candidate_response_at: new Date().toISOString(),
         candidate_contact_shared: candidate.contact,
         candidate_message: candidateNote
@@ -153,9 +153,11 @@ export default function CandidateProfile({ onNavigate }) {
     setCandidate(c => ({ ...c, is_active: newStatus }))
   }
 
-  const statusBadge = (status) => {
+  const statusBadge = (status, interest) => {
     const map = {
       'notified': { label: 'Awaiting your response', cls: 'badge-yellow' },
+      'cv_pending': { label: 'CV due — 48hrs', cls: 'badge-yellow' },
+      'cv_sent': { label: 'CV Sent ✓', cls: 'badge-green' },
       'interested': { label: 'You said Yes', cls: 'badge-green' },
       'not_interested': { label: 'You declined', cls: 'badge-grey' },
       'saved': { label: 'Saved by company', cls: 'badge-teal' },
@@ -163,6 +165,14 @@ export default function CandidateProfile({ onNavigate }) {
     }
     const s = map[status] || { label: status, cls: 'badge-grey' }
     return <span className={`badge ${s.cls}`}>{s.label}</span>
+  }
+
+  const getDeadlineHours = (interest) => {
+    if (interest.status !== 'cv_pending' || !interest.candidate_response_at) return null
+    const yesAt = new Date(interest.candidate_response_at)
+    const deadline = new Date(yesAt.getTime() + 48 * 60 * 60 * 1000)
+    const hoursLeft = Math.max(0, Math.floor((deadline - new Date()) / (1000 * 60 * 60)))
+    return hoursLeft
   }
 
   // Step 0 — Enter contact
@@ -239,11 +249,17 @@ export default function CandidateProfile({ onNavigate }) {
     if (acceptingInterest && acceptingInterestData) return (
       <div className="page">
         <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Send Your CV</h2>
-        <p style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 20 }}>
+        <p style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 12 }}>
           You are expressing interest in a role at <strong style={{ color: 'var(--teal)' }}>
             {acceptingInterestData.jds?.stealth_mode ? 'a confidential company' : (acceptingInterestData.corporates?.company_name || 'this company')}
-          </strong>. Upload your CV to proceed — this is the only document they will receive.
+          </strong>.
         </p>
+        <div style={{ background: '#fff8f0', border: '1.5px solid var(--orange-border)', borderRadius: 10, padding: '12px 14px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>⏰</span>
+          <div style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--orange)' }}>You have 48 hours</strong> to upload and send your CV. After that this opportunity will expire and the match will be closed.
+          </div>
+        </div>
 
         {/* CV Upload */}
         <div className="form-group">
@@ -440,7 +456,14 @@ export default function CandidateProfile({ onNavigate }) {
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn-primary btn-sm" onClick={() => handleRespond(interest.id, 'interested')}>
+                  <button className="btn-primary btn-sm" onClick={async () => {
+                    // Mark as cv_pending first
+                    await supabase.from('interests').update({
+                      status: 'cv_pending',
+                      candidate_response_at: new Date().toISOString()
+                    }).eq('id', interest.id)
+                    handleRespond(interest.id, 'interested')
+                  }}>
                     Yes, I'm interested
                   </button>
                   <button className="btn-secondary btn-sm" onClick={() => handleRespond(interest.id, 'not_interested')}>

@@ -660,6 +660,10 @@ export function CorporateDashboard({ corporate, onNavigate }) {
     setInterests(data || [])
   }
 
+  const getInterestStatus = (candidateId) => {
+    return interests.find(i => i.candidate_id === candidateId)?.status || null
+  }
+
   const handleExpressInterest = async (jd, candidate) => {
     const { error } = await supabase.from('interests').insert({
       jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'notified'
@@ -677,16 +681,14 @@ export function CorporateDashboard({ corporate, onNavigate }) {
     await supabase.from('interests').insert({
       jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'saved'
     })
-    alert('Profile shortlisted. You can express interest when ready.')
+    await loadInterests(activeJd?.id || jd.id)
   }
 
   const handleNotFit = async (jdId, candidateId) => {
     await supabase.from('interests').insert({
       jd_id: jdId, candidate_id: candidateId, corporate_id: corporate.id, status: 'not_fit'
     })
-    // Refresh matches to remove this candidate from view
-    const updated = await matchCandidates(activeJd, corporate)
-    setMatches(m => ({ ...m, [jdId]: updated.filter(c => c.id !== candidateId) }))
+    await loadInterests(jdId)
   }
 
   if (!corporate) return null
@@ -815,14 +817,52 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                 )}
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
-                  <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest</button>
-                  <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Shortlist</button>
-                  <button type="button" onClick={() => handleNotFit(activeJd.id, c.id)}
-                    style={{ padding: '8px 14px', fontSize: 13, borderRadius: 6, border: '1.5px solid var(--grey-200)', background: 'white', color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    Not a fit
-                  </button>
-                </div>
+                {/* Action buttons — greyed out once action taken */}
+                {(() => {
+                  const actionStatus = getInterestStatus(c.id)
+                  if (actionStatus === 'notified') return (
+                    <div style={{ paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="badge badge-teal">✓ Interest Expressed</span>
+                        <span style={{ fontSize: 12, color: 'var(--grey-400)' }}>Awaiting candidate response</span>
+                      </div>
+                    </div>
+                  )
+                  if (actionStatus === 'saved') return (
+                    <div style={{ paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span className="badge badge-yellow">⭐ Shortlisted</span>
+                      </div>
+                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest Now</button>
+                    </div>
+                  )
+                  if (actionStatus === 'not_fit') return (
+                    <div style={{ paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
+                      <span className="badge badge-grey">✗ Marked Not a Fit</span>
+                    </div>
+                  )
+                  if (actionStatus === 'cv_sent' || actionStatus === 'interested' || actionStatus === 'cv_pending') return (
+                    <div style={{ paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="badge badge-green">✓ Candidate Interested</span>
+                        <span style={{ fontSize: 12, color: 'var(--grey-400)' }}>
+                          {actionStatus === 'cv_sent' ? 'CV received — check your email' : 'CV upload pending (48hrs)'}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                  // No action taken yet
+                  return (
+                    <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
+                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest</button>
+                      <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Shortlist</button>
+                      <button type="button" onClick={() => handleNotFit(activeJd.id, c.id)}
+                        style={{ padding: '8px 14px', fontSize: 13, borderRadius: 6, border: '1.5px solid var(--grey-200)', background: 'white', color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Not a fit
+                      </button>
+                    </div>
+                  )
+                })()}
               </div>
             ))}
           </>
@@ -879,7 +919,7 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                     <div style={{ fontSize: 11, color: 'var(--grey-600)' }}>Matched profiles</div>
                   </div>
                 </div>
-                <button className="btn-primary btn-sm" onClick={() => { setActiveJd(jd); loadInterests(jd.id) }}>View Matches →</button>
+                <button className="btn-primary btn-sm" onClick={async () => { setActiveJd(jd); await loadInterests(jd.id) }}>View Matches →</button>
               </div>
             )
           })}

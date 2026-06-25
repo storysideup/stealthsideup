@@ -36,7 +36,7 @@ export default function Home({ onNavigate }) {
     { num: '1', icon: '📋', label: 'Post a Search', desc: 'Upload your JD — our AI fills the form. Standard or stealth mode.' },
     { num: '2', icon: '👥', label: 'See Matched Profiles', desc: 'Anonymous profiles matched to your criteria — skills, experience, location, CTC' },
     { num: '3', icon: '💬', label: 'Express Interest', desc: 'Select profiles you like. We notify the candidate on your behalf.' },
-    { num: '4', icon: '🤝', label: 'We Facilitate', desc: 'If the candidate says yes, StorySideUp makes the introduction.' },
+    { num: '4', icon: '📧', label: 'Connect', desc: 'Say yes, upload your CV — it goes directly to the recruiter. You take it from there.' },
   ]
 
   const steps = howTab === 'candidate' ? candidateSteps : employerSteps

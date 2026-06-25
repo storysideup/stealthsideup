@@ -6,14 +6,13 @@ function CollapsibleSection({ title, children }) {
     <div style={{ marginBottom: 24 }}>
       <button type="button" onClick={() => setOpen(o => !o)} style={{
         width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-        padding: '0 0 10px'
+        background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0 0 10px'
       }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1 }}>{title}</div>
         <span style={{ fontSize: 18, color: '#9ca3af', fontWeight: 700 }}>{open ? '−' : '+'}</span>
       </button>
       {open && (
-        <div style={{ background: '#e8f4f2', border: '1px solid #b8ddd9', borderRadius: 10, padding: '14px 15px' }}>
+        <div style={{ background: '#EFF8F6', border: '1px solid #C8E6E1', borderRadius: 12, padding: '16px' }}>
           {children}
         </div>
       )}
@@ -25,44 +24,114 @@ const LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJ
 
 export default function Home({ onNavigate }) {
   const steps = [
-    { num: '1', label: 'Register', sub: 'No name. No employer.' },
-    { num: '2', label: 'Get Matched', sub: 'We work in the background' },
-    { num: '3', label: 'You Decide', sub: 'See who it is first' },
-    { num: '4', label: 'Connect', sub: 'Only if you want to' },
+    { num: '1', label: 'Register', sub: 'Zero personal details' },
+    { num: '2', label: 'Get Matched', sub: 'We find the fit' },
+    { num: '3', label: 'You Decide', sub: 'See full company info' },
+    { num: '4', label: 'Connect', sub: 'Share contact only then' },
+  ]
+
+  const features = [
+    { icon: '🔒', title: 'Your HR will never know', desc: 'No name, no employer, no photo. Just your professional story.' },
+    { icon: '🎯', title: 'You see the company first', desc: 'Full company details before they know anything about you.' },
+    { icon: '🚫', title: 'Block any company', desc: 'They never see your profile exists — instantly, invisibly.' },
+    { icon: '📱', title: 'One WhatsApp. That is it.', desc: 'No spam. Just a message when there is a genuine match.' },
   ]
 
   return (
-    <div style={{ background: 'white', minHeight: '100vh' }}>
+    <div style={{ background: '#FAFAF8', minHeight: '100vh', fontFamily: "'Segoe UI', -apple-system, sans-serif" }}>
 
-      <div style={{ padding: '28px 20px 24px', borderBottom: '1px solid #f3f4f6' }}>
-
-        {/* HEADLINE */}
-        <h1 style={{ fontSize: 21, fontWeight: 800, color: '#1f2937', lineHeight: 1.35, marginBottom: 16, letterSpacing: '-0.4px' }}>
-          Get matched to roles that fit your salary, experience, function and location —{' '}
-          <span style={{ color: '#0f4f47' }}>no CV, no visibility, complete stealth.</span>
-        </h1>
-
-        {/* DESCRIPTION */}
-        <div style={{ borderLeft: '3px solid #e8621a', paddingLeft: 14, marginBottom: 24 }}>
-          <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.8, margin: 0 }}>
-            Your profile exists on StealthSideUp. Your preferences are known. When a role matches — salary, experience, function, industry, location — you get a WhatsApp. You see the company name and the role before they see anything about you. Nobody at your current workplace ever finds out you were looking.
-          </p>
+      {/* HERO */}
+      <div style={{
+        background: 'linear-gradient(160deg, #0A3D35 0%, #0F4F47 100%)',
+        padding: '32px 20px 36px',
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20 }}>
+          by StorySideUp
         </div>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: 12, letterSpacing: '-0.5px' }}>
+          Get matched to roles<br />that fit — no CV,<br />
+          <span style={{ color: '#E8621A' }}>no visibility.</span>
+        </h1>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginBottom: 0 }}>
+          Your salary, experience, function and location — matched to live roles in the background. Nobody knows you are looking.
+        </p>
+      </div>
+
+      {/* TWO PATH CARDS */}
+      <div style={{ padding: '0 16px', marginTop: -20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+
+          {/* CANDIDATE CARD */}
+          <div style={{
+            background: 'white', borderRadius: 16, padding: '20px 16px',
+            boxShadow: '0 4px 24px rgba(10,61,53,0.10)',
+            border: '1px solid rgba(10,61,53,0.08)'
+          }}>
+            <div style={{ fontSize: 24, marginBottom: 10 }}>👤</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#0A3D35', marginBottom: 6, lineHeight: 1.2 }}>Candidate</div>
+            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16 }}>Explore opportunities without anyone knowing</div>
+            <button onClick={() => onNavigate('register')} style={{
+              width: '100%', background: '#0A3D35', color: 'white', border: 'none',
+              borderRadius: 8, padding: '10px 8px', fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8
+            }}>
+              Register Anonymously
+            </button>
+            <button onClick={() => onNavigate('candidate-profile')} style={{
+              width: '100%', background: 'transparent', color: '#0A3D35',
+              border: '1.5px solid #0A3D35', borderRadius: 8,
+              padding: '9px 8px', fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit'
+            }}>
+              View My Profile
+            </button>
+          </div>
+
+          {/* EMPLOYER CARD */}
+          <div style={{
+            background: 'white', borderRadius: 16, padding: '20px 16px',
+            boxShadow: '0 4px 24px rgba(232,98,26,0.10)',
+            border: '1px solid rgba(232,98,26,0.12)'
+          }}>
+            <div style={{ fontSize: 24, marginBottom: 10 }}>🏢</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#0A3D35', marginBottom: 6, lineHeight: 1.2 }}>Employer</div>
+            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16 }}>Find the right talent, matched to your skills</div>
+            <button onClick={() => onNavigate('corporate-login')} style={{
+              width: '100%', background: '#E8621A', color: 'white', border: 'none',
+              borderRadius: 8, padding: '10px 8px', fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8
+            }}>
+              Post a Search
+            </button>
+            <button onClick={() => onNavigate('corporate-login')} style={{
+              width: '100%', background: 'transparent', color: '#E8621A',
+              border: '1.5px solid #E8621A', borderRadius: 8,
+              padding: '9px 8px', fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit'
+            }}>
+              Employer Login
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: '28px 20px 0' }}>
 
         {/* HOW IT WORKS */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 16 }}>How it works</div>
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 20 }}>How it works</div>
           <div style={{ display: 'flex', position: 'relative' }}>
             <div style={{ position: 'absolute', top: 16, left: '12%', right: '12%', height: 1, background: '#e5e7eb', zIndex: 0 }} />
             {steps.map((step, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 1 }}>
                 <div style={{
                   width: 32, height: 32, borderRadius: '50%',
-                  background: i === 0 ? '#0f4f47' : i === 3 ? '#e8621a' : 'white',
-                  border: i === 0 ? '2px solid #0f4f47' : i === 3 ? '2px solid #e8621a' : '1.5px solid #d1d5db',
+                  background: i === 0 ? '#0A3D35' : i === 3 ? '#E8621A' : 'white',
+                  border: i === 0 ? '2px solid #0A3D35' : i === 3 ? '2px solid #E8621A' : '1.5px solid #e5e7eb',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 12, fontWeight: 700,
-                  color: i === 0 || i === 3 ? 'white' : '#9ca3af', marginBottom: 8
+                  color: i === 0 || i === 3 ? 'white' : '#9ca3af', marginBottom: 8,
+                  boxShadow: i === 0 || i === 3 ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
                 }}>{step.num}</div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#1f2937', textAlign: 'center', lineHeight: 1.3, marginBottom: 3 }}>{step.label}</div>
                 <div style={{ fontSize: 10, color: '#9ca3af', textAlign: 'center', lineHeight: 1.4 }}>{step.sub}</div>
@@ -71,46 +140,23 @@ export default function Home({ onNavigate }) {
           </div>
         </div>
 
-        {/* CTAs */}
-        <button onClick={() => onNavigate('register')} style={{
-          width: '100%', background: '#0f4f47', color: 'white', border: 'none',
-          borderRadius: 8, padding: '14px 20px', fontSize: 15, fontWeight: 700,
-          cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10
-        }}>
-          Register Anonymously — takes 5 minutes
-        </button>
-        <button onClick={() => onNavigate('candidate-profile')} style={{
-          width: '100%', background: 'white', color: '#0f4f47',
-          border: '1.5px solid #0f4f47', borderRadius: 8,
-          padding: '12px 20px', fontSize: 14, fontWeight: 600,
-          cursor: 'pointer', fontFamily: 'inherit'
-        }}>
-          Already registered? View my matches
-        </button>
-      </div>
-
-      <div style={{ padding: '24px 20px 0' }}>
-
-        {/* WHAT MAKES THIS DIFFERENT */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 14 }}>What makes this different</div>
-          {[
-            { icon: '🔒', title: 'Your HR will never know', desc: 'No name, no employer, no photo stored anywhere. Your profile exists as a set of professional attributes — nothing that can identify you.' },
-            { icon: '🎯', title: 'You see the company before they see you', desc: 'Every notification tells you exactly which company it is and what the role pays. You decide before they know anything about you.' },
-            { icon: '🚫', title: 'Block any company instantly', desc: 'List companies you never want to hear from — your current employer, competitors, anyone. They will never know your profile exists.' },
-            { icon: '📱', title: 'One WhatsApp. That is it.', desc: 'No job board spam. No recruiter cold calls. Just a single WhatsApp when a role genuinely matches your experience.' },
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 18 }}>
-              <div style={{ fontSize: 20, flexShrink: 0, marginTop: 2 }}>{item.icon}</div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3, color: '#1f2937' }}>{item.title}</div>
-                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>{item.desc}</div>
+        {/* WHAT MAKES THIS DIFFERENT — icon cards */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>What makes this different</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {features.map((f, i) => (
+              <div key={i} style={{
+                background: i % 2 === 0 ? '#EFF8F6' : '#FEF3EC',
+                borderRadius: 12, padding: '16px 14px',
+                border: i % 2 === 0 ? '1px solid #C8E6E1' : '1px solid #FACDB0'
+              }}>
+                <div style={{ fontSize: 22, marginBottom: 8 }}>{f.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0A3D35', marginBottom: 5, lineHeight: 1.3 }}>{f.title}</div>
+                <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5 }}>{f.desc}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-
-        <div style={{ height: 1, background: '#f3f4f6', marginBottom: 24 }} />
 
         {/* WHY I BUILT THIS — collapsible */}
         <CollapsibleSection title="Why I built this">
@@ -120,30 +166,13 @@ export default function Home({ onNavigate }) {
           <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.8, margin: 0 }}>
             Your CV is not the problem — it is what is happening to it. It is getting rejected before it reaches the right person, filtered by algorithms, buried in inboxes, or simply never seen. StealthSideUp removes the CV from the equation entirely. Your experience, your skills and your preferences speak directly to the right role — no gatekeeping, no guesswork.
           </p>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #b8ddd9' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f4f47' }}>Dora Harsh Suri</div>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #C8E6E1' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0A3D35' }}>Dora Harsh Suri</div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Founder, StorySideUp · ICF ACC Coach · Hogan Advanced Assessor · 20+ years in Executive Search</div>
           </div>
         </CollapsibleSection>
 
-        <div style={{ height: 1, background: '#f3f4f6', marginBottom: 24 }} />
-
-        {/* FOR COMPANIES */}
-        <div style={{ marginBottom: 100 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>For Companies</div>
-          <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 15px', marginBottom: 14 }}>
-            <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.7, margin: 0 }}>
-              Post structured searches and reach senior passive talent who are invisible on every other platform. Standard or stealth — your choice. Use tokens to express interest — tokens are restored when a candidate says yes.
-            </p>
-          </div>
-          <button onClick={() => onNavigate('corporate-login')} style={{
-            background: 'white', color: '#0f4f47', border: '1.5px solid #0f4f47',
-            borderRadius: 7, padding: '10px 16px', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'inherit'
-          }}>
-            Corporate Login →
-          </button>
-        </div>
+        <div style={{ height: 1, background: '#f3f4f6', marginBottom: 100 }} />
 
       </div>
     </div>

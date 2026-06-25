@@ -29,7 +29,7 @@ const PAGE_HEADERS = {
   'corporate-login': { title: 'Corporate Access', subtitle: 'Post JDs · Find passive talent' },
   'corporate-dashboard': { title: 'Dashboard', subtitle: 'Your active mandates' },
   'post-jd': { title: 'Post a Role', subtitle: 'Structured for better matching' },
-  'candidate-profile': { title: 'My Profile', subtitle: 'Your matches and responses' },
+  'candidate-profile': { title: 'My Dashboard', subtitle: 'Your matches and responses' },
 }
 
 export default function App() {
@@ -84,7 +84,7 @@ export default function App() {
         </button>
         <button className={`nav-item ${page === 'candidate-profile' ? 'active' : ''}`} onClick={() => navigate('candidate-profile')}>
           <UserIcon active={page === 'candidate-profile'} />
-          My Profile
+          Dashboard
         </button>
         <button className={`nav-item ${isCorporatePage ? 'active' : ''}`} onClick={() => navigate(corporate ? 'corporate-dashboard' : 'corporate-login')}>
           <BriefcaseIcon active={isCorporatePage} />

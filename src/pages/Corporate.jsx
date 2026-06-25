@@ -95,7 +95,8 @@ export function PostJD({ corporate, onNavigate }) {
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
     must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
     stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], gender_preference: 'No preference — open to all',
-    max_notice_period: '', min_years_in_function: '', languages_required: [], travel_required: ''
+    max_notice_period: '', min_years_in_function: '', languages_required: [], travel_required: '',
+    recruiter_email: '', recruiter_whatsapp: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -174,6 +175,9 @@ JD: ${jdText.slice(0, 3000)}`
   const handleSubmit = async () => {
     if (!form.role_title || !form.job_function || !form.seniority_level) {
       setError('Role title, function and seniority level are required'); return
+    }
+    if (!form.recruiter_email || !form.recruiter_email.includes('@')) {
+      setError('Please enter a valid email address to receive candidate CVs'); return
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true, min_degree_required: eduPref.min_degree, institute_preference: eduPref.institute_pref })
@@ -514,6 +518,20 @@ JD: ${jdText.slice(0, 3000)}`
           value={form.end_date}
           onChange={e => set('end_date', e.target.value)} />
         <div className="form-hint">After this date the search closes automatically and no new candidates are matched. Default is 10 days — adjust as needed for your timeline.</div>
+      </div>
+
+      {/* RECRUITER CONTACT — where to receive CVs */}
+      <div className="form-group">
+        <label className="form-label">Where should we send candidate CVs? <span className="required">*</span></label>
+        <div className="form-hint" style={{ marginBottom: 10 }}>When a candidate says yes, their CV and contact details will be sent here.</div>
+        <input className="form-input" type="email" placeholder="recruiter@company.com"
+          value={form.recruiter_email} onChange={e => set('recruiter_email', e.target.value)} />
+      </div>
+      <div className="form-group">
+        <label className="form-label">WhatsApp for quick notifications (optional)</label>
+        <div className="form-hint" style={{ marginBottom: 10 }}>Get an instant WhatsApp when a candidate says yes.</div>
+        <input className="form-input" type="tel" placeholder="+91 98765 43210"
+          value={form.recruiter_whatsapp} onChange={e => set('recruiter_whatsapp', e.target.value)} />
       </div>
 
       {/* STEALTH MODE TOGGLE — after all basics filled */}

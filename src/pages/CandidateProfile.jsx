@@ -10,6 +10,11 @@ export default function CandidateProfile({ onNavigate }) {
   const [decliningInterest, setDecliningInterest] = useState(null)
   const [declineReasons, setDeclineReasons] = useState([])
   const [declineOther, setDeclineOther] = useState('')
+  const [acceptingInterest, setAcceptingInterest] = useState(null)
+  const [cvFile, setCvFile] = useState(null)
+  const [candidateNote, setCandidateNote] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -48,6 +53,10 @@ export default function CandidateProfile({ onNavigate }) {
       setDecliningInterest(interestId)
       return
     }
+    if (response === 'interested') {
+      setAcceptingInterest(interestId)
+      return
+    }
     setLoading(true)
     await supabase.from('interests').update({
       status: response,
@@ -76,6 +85,66 @@ export default function CandidateProfile({ onNavigate }) {
 
   const toggleDeclineReason = (reason) => {
     setDeclineReasons(prev => prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason])
+  }
+
+  const handleSendCV = async () => {
+    if (!cvFile) { setSendError('Please upload your CV to proceed'); return }
+    setSending(true); setSendError('')
+    try {
+      const interest = interests.find(i => i.id === acceptingInterest)
+      const recruiterEmail = interest?.jds?.recruiter_email
+
+      // Convert CV to base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(cvFile)
+      })
+
+      // Send via our API
+      const response = await fetch('/api/send-cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recruiterEmail,
+          candidateProfile: {
+            id: candidate.id,
+            headline: candidate.headline,
+            years_experience: candidate.years_experience,
+            primary_function: candidate.primary_function,
+            current_industry: candidate.current_industry,
+            ctc_total: candidate.ctc_total,
+            notice_period: candidate.notice_period,
+          },
+          jd: { title: interest?.jds?.role_title, function: interest?.jds?.function },
+          company: interest?.jds?.stealth_mode ? 'Confidential' : interest?.corporates?.company_name,
+          note: candidateNote,
+          cvBase64: base64,
+          cvName: cvFile.name,
+          contactShared: candidate.contact
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to send')
+
+      // Update interest status
+      await supabase.from('interests').update({
+        status: 'interested',
+        candidate_response_at: new Date().toISOString(),
+        candidate_contact_shared: candidate.contact,
+        candidate_message: candidateNote
+      }).eq('id', acceptingInterest)
+
+      setAcceptingInterest(null)
+      setCvFile(null)
+      setCandidateNote('')
+      const { data } = await supabase.from('interests').select('*, jds(*), corporates(*)').eq('candidate_id', candidate.id).order('created_at', { ascending: false })
+      setInterests(data || [])
+    } catch (e) {
+      setSendError('Something went wrong. Please try again.')
+    }
+    setSending(false)
   }
 
   const handleToggleActive = async () => {
@@ -164,6 +233,68 @@ export default function CandidateProfile({ onNavigate }) {
       'Not interested in this company',
     ]
     const allDeclineReasons = isStealthDecline ? DECLINE_REASONS_BASE : [...DECLINE_REASONS_BASE, ...DECLINE_REASONS_NON_STEALTH]
+
+    // YES FLOW — CV upload screen
+    const acceptingInterestData = acceptingInterest ? interests.find(i => i.id === acceptingInterest) : null
+    if (acceptingInterest && acceptingInterestData) return (
+      <div className="page">
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Send Your CV</h2>
+        <p style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 20 }}>
+          You are expressing interest in a role at <strong style={{ color: 'var(--teal)' }}>
+            {acceptingInterestData.jds?.stealth_mode ? 'a confidential company' : (acceptingInterestData.corporates?.company_name || 'this company')}
+          </strong>. Upload your CV to proceed — this is the only document they will receive.
+        </p>
+
+        {/* CV Upload */}
+        <div className="form-group">
+          <label className="form-label">Your CV <span className="required">*</span></label>
+          <label style={{
+            display: 'block', border: cvFile ? '2px solid var(--teal)' : '2px dashed var(--grey-300)',
+            borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer',
+            background: cvFile ? 'var(--teal-light)' : 'white'
+          }}>
+            <input type="file" accept=".pdf,.doc,.docx" onChange={e => setCvFile(e.target.files?.[0] || null)} style={{ display: 'none' }} />
+            {cvFile ? (
+              <div>
+                <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)' }}>{cvFile.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4 }}>Tap to change</div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>📄</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--teal)', marginBottom: 4 }}>Tap to upload your CV</div>
+                <div style={{ fontSize: 11, color: 'var(--grey-400)' }}>PDF or Word · Max 5MB</div>
+              </div>
+            )}
+          </label>
+        </div>
+
+        {/* Optional note */}
+        <div className="form-group">
+          <label className="form-label">A note for the recruiter (optional)</label>
+          <textarea className="form-textarea" style={{ minHeight: 70 }} maxLength={150}
+            placeholder="Why are you interested in this role? 150 chars max."
+            value={candidateNote} onChange={e => setCandidateNote(e.target.value)} />
+          <div className="form-hint" style={{ textAlign: 'right' }}>{candidateNote.length}/150</div>
+        </div>
+
+        <div className="card" style={{ background: 'var(--orange-light)', borderColor: 'var(--orange-border)', marginBottom: 20 }}>
+          <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.6 }}>
+            📧 Your CV and contact details will be sent directly to the recruiter. StorySideUp will also receive a copy to support your introduction.
+          </div>
+        </div>
+
+        {sendError && <div className="error-msg">{sendError}</div>}
+
+        <button className="btn-primary" onClick={handleSendCV} disabled={sending || !cvFile}>
+          {sending ? 'Sending...' : 'Send CV & Express Interest →'}
+        </button>
+        <div className="mt-4">
+          <button className="btn-secondary" onClick={() => { setAcceptingInterest(null); setCvFile(null); setCandidateNote('') }}>← Back</button>
+        </div>
+      </div>
+    )
 
     if (decliningInterest) return (
       <div className="page">

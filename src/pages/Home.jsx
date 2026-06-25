@@ -29,14 +29,14 @@ export default function Home({ onNavigate }) {
     { num: '1', icon: '👤', label: 'Register', desc: 'Create an anonymous profile — no name, no employer, no photo' },
     { num: '2', icon: '🔍', label: 'Get Matched', desc: 'We match your skills and experience to live roles in the background' },
     { num: '3', icon: '👁️', label: 'See Who It Is', desc: 'Get a WhatsApp with full company details — before they know anything about you' },
-    { num: '4', icon: '✅', label: 'Connect', desc: 'Say yes and share your contact — only if you want to' },
+    { num: '4', icon: '📧', label: 'Connect', desc: 'Say yes, upload your CV — it goes directly to the recruiter. You take it from there.' },
   ]
 
   const employerSteps = [
     { num: '1', icon: '📋', label: 'Post a Search', desc: 'Upload your JD — our AI fills the form. Standard or stealth mode.' },
     { num: '2', icon: '👥', label: 'See Matched Profiles', desc: 'Anonymous profiles matched to your criteria — skills, experience, location, CTC' },
     { num: '3', icon: '💬', label: 'Express Interest', desc: 'Select profiles you like. We notify the candidate on your behalf.' },
-    { num: '4', icon: '📧', label: 'Connect', desc: 'Say yes, upload your CV — it goes directly to the recruiter. You take it from there.' },
+    { num: '4', icon: '📧', label: 'CV in Your Inbox', desc: 'Candidate says yes — they upload their CV and it lands directly in your inbox.' },
   ]
 
   const steps = howTab === 'candidate' ? candidateSteps : employerSteps

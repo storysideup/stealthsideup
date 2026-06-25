@@ -170,7 +170,7 @@ export default function Home({ onNavigate }) {
           <div style={{ background: 'white', borderRadius: 14, padding: '16px', boxShadow: '0 2px 12px rgba(10,61,53,0.06)', border: '1px solid rgba(10,61,53,0.06)' }}>
             {[
               { icon: '✉️', label: 'Email', value: 'dorasuri@storysideup.com', href: 'mailto:dorasuri@storysideup.com' },
-              { icon: '💼', label: 'LinkedIn', value: 'StorySideUp', href: 'https://www.linkedin.com/company/storysideup' },
+              { icon: '💼', label: 'LinkedIn', value: 'Dora Harsh Suri', href: 'https://www.linkedin.com/in/dora-harsh-suri/' },
               { icon: '🌐', label: 'Website', value: 'storysideup.netlify.app', href: 'https://storysideup.netlify.app' },
             ].map(({ icon, label, value, href }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{

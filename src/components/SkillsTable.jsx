@@ -78,7 +78,7 @@ function SkillRow({ subFunction, entry, onChange, mode }) {
               borderColor: !highlight.trim() ? 'var(--orange)' : 'var(--teal-border)',
               background: '#f9fafb'
             }}
-            placeholder="Share a highlight from your work in this area — one line, no company name"
+            placeholder="What's the best example of your work here? One line, no company name."
             maxLength={160}
             value={highlight}
             onChange={e => handleHighlight(e.target.value)}

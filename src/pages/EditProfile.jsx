@@ -4,8 +4,18 @@ import { supabase } from '../lib/supabase'
 export default function EditProfile({ onNavigate }) {
   const [contact, setContact] = useState('')
   const [otp, setOtp] = useState(['','','','','',''])
-  const [step, setStep] = useState(0)
-  const [candidate, setCandidate] = useState(null)
+  const [step, setStep] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('ssu_candidate')
+      return saved ? 1 : 0 // Skip OTP if already logged in
+    } catch { return 0 }
+  })
+  const [candidate, setCandidate] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('ssu_candidate')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)

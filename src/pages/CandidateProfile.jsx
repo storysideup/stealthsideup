@@ -2,10 +2,22 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function CandidateProfile({ onNavigate }) {
-  const [step, setStep] = useState(0) // 0=enter contact, 1=otp, 2=dashboard
-  const [contact, setContact] = useState('')
+  const [step, setStep] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('ssu_candidate')
+      return saved ? 2 : 0
+    } catch { return 0 }
+  })
+  const [contact, setContact] = useState(() => {
+    try { return sessionStorage.getItem('ssu_candidate_contact') || '' } catch { return '' }
+  })
   const [otp, setOtp] = useState(['','','','','',''])
-  const [candidate, setCandidate] = useState(null)
+  const [candidate, setCandidate] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('ssu_candidate')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
   const [interests, setInterests] = useState([])
   const [decliningInterest, setDecliningInterest] = useState(null)
   const [declineReasons, setDeclineReasons] = useState([])
@@ -38,6 +50,11 @@ export default function CandidateProfile({ onNavigate }) {
       .eq('candidate_id', candidate.id)
       .order('created_at', { ascending: false })
     setInterests(interestData || [])
+    // Save session so Edit Profile doesn't ask for OTP again
+    try {
+      sessionStorage.setItem('ssu_candidate', JSON.stringify(data))
+      sessionStorage.setItem('ssu_candidate_contact', contact)
+    } catch {}
     setTimeout(() => { setLoading(false); setStep(2) }, 500)
   }
 
@@ -151,6 +168,14 @@ export default function CandidateProfile({ onNavigate }) {
     const newStatus = !candidate.is_active
     await supabase.from('candidates').update({ is_active: newStatus }).eq('id', candidate.id)
     setCandidate(c => ({ ...c, is_active: newStatus }))
+  }
+
+  const handleLogout = () => {
+    try {
+      sessionStorage.removeItem('ssu_candidate')
+      sessionStorage.removeItem('ssu_candidate_contact')
+    } catch {}
+    setStep(0); setCandidate(null); setInterests([])
   }
 
   const statusBadge = (status, interest) => {

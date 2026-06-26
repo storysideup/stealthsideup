@@ -1,90 +1,199 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import SkillsTable from '../components/SkillsTable'
+import CareerHistory from '../components/CareerHistory'
+import { CandidateLocationPicker } from '../components/LocationPicker'
+import {
+  FUNCTIONS, INDUSTRIES, NOTICE_PERIODS, LANGUAGES,
+  SENIORITY_LEVELS, ORG_TYPES
+} from '../data/formData'
+
+const SECTIONS = ['Basic Info', 'Current Role', 'Career History', 'Skills', 'Preferences']
+
+function TagSelect({ options, value = [], onChange, max }) {
+  const toggle = (opt) => {
+    if (value.includes(opt)) onChange(value.filter(v => v !== opt))
+    else if (!max || value.length < max) onChange([...value, opt])
+  }
+  return (
+    <div className="tag-cloud">
+      {options.map(opt => (
+        <button key={opt} type="button"
+          className={`tag ${value.includes(opt) ? 'selected' : ''}`}
+          onClick={() => toggle(opt)}>{opt}</button>
+      ))}
+    </div>
+  )
+}
 
 export default function EditProfile({ onNavigate }) {
+  const [step, setStep] = useState(0) // 0=verify, 1=edit
   const [contact, setContact] = useState('')
   const [otp, setOtp] = useState(['','','','','',''])
-  const [step, setStep] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('ssu_candidate')
-      return saved ? 1 : 0 // Skip OTP if already logged in
-    } catch { return 0 }
-  })
-  const [candidate, setCandidate] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('ssu_candidate')
-      return saved ? JSON.parse(saved) : null
-    } catch { return null }
-  })
+  const [candidate, setCandidate] = useState(null)
+  const [form, setForm] = useState(null)
+  const [activeSection, setActiveSection] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
 
+  // Load from session
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('ssu_candidate')
+      const savedContact = sessionStorage.getItem('ssu_candidate_contact')
+      if (saved) {
+        const c = JSON.parse(saved)
+        setCandidate(c)
+        setContact(savedContact || '')
+        initForm(c)
+        setStep(1)
+      }
+    } catch {}
+  }, [])
+
+  const initForm = (c) => {
+    setForm({
+      // Basic
+      gender: c.gender || '',
+      current_employment_type: c.current_employment_type || '',
+      desired_employment_type: c.desired_employment_type || '',
+      years_experience: c.years_experience || '',
+      primary_function: c.primary_function || '',
+      headline: c.headline || '',
+      job_search_status: c.job_search_status || '',
+      // Current role
+      current_industry: c.current_industry || c.freelance_sector || '',
+      previous_industries: c.previous_industries || [],
+      role_type: c.role_type || '',
+      team_size: c.team_size || '',
+      work_preference: c.work_preference || '',
+      ctc_fixed: c.ctc_fixed || '',
+      ctc_variable: c.ctc_variable || '',
+      ctc_bonus: c.ctc_bonus || '',
+      ctc_total: c.ctc_total || '',
+      // Career history
+      career_history: c.career_history || [],
+      // Skills
+      skill_tree: c.skill_tree || {},
+      // Preferences
+      seniority_open_to: c.seniority_open_to || [],
+      org_type_open_to: c.org_type_open_to || [],
+      preferred_locations: c.preferred_locations || { cities: [], openToNearby: true },
+      notice_period: c.notice_period || '',
+      min_expected_ctc: c.min_expected_ctc || '',
+      years_in_function: c.years_in_function || '',
+      languages: c.languages || [],
+      open_to_travel: c.open_to_travel || '',
+      has_passport: c.has_passport || '',
+      blocked_companies: c.blocked_companies?.join(', ') || '',
+    })
+  }
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
   const handleSendOtp = async () => {
-    if (!contact.trim()) { setError('Enter your registered phone or email'); return }
+    if (!contact.trim()) { setError('Enter your registered phone number'); return }
     setLoading(true); setError('')
     const { data } = await supabase.from('candidates').select('*').eq('contact', contact.trim()).single()
-    if (!data) { setError('No profile found with this contact. Please register first.'); setLoading(false); return }
+    if (!data) { setError('No profile found. Please register first.'); setLoading(false); return }
     setCandidate(data)
-    setTimeout(() => { setLoading(false); setStep(1) }, 600)
+    initForm(data)
+    setTimeout(() => { setLoading(false); setStep(0.5) }, 500)
   }
 
   const handleVerifyOtp = async () => {
     const code = otp.join('')
     if (code.length < 6) { setError('Enter the 6-digit OTP'); return }
     setLoading(true)
-    setTimeout(() => { setLoading(false); setStep(2) }, 500)
+    setTimeout(() => { setLoading(false); setStep(1) }, 400)
   }
 
   const handleOtpChange = (idx, val) => {
     if (!/^\d*$/.test(val)) return
     const next = [...otp]; next[idx] = val.slice(-1)
     setOtp(next)
-    if (val && idx < 5) document.getElementById(`eotp-${idx + 1}`)?.focus()
+    if (val && idx < 5) document.getElementById(`eotp-${idx+1}`)?.focus()
   }
 
   const handleSave = async () => {
-    setLoading(true)
+    setSaving(true); setError('')
     const { error: err } = await supabase.from('candidates').update({
-      job_search_status: candidate.job_search_status,
-      blocked_companies: candidate.blocked_companies,
-      work_preference: candidate.work_preference,
-      relocation: candidate.relocation,
-      is_active: candidate.is_active
+      gender: form.gender,
+      current_employment_type: form.current_employment_type,
+      desired_employment_type: form.desired_employment_type,
+      years_experience: form.years_experience,
+      primary_function: form.primary_function,
+      headline: form.headline,
+      job_search_status: form.job_search_status,
+      current_industry: form.current_industry,
+      freelance_sector: form.current_industry,
+      previous_industries: form.previous_industries,
+      role_type: form.role_type,
+      team_size: form.team_size,
+      work_preference: form.work_preference,
+      ctc_fixed: parseFloat(form.ctc_fixed) || null,
+      ctc_variable: parseFloat(form.ctc_variable) || null,
+      ctc_bonus: parseFloat(form.ctc_bonus) || null,
+      ctc_total: parseFloat(form.ctc_total) || null,
+      career_history: form.career_history,
+      skill_tree: form.skill_tree,
+      seniority_open_to: form.seniority_open_to,
+      org_type_open_to: form.org_type_open_to,
+      preferred_locations: form.preferred_locations,
+      notice_period: form.notice_period,
+      min_expected_ctc: parseFloat(form.min_expected_ctc) || null,
+      years_in_function: parseInt(form.years_in_function) || null,
+      languages: form.languages,
+      open_to_travel: form.open_to_travel,
+      has_passport: form.has_passport,
+      blocked_companies: form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [],
     }).eq('id', candidate.id)
-    if (err) { setError(err.message); setLoading(false); return }
-    setSaved(true); setLoading(false)
+
+    if (err) { setError(err.message); setSaving(false); return }
+
+    // Update session
+    try {
+      const updated = { ...candidate, ...form }
+      sessionStorage.setItem('ssu_candidate', JSON.stringify(updated))
+    } catch {}
+
+    setSaved(true); setSaving(false)
   }
 
-  const set = (k, v) => setCandidate(c => ({ ...c, [k]: v }))
-
+  // Success
   if (saved) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
-      <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#165D7B" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
+      <div className="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#165D7B" strokeWidth="2.5" width="32" height="32">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
       <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 10 }}>Profile Updated</h2>
-      <p style={{ color: 'var(--grey-600)', marginBottom: 24 }}>Your changes are live on StealthSideUp.</p>
-      <button className="btn-secondary" onClick={() => onNavigate('home')}>Back to Home</button>
+      <p style={{ color: 'var(--grey-600)', marginBottom: 24 }}>Your changes are live.</p>
+      <button className="btn-primary" onClick={() => onNavigate('candidate-profile')}>Back to My Dashboard</button>
     </div>
   )
 
+  // OTP entry
   if (step === 0) return (
     <div className="page">
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 8 }}>Edit My Profile</h2>
-      <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 24 }}>Enter the phone or email you registered with. We'll send you an OTP to verify.</p>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 8 }}>Edit My Profile</h2>
+      <p style={{ fontSize: 14, color: 'var(--grey-600)', marginBottom: 24 }}>Enter your registered number to continue.</p>
       <div className="form-group">
-        <label className="form-label">Registered Phone / Email</label>
-        <input className="form-input" placeholder="+91 98765 43210 or you@email.com" value={contact} onChange={e => setContact(e.target.value)} />
+        <label className="form-label">Registered Phone Number</label>
+        <input className="form-input" type="tel" placeholder="+91 98765 43210" value={contact} onChange={e => setContact(e.target.value)} />
       </div>
       {error && <div className="error-msg">{error}</div>}
-      <button className="btn-primary" onClick={handleSendOtp} disabled={loading}>{loading ? 'Looking up profile...' : 'Send OTP →'}</button>
-      <div className="mt-4"><button className="btn-secondary" onClick={() => onNavigate('home')}>← Back</button></div>
+      <button className="btn-primary" onClick={handleSendOtp} disabled={loading}>{loading ? 'Looking up...' : 'Send OTP →'}</button>
     </div>
   )
 
-  if (step === 1) return (
+  if (step === 0.5) return (
     <div className="page">
-      <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Verify OTP</h2>
-      <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>Enter the 6-digit code sent to {contact}</p>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 8 }}>Verify OTP</h2>
+      <p style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 20 }}>Enter the 6-digit code sent to {contact}</p>
       <div className="otp-container">
         {otp.map((d, i) => (
           <input key={i} id={`eotp-${i}`} className="otp-input" maxLength={1} value={d}
@@ -92,65 +201,144 @@ export default function EditProfile({ onNavigate }) {
             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) document.getElementById(`eotp-${i-1}`)?.focus() }} />
         ))}
       </div>
+      <div className="form-hint" style={{ textAlign: 'center', marginBottom: 20 }}>(Demo — any 6 digits)</div>
       {error && <div className="error-msg">{error}</div>}
-      <button className="btn-primary" onClick={handleVerifyOtp} disabled={loading}>{loading ? 'Verifying...' : 'Verify →'}</button>
+      <button className="btn-primary" onClick={handleVerifyOtp} disabled={loading}>{loading ? 'Verifying...' : 'Edit My Profile →'}</button>
     </div>
   )
 
-  if (step === 2 && candidate) return (
+  if (!form) return <div className="page"><div className="spinner" /></div>
+
+  // Full edit form
+  return (
     <div className="page">
-      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 4 }}>Your Profile</h2>
-      <p className="text-muted" style={{ marginBottom: 20 }}>Update your preferences below</p>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 4 }}>Edit My Profile</h2>
+      <p style={{ fontSize: 12, color: 'var(--grey-400)', marginBottom: 16 }}>All changes save immediately when you tap Save.</p>
 
-      <div className="card card-teal" style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', marginBottom: 6, textTransform: 'uppercase' }}>Current Profile</div>
-        <div style={{ fontSize: 14, lineHeight: 1.6 }}>
-          <div><strong>Function:</strong> {candidate.primary_function}</div>
-          <div><strong>Experience:</strong> {candidate.years_experience} years</div>
-          <div><strong>Industry:</strong> {candidate.current_industry}</div>
-          <div><strong>CTC:</strong> {candidate.ctc_total ? `₹${candidate.ctc_total}L` : '—'}</div>
+      {/* Section tabs */}
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 24, paddingBottom: 4 }}>
+        {SECTIONS.map((s, i) => (
+          <button key={s} type="button" onClick={() => setActiveSection(i)} style={{
+            padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+            background: activeSection === i ? 'var(--teal)' : 'var(--grey-100)',
+            color: activeSection === i ? 'white' : 'var(--grey-600)',
+            flexShrink: 0
+          }}>{s}</button>
+        ))}
+      </div>
+
+      {/* SECTION 0 — Basic Info */}
+      {activeSection === 0 && <>
+        <div className="form-group">
+          <label className="form-label">Professional Headline</label>
+          <textarea className="form-textarea" maxLength={150} value={form.headline} onChange={e => set('headline', e.target.value)}
+            placeholder="Your story in one line — no name, no employer, no title" />
+          <div className="form-hint" style={{ textAlign: 'right' }}>{form.headline.length}/150</div>
         </div>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Job Search Status</label>
-        <div className="tag-cloud">
-          {['Actively looking (want to move within 0–3 months)','Passively open (the right role would make me consider moving)','Just exploring (not in a hurry, happy where I am)'].map(s => (
-            <button key={s} type="button" className={`tag ${candidate.job_search_status === s ? 'selected' : ''}`} onClick={() => set('job_search_status', s)}>{s}</button>
-          ))}
+        <div className="form-group">
+          <label className="form-label">Job Search Status</label>
+          <TagSelect options={['Actively looking (want to move within 0–3 months)', 'Passively open (the right role would make me consider moving)', 'Just exploring (not in a hurry, happy where I am)']}
+            value={form.job_search_status ? [form.job_search_status] : []} onChange={v => set('job_search_status', v[v.length-1] || '')} max={1} />
         </div>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Work Preference</label>
-        <div className="tag-cloud">
-          {['On-site','Hybrid','Remote','Flexible'].map(s => (
-            <button key={s} type="button" className={`tag ${candidate.work_preference === s ? 'selected' : ''}`} onClick={() => set('work_preference', s)}>{s}</button>
-          ))}
+        <div className="form-group">
+          <label className="form-label">Primary Function</label>
+          <select className="form-select" value={form.primary_function} onChange={e => set('primary_function', e.target.value)}>
+            <option value="">Select function...</option>
+            {FUNCTIONS.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
         </div>
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Companies to Block</label>
-        <textarea className="form-textarea" style={{ minHeight: 70 }}
-          placeholder="Company names, comma separated"
-          value={Array.isArray(candidate.blocked_companies) ? candidate.blocked_companies.join(', ') : candidate.blocked_companies || ''}
-          onChange={e => set('blocked_companies', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Profile Active?</label>
-        <div className="tag-cloud">
-          <button type="button" className={`tag ${candidate.is_active ? 'selected' : ''}`} onClick={() => set('is_active', true)}>✓ Active — show my profile</button>
-          <button type="button" className={`tag ${!candidate.is_active ? 'selected' : ''}`} onClick={() => set('is_active', false)}>Pause my profile</button>
+        <div className="form-group">
+          <label className="form-label">Total Years of Experience</label>
+          <select className="form-select" value={form.years_experience} onChange={e => set('years_experience', e.target.value)}>
+            <option value="">Select...</option>
+            {['0-2','3-5','6-8','9-12','13-16','17-20','20+'].map(y => <option key={y} value={y}>{y} years</option>)}
+          </select>
         </div>
-        <div className="form-hint">Pausing hides your profile from all matches until you reactivate</div>
-      </div>
+        <div className="form-group">
+          <label className="form-label">Current Employment Type</label>
+          <TagSelect options={['Full-time Employee','Freelance / Independent Consultant','Fractional / Part-time','Between Roles']}
+            value={form.current_employment_type ? [form.current_employment_type] : []} onChange={v => set('current_employment_type', v[v.length-1] || '')} max={1} />
+        </div>
+      </>}
+
+      {/* SECTION 1 — Current Role */}
+      {activeSection === 1 && <>
+        <div className="form-group">
+          <label className="form-label">Current Industry</label>
+          <select className="form-select" value={form.current_industry} onChange={e => set('current_industry', e.target.value)}>
+            <option value="">Select industry...</option>
+            {INDUSTRIES.flatMap(g => g.items).map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Current CTC — Fixed (₹L per annum)</label>
+          <input className="form-input" type="number" placeholder="e.g. 25" value={form.ctc_fixed} onChange={e => set('ctc_fixed', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Variable / Bonus (₹L)</label>
+          <input className="form-input" type="number" placeholder="e.g. 5" value={form.ctc_variable} onChange={e => set('ctc_variable', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Work Preference</label>
+          <TagSelect options={['Full-time in office','Hybrid','Remote / Work from home','Open to any']}
+            value={form.work_preference ? [form.work_preference] : []} onChange={v => set('work_preference', v[v.length-1] || '')} max={1} />
+        </div>
+      </>}
+
+      {/* SECTION 2 — Career History */}
+      {activeSection === 2 && <>
+        <div className="form-group">
+          <label className="form-label">Last 3 Roles</label>
+          <CareerHistory value={form.career_history} onChange={v => set('career_history', v)} />
+        </div>
+      </>}
+
+      {/* SECTION 3 — Skills */}
+      {activeSection === 3 && <>
+        <div className="form-group">
+          <label className="form-label">Your Skills — {form.primary_function || 'select function first'}</label>
+          <SkillsTable functionName={form.primary_function} value={form.skill_tree} onChange={v => set('skill_tree', v)} mode="candidate" />
+        </div>
+      </>}
+
+      {/* SECTION 4 — Preferences */}
+      {activeSection === 4 && <>
+        <div className="form-group">
+          <label className="form-label">Notice Period</label>
+          <TagSelect options={NOTICE_PERIODS} value={form.notice_period ? [form.notice_period] : []} onChange={v => set('notice_period', v[v.length-1] || '')} max={1} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
+          <input className="form-input" type="number" placeholder="e.g. 35" value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Years in Current Function</label>
+          <input className="form-input" type="number" placeholder="e.g. 8" value={form.years_in_function} onChange={e => set('years_in_function', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Preferred Locations</label>
+          <CandidateLocationPicker value={form.preferred_locations} onChange={v => set('preferred_locations', v)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Languages Known</label>
+          <TagSelect options={LANGUAGES} value={form.languages} onChange={v => set('languages', v)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Companies to Block</label>
+          <input className="form-input" placeholder="Comma separated — e.g. Company A, Company B"
+            value={form.blocked_companies} onChange={e => set('blocked_companies', e.target.value)} />
+        </div>
+      </>}
 
       {error && <div className="error-msg">{error}</div>}
-      <button className="btn-primary" onClick={handleSave} disabled={loading}>{loading ? 'Saving...' : 'Save Changes →'}</button>
+
+      <button className="btn-primary" onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving...' : '✓ Save Changes'}
+      </button>
+      <div className="mt-4">
+        <button className="btn-secondary" onClick={() => onNavigate('candidate-profile')}>← Back to Dashboard</button>
+      </div>
     </div>
   )
-
-  return null
 }

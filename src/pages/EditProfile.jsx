@@ -50,7 +50,7 @@ export default function EditProfile({ onNavigate }) {
 
   if (saved) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
-      <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0F4F47" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
+      <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#165D7B" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
       <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 10 }}>Profile Updated</h2>
       <p style={{ color: 'var(--grey-600)', marginBottom: 24 }}>Your changes are live on StealthSideUp.</p>
       <button className="btn-secondary" onClick={() => onNavigate('home')}>Back to Home</button>

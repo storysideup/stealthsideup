@@ -12,7 +12,7 @@ function CollapsibleSection({ title, children }) {
         <span style={{ fontSize: 18, color: '#9ca3af', fontWeight: 700 }}>{open ? '−' : '+'}</span>
       </button>
       {open && (
-        <div style={{ background: '#EFF8F6', border: '1px solid #C8E6E1', borderRadius: 12, padding: '16px' }}>
+        <div style={{ background: '#EBF4F8', border: '1px solid #B8D8E8', borderRadius: 12, padding: '16px' }}>
           {children}
         </div>
       )}
@@ -45,10 +45,10 @@ export default function Home({ onNavigate }) {
     <div style={{ background: '#FAFAF8', minHeight: '100vh', fontFamily: "'Segoe UI', -apple-system, sans-serif" }}>
 
       {/* HERO */}
-      <div style={{ background: 'linear-gradient(160deg, #0A3D35 0%, #0F4F47 100%)', padding: '32px 20px 40px' }}>
+      <div style={{ background: 'linear-gradient(160deg, #165D7B 0%, #165D7B 100%)', padding: '32px 20px 40px' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>by StorySideUp</div>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'white', lineHeight: 1.25, marginBottom: 0, letterSpacing: '-0.5px' }}>
-          Get matched to jobs anonymously based on your skills and experience.
+          Get matched to jobs anonymously: based on your skills and experience.
         </h1>
       </div>
 
@@ -57,35 +57,35 @@ export default function Home({ onNavigate }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
           {/* CANDIDATE */}
-          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(10,61,53,0.12)', border: '1px solid rgba(10,61,53,0.06)' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(22,93,123,0.12)', border: '1px solid rgba(22,93,123,0.06)' }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>👤</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#0A3D35', marginBottom: 4, lineHeight: 1.2 }}>Candidate</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#165D7B', marginBottom: 4, lineHeight: 1.2 }}>Candidate</div>
             <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16 }}>Explore opportunities without anyone knowing</div>
             <button onClick={() => onNavigate('register')} style={{
-              width: '100%', background: '#0A3D35', color: 'white', border: 'none',
+              width: '100%', background: '#165D7B', color: 'white', border: 'none',
               borderRadius: 8, padding: '10px 8px', fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, boxShadow: '0 2px 8px rgba(10,61,53,0.2)'
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, boxShadow: '0 2px 8px rgba(22,93,123,0.2)'
             }}>Register Anonymously</button>
             <button onClick={() => onNavigate('candidate-profile')} style={{
-              width: '100%', background: 'transparent', color: '#0A3D35',
-              border: '1.5px solid #0A3D35', borderRadius: 8, padding: '9px 8px',
+              width: '100%', background: 'transparent', color: '#165D7B',
+              border: '1.5px solid #165D7B', borderRadius: 8, padding: '9px 8px',
               fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
             }}>View My Profile</button>
           </div>
 
           {/* EMPLOYER */}
-          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(232,98,26,0.12)', border: '1px solid rgba(232,98,26,0.08)' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(255,157,82,0.12)', border: '1px solid rgba(255,157,82,0.08)' }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>🏢</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: '#0A3D35', marginBottom: 4, lineHeight: 1.2 }}>Employer</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#165D7B', marginBottom: 4, lineHeight: 1.2 }}>Employer</div>
             <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16 }}>Find talent matched to your skills requirement</div>
             <button onClick={() => onNavigate('corporate-login')} style={{
-              width: '100%', background: '#E8621A', color: 'white', border: 'none',
+              width: '100%', background: '#FF9D52', color: 'white', border: 'none',
               borderRadius: 8, padding: '10px 8px', fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, boxShadow: '0 2px 8px rgba(232,98,26,0.25)'
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, boxShadow: '0 2px 8px rgba(255,157,82,0.25)'
             }}>Post a Search</button>
             <button onClick={() => onNavigate('corporate-login')} style={{
-              width: '100%', background: 'transparent', color: '#E8621A',
-              border: '1.5px solid #E8621A', borderRadius: 8, padding: '9px 8px',
+              width: '100%', background: 'transparent', color: '#FF9D52',
+              border: '1.5px solid #FF9D52', borderRadius: 8, padding: '9px 8px',
               fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
             }}>Employer Login</button>
           </div>
@@ -105,7 +105,7 @@ export default function Home({ onNavigate }) {
                 flex: 1, padding: '8px 0', border: 'none', borderRadius: 8, cursor: 'pointer',
                 fontFamily: 'inherit', fontSize: 13, fontWeight: 600, transition: 'all 0.2s',
                 background: howTab === tab ? 'white' : 'transparent',
-                color: howTab === tab ? '#0A3D35' : '#9ca3af',
+                color: howTab === tab ? '#165D7B' : '#9ca3af',
                 boxShadow: howTab === tab ? '0 1px 6px rgba(0,0,0,0.08)' : 'none'
               }}>
                 {tab === 'candidate' ? '👤 For Candidates' : '🏢 For Employers'}
@@ -119,13 +119,13 @@ export default function Home({ onNavigate }) {
               <div key={i} style={{
                 display: 'flex', gap: 14, alignItems: 'flex-start',
                 background: 'white', borderRadius: 12, padding: '14px 14px',
-                boxShadow: '0 2px 8px rgba(10,61,53,0.06)',
-                border: '1px solid rgba(10,61,53,0.06)'
+                boxShadow: '0 2px 8px rgba(22,93,123,0.06)',
+                border: '1px solid rgba(22,93,123,0.06)'
               }}>
                 <div style={{
                   width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                  background: i === 0 ? '#0A3D35' : i === steps.length - 1 ? '#E8621A' : '#EFF8F6',
-                  border: i === 0 ? 'none' : i === steps.length - 1 ? 'none' : '1.5px solid #C8E6E1',
+                  background: i === 0 ? '#165D7B' : i === steps.length - 1 ? '#FF9D52' : '#EBF4F8',
+                  border: i === 0 ? 'none' : i === steps.length - 1 ? 'none' : '1.5px solid #B8D8E8',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: i === 0 || i === steps.length - 1 ? 13 : 15
                 }}>
@@ -134,7 +134,7 @@ export default function Home({ onNavigate }) {
                   ) : step.icon}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0A3D35', marginBottom: 3 }}>{step.label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#165D7B', marginBottom: 3 }}>{step.label}</div>
                   <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.55 }}>{step.desc}</div>
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default function Home({ onNavigate }) {
 
         {/* ABOUT US */}
         <CollapsibleSection title="About Us — Who We Are & Why We Built This">
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#0A3D35', marginBottom: 8 }}>StorySideUp</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#165D7B', marginBottom: 8 }}>StorySideUp</div>
           <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.75, margin: '0 0 12px' }}>
             StorySideUp is a boutique HR practice based in Delhi NCR. We work with candidates and organisations on hiring, coaching, assessments and HR consulting across multiple industries.
           </p>
@@ -156,8 +156,8 @@ export default function Home({ onNavigate }) {
           <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.75, margin: 0 }}>
             Your CV is not the problem — it is what is happening to it. It is getting rejected before it reaches the right person, filtered by algorithms, buried in inboxes, or simply never seen. StealthSideUp removes the CV from the equation entirely. Your experience, your skills and your preferences speak directly to the right role — no gatekeeping, no guesswork.
           </p>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #C8E6E1' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0A3D35' }}>Dora Harsh Suri</div>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #B8D8E8' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#165D7B' }}>Dora Harsh Suri</div>
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Founder, StorySideUp · ICF ACC Coach · Hogan Advanced Assessor · 20+ years in Executive Search</div>
           </div>
         </CollapsibleSection>
@@ -167,7 +167,7 @@ export default function Home({ onNavigate }) {
         {/* CONTACT */}
         <div style={{ marginBottom: 100 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Get in Touch</div>
-          <div style={{ background: 'white', borderRadius: 14, padding: '16px', boxShadow: '0 2px 12px rgba(10,61,53,0.06)', border: '1px solid rgba(10,61,53,0.06)' }}>
+          <div style={{ background: 'white', borderRadius: 14, padding: '16px', boxShadow: '0 2px 12px rgba(22,93,123,0.06)', border: '1px solid rgba(22,93,123,0.06)' }}>
             {[
               { icon: '✉️', label: 'Email', value: 'dorasuri@storysideup.com', href: 'mailto:dorasuri@storysideup.com' },
               { icon: '💼', label: 'LinkedIn', value: 'StorySideUp', href: 'https://www.linkedin.com/company/story-side-up/' },
@@ -180,7 +180,7 @@ export default function Home({ onNavigate }) {
                 <span style={{ fontSize: 18, width: 28, textAlign: 'center' }}>{icon}</span>
                 <div>
                   <div style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}>{label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A3D35' }}>{value}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#165D7B' }}>{value}</div>
                 </div>
                 <span style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: 16 }}>→</span>
               </a>

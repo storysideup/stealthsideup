@@ -197,7 +197,7 @@ JD: ${textToExtract.slice(0, 3000)}`
 
   if (success) return (
     <div className="page" style={{ paddingTop: 32 }}>
-      <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0F4F47" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
+      <div className="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#165D7B" strokeWidth="2.5" width="32" height="32"><polyline points="20 6 9 17 4 12" /></svg></div>
       <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6, textAlign: 'center' }}>Your Search is Live</h2>
       <p style={{ color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 24, textAlign: 'center', fontSize: 14 }}>
         We are now matching anonymous profiles against your criteria in the background.
@@ -229,7 +229,7 @@ JD: ${textToExtract.slice(0, 3000)}`
     </div>
   )
 
-  const aiBg = (field) => aiFields.includes(field) ? { background: '#e8f4f2', borderColor: '#0f4f47' } : {}
+  const aiBg = (field) => aiFields.includes(field) ? { background: '#e8f4f2', borderColor: '#165D7B' } : {}
   const AiBadge = ({ field }) => aiFields.includes(field) ? (
     <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 4, padding: '2px 6px', marginLeft: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>AI filled</span>
   ) : <span style={{ fontSize: 10, color: 'var(--orange)', marginLeft: 8, fontWeight: 600 }}>⚠ Fill this</span>

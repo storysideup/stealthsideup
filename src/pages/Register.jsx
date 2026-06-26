@@ -242,7 +242,7 @@ export default function Register({ onNavigate }) {
   if (success) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
       <div className="success-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#0F4F47" strokeWidth="2.5" width="32" height="32">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#165D7B" strokeWidth="2.5" width="32" height="32">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
@@ -710,7 +710,7 @@ export default function Register({ onNavigate }) {
             <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
               <input type="checkbox" checked={form.declaration_agreed}
                 onChange={e => set('declaration_agreed', e.target.checked)}
-                style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, accentColor: '#0f4f47' }} />
+                style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, accentColor: '#165D7B' }} />
               <span style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
                 I confirm that all information provided is accurate to the best of my knowledge. StealthSideUp reserves the right to suspend or permanently restrict access to the platform if any declared information is found to be materially inaccurate during or after the recruitment process.
               </span>

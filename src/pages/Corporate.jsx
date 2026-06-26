@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
-import SkillTreeSelector from '../components/SkillTreeSelector'
+import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
 
@@ -93,7 +93,7 @@ export function PostJD({ corporate, onNavigate }) {
     team_size_expected: '', geography: '', employment_type: '', org_type: '',
     work_mode: '', location: '', relocation_support: '',
     ctc_fixed_min: '', ctc_fixed_max: '', ctc_variable: '', ctc_other: '',
-    must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: [], role_context: '', why_role: '',
+    must_have_skills: [], good_to_have_skills: [], skill_tree_requirement: {}, role_context: '', why_role: '',
     stealth_mode: false, job_function: '', end_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], gender_preference: 'No preference — open to all',
     max_notice_period: '', min_years_in_function: '', languages_required: [], travel_required: '',
     recruiter_email: '', recruiter_whatsapp: ''
@@ -425,8 +425,8 @@ JD: ${textToExtract.slice(0, 3000)}`
 
       <div className="form-group">
         <label className="form-label">Skill Requirements</label>
-        <div className="form-hint" style={{ marginBottom: 10 }}>Specify the skills you need — this is matched against candidate profiles</div>
-        <SkillTreeSelector
+        <div className="form-hint" style={{ marginBottom: 10 }}>Select the minimum proficiency level you need for each skill area</div>
+        <SkillsTable
           functionName={form.job_function}
           value={form.skill_tree_requirement}
           onChange={v => set('skill_tree_requirement', v)}
@@ -781,18 +781,27 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                   </div>
                 )}
 
-                {/* Skills with proof points */}
-                {c.skill_tree?.length > 0 && (
+                {/* Skills with highlights */}
+                {c.skill_tree && Object.keys(c.skill_tree).length > 0 && (
                   <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Skills & Proof Points</div>
-                    {c.skill_tree.slice(0, 4).map((skill, si) => (
-                      <div key={si} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '8px 10px', marginBottom: 6 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: skill.proofPoint ? 4 : 0 }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-800)' }}>{skill.subFunction}</span>
-                          {skill.proficiency && <span className="badge badge-teal" style={{ fontSize: 10 }}>{skill.proficiency}</span>}
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Skills</div>
+                    {Object.entries(c.skill_tree).slice(0, 6).map(([sf, entry]) => (
+                      <div key={sf} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '8px 10px', marginBottom: 6 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: entry?.highlight ? 4 : 0 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-800)' }}>{sf}</span>
+                          {entry?.level && (
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                              background: entry.level === 'Expert' ? '#d1fae5' : entry.level === 'Proficient' ? '#FFF4EC' : 'var(--teal-light)',
+                              color: entry.level === 'Expert' ? '#065f46' : entry.level === 'Proficient' ? '#c45f00' : 'var(--teal)'
+                            }}>{entry.level}</span>
+                          )}
                         </div>
-                        {skill.specialisation && <div style={{ fontSize: 11, color: 'var(--grey-600)', marginBottom: skill.proofPoint ? 3 : 0 }}>{skill.specialisation}</div>}
-                        {skill.proofPoint && <div style={{ fontSize: 11, color: 'var(--orange)', fontStyle: 'italic' }}>"{skill.proofPoint}"</div>}
+                        {entry?.highlight && (
+                          <div style={{ fontSize: 11, color: 'var(--orange)', fontStyle: 'italic', lineHeight: 1.5 }}>
+                            "{entry.highlight}"
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

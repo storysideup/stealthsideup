@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
-import SkillTreeSelector from '../components/SkillTreeSelector'
+import SkillsTable from '../components/SkillsTable'
 
 function InstituteSearch({ value, onChange }) {
   const [query, setQuery] = React.useState(value || '')
@@ -188,7 +188,7 @@ export default function Register({ onNavigate }) {
     ctc_fixed: '', ctc_variable: '', ctc_joining_bonus: '', ctc_esops: '', ctc_allowances: '',
     freelance_sector: '', freelance_engagement_size: '', freelance_years: '',
     previous_industries: [], average_tenure: '', career_b2b_b2c: '',
-    skill_keywords: [], skill_tree: [], career_history: [], headline: '', declaration_agreed: false,
+    skill_keywords: [], skill_tree: {}, career_history: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
     notice_period: '', min_expected_ctc: '', years_in_function: '',
@@ -560,7 +560,10 @@ export default function Register({ onNavigate }) {
 
           <div className="form-group">
             <label className="form-label">Your Skills <span className="required">*</span></label>
-            <SkillTreeSelector
+            <div className="form-hint" style={{ marginBottom: 12 }}>
+              Select your proficiency level for each area. For Expert — share a highlight from your work.
+            </div>
+            <SkillsTable
               functionName={form.primary_function}
               value={form.skill_tree}
               onChange={v => set('skill_tree', v)}
@@ -673,7 +676,7 @@ export default function Register({ onNavigate }) {
             if (!form.job_search_status) missing.push('jobstatus')
             if (!form.primary_function) missing.push('function')
             if (!form.years_experience) missing.push('experience')
-            if (form.skill_tree.length === 0) missing.push('skills')
+            if (Object.keys(form.skill_tree).length === 0) missing.push('skills')
             return missing.length > 0 ? (
               <div style={{ background: '#fff8f0', border: '1.5px solid #f5c4a3', borderRadius: 10, padding: '12px 14px', marginBottom: 20 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--orange)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>
@@ -698,7 +701,7 @@ export default function Register({ onNavigate }) {
               { label: 'Current Employment', value: form.current_employment_type },
               { label: 'Current Industry', value: form.current_industry || form.freelance_sector },
               { label: 'Total CTC', value: ctcTotal ? '\u20b9' + ctcTotal.toFixed(1) + 'L' : '' },
-              { label: 'Skill Areas', value: form.skill_tree.length ? form.skill_tree.length + ' added' : '' },
+              { label: 'Skill Areas', value: Object.keys(form.skill_tree).length ? Object.keys(form.skill_tree).length + ' added' : '' },
               { label: 'Job Status', value: form.job_search_status },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--teal-border)', fontSize: 13 }}>
@@ -740,7 +743,7 @@ export default function Register({ onNavigate }) {
           )}
 
           {/* SKILLS MISSING WARNING */}
-          {form.skill_tree.length === 0 && (
+          {Object.keys(form.skill_tree).length === 0 && (
             <div style={{ background: '#fff8f0', border: '1.5px solid #f5c4a3', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
               <div style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.6 }}>
                 <strong style={{ color: 'var(--orange)' }}>No skills added yet.</strong> Go back to Section E — Past Experience to add your skill areas. This is what companies match against your profile.

@@ -161,7 +161,7 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
+          model: isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
           messages: [{ role: 'user', content: messageContent }]
         })
@@ -181,7 +181,7 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
       onChange(updated)
       setUploadDone(true)
     } catch (e) {
-      setUploadError('Could not read CV. Please fill manually.')
+      setUploadError('Could not read CV: ' + (e.message || 'Unknown error') + '. Try a Word doc (.docx) instead.')
     }
     setUploading(false)
   }

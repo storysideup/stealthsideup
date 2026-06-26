@@ -80,7 +80,7 @@ export const CURRENT_EMPLOYMENT_TYPES = [
   "Full-time employed",
   "Freelance / Independent Consultant",
   "Entrepreneur / Founder",
-  "Between roles (available immediately)",
+  "Not currently employed",
   "Sabbatical"
 ]
 

@@ -138,21 +138,20 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
     if (!file) return
     setUploading(true); setUploadError('')
     try {
-      // Read file as text directly for better compatibility
-      const cvText = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result?.slice(0, 6000) || '')
-        reader.onerror = reject
-        // Use readAsText for all file types - works for PDF text content too
-        reader.readAsText(file)
-      })
-
-      if (!cvText || cvText.trim().length < 50) {
-        throw new Error('CV appears empty or unreadable')
-      }
       const subFunctionList = subFunctions.join(', ')
-
       const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
+      if (!apiKey) throw new Error('API key not configured')
+      const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const prompt = `Read this CV carefully. For each sub-function listed, determine proficiency (Familiar/Proficient/Expert). Only include where there is clear evidence. For Expert, extract a one-line achievement with no company names.\n\nSub-functions: ${subFunctionList}\n\nReturn ONLY valid JSON, no markdown:\n{"Talent Acquisition": {"level": "Expert", "highlight": "Led end-to-end hiring for 3 business units"}}\n\nOnly include sub-functions with clear evidence.`
+      const messageContent = isPDF
+        ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }, { type: 'text', text: prompt }]
+        : [{ type: 'text', text: prompt + '\n\nCV text:\n' + atob(base64).slice(0, 5000) }]
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -164,24 +163,9 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `Read this CV. For each sub-function listed below, determine if the person has experience and at what level (Familiar/Proficient/Expert). Only include sub-functions where there is clear evidence. For Expert level, extract a specific one-line achievement from the CV (no company names).
-
-Sub-functions to evaluate: ${subFunctionList}
-
-Return ONLY a JSON object like this, no markdown:
-{
-  "Talent Acquisition": { "level": "Expert", "highlight": "Led hiring of 200+ roles across 3 business units in 18 months" },
-  "HR Analytics": { "level": "Proficient", "highlight": "" }
-}
-
-Only include sub-functions with clear evidence. CV:
-${cvText}`
-          }]
+          messages: [{ role: 'user', content: messageContent }]
         })
       })
-
       const data = await response.json()
       const text = data.content?.[0]?.text || ''
       const clean = text.replace(/```json|```/g, '').trim()

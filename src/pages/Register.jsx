@@ -1,7 +1,7 @@
-import React from 'react'
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillsTable from '../components/SkillsTable'
+import { COMPANIES } from '../data/companies'
 
 function InstituteSearch({ value, onChange }) {
   const [query, setQuery] = React.useState(value || '')
@@ -57,6 +57,7 @@ function InstituteSearch({ value, onChange }) {
   )
 }
 import { CandidateLocationPicker } from '../components/LocationPicker'
+import { COMPANIES } from '../data/companies'
 import CareerHistory from '../components/CareerHistory'
 import CVUploadSection from '../components/CVUpload'
 import {
@@ -169,6 +170,87 @@ function TrustBlock() {
   )
 }
 
+
+function CompanySearch({ value = [], onChange }) {
+  const [query, setQuery] = React.useState('')
+  const [showOptions, setShowOptions] = React.useState(false)
+  const filtered = query.length > 1
+    ? COMPANIES.filter(c => c.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+    : []
+
+  const addCompany = (company) => {
+    if (!value.includes(company)) onChange([...value, company])
+    setQuery(''); setShowOptions(false)
+  }
+
+  const removeCompany = (company) => onChange(value.filter(c => c !== company))
+
+  return (
+    <div>
+      <div className="form-hint" style={{ marginBottom: 10, lineHeight: 1.6 }}>
+        Add your current and previous employers so they never see your profile. Type the common name — e.g. "Airtel" not "Bharti Airtel Limited".
+      </div>
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          {value.map(company => (
+            <div key={company} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px',
+              background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 20,
+              fontSize: 12, color: '#991b1b', fontWeight: 600
+            }}>
+              {company}
+              <button type="button" onClick={() => removeCompany(company)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ position: 'relative' }}>
+        <input className="form-input"
+          placeholder="Start typing company name..."
+          value={query}
+          onChange={e => { setQuery(e.target.value); setShowOptions(true) }}
+          onFocus={() => setShowOptions(true)}
+          onBlur={() => setTimeout(() => setShowOptions(false), 200)}
+        />
+        {showOptions && (filtered.length > 0 || query.length > 1) && (
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+            background: 'white', border: '1.5px solid var(--teal-border)',
+            borderRadius: 8, boxShadow: 'var(--shadow-md)', maxHeight: 220, overflowY: 'auto'
+          }}>
+            {filtered.map(company => (
+              <button key={company} type="button"
+                onMouseDown={() => addCompany(company)}
+                style={{
+                  display: 'block', width: '100%', padding: '10px 14px', border: 'none',
+                  borderBottom: '1px solid var(--grey-100)', background: 'white',
+                  textAlign: 'left', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  color: 'var(--grey-800)'
+                }}
+                onMouseEnter={e => e.target.style.background = 'var(--teal-light)'}
+                onMouseLeave={e => e.target.style.background = 'white'}>
+                {company}
+              </button>
+            ))}
+            {query.length > 1 && (
+              <button type="button"
+                onMouseDown={() => addCompany(query)}
+                style={{
+                  display: 'block', width: '100%', padding: '10px 14px', border: 'none',
+                  background: '#fff4ec', textAlign: 'left', fontSize: 12,
+                  cursor: 'pointer', fontFamily: 'inherit', color: 'var(--orange)', fontWeight: 600
+                }}>
+                + Block "{query}" (not in list)
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Register({ onNavigate }) {
   const [step, setStep] = useState(0) // 0=contact, 1=verify, 2-7=form sections
   const [contact, setContact] = useState('')
@@ -271,7 +353,7 @@ export default function Register({ onNavigate }) {
         work_preference: form.work_preference,
         relocation: form.relocation,
         relocation_cities: form.relocation_cities,
-        blocked_companies: form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [],
+        blocked_companies: form.blocked_companies || [],
         preferred_locations: form.preferred_locations,
         career_history: form.career_history,
         notice_period: form.notice_period,
@@ -629,16 +711,6 @@ export default function Register({ onNavigate }) {
               <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>Lakhs per annum</span>
             </div>
             <div className="form-hint">The minimum you would consider moving for. Helps us filter out roles that don't meet your expectations.</div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Years in Your Primary Function</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input className="form-input" type="number" min="0" max="50" placeholder="e.g. 8" style={{ maxWidth: 100 }}
-                value={form.years_in_function} onChange={e => set('years_in_function', e.target.value)} />
-              <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>years</span>
-            </div>
-            <div className="form-hint">Of your total experience, how many years have been in {form.primary_function || 'your primary function'}?</div>
           </div>
 
           <div className="form-group">

@@ -7,6 +7,7 @@ import {
   FUNCTIONS, INDUSTRIES, NOTICE_PERIODS, LANGUAGES,
   SENIORITY_LEVELS, ORG_TYPES
 } from '../data/formData'
+import { COMPANIES } from '../data/companies'
 
 const SECTIONS = ['Basic Info', 'Current Role', 'Career History', 'Skills', 'Preferences']
 
@@ -22,6 +23,59 @@ function TagSelect({ options, value = [], onChange, max }) {
           className={`tag ${value.includes(opt) ? 'selected' : ''}`}
           onClick={() => toggle(opt)}>{opt}</button>
       ))}
+    </div>
+  )
+}
+
+import React from 'react'
+
+function CompanySearch({ value = [], onChange }) {
+  const [query, setQuery] = React.useState('')
+  const [showOptions, setShowOptions] = React.useState(false)
+  const filtered = query.length > 1
+    ? COMPANIES.filter(c => c.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+    : []
+  const addCompany = (company) => {
+    if (!value.includes(company)) onChange([...value, company])
+    setQuery(''); setShowOptions(false)
+  }
+  const removeCompany = (company) => onChange(value.filter(c => c !== company))
+  return (
+    <div>
+      <div className="form-hint" style={{ marginBottom: 10, lineHeight: 1.6 }}>
+        Add your current and previous employers — your profile will never be shown to them.
+      </div>
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          {value.map(company => (
+            <div key={company} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 20, fontSize: 12, color: '#991b1b', fontWeight: 600 }}>
+              {company}
+              <button type="button" onClick={() => removeCompany(company)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ position: 'relative' }}>
+        <input className="form-input" placeholder="Start typing company name..." value={query}
+          onChange={e => { setQuery(e.target.value); setShowOptions(true) }}
+          onFocus={() => setShowOptions(true)} onBlur={() => setTimeout(() => setShowOptions(false), 200)} />
+        {showOptions && (filtered.length > 0 || query.length > 1) && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: 'white', border: '1.5px solid var(--teal-border)', borderRadius: 8, boxShadow: 'var(--shadow-md)', maxHeight: 220, overflowY: 'auto' }}>
+            {filtered.map(company => (
+              <button key={company} type="button" onMouseDown={() => addCompany(company)}
+                style={{ display: 'block', width: '100%', padding: '10px 14px', border: 'none', borderBottom: '1px solid var(--grey-100)', background: 'white', textAlign: 'left', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--grey-800)' }}>
+                {company}
+              </button>
+            ))}
+            {query.length > 1 && (
+              <button type="button" onMouseDown={() => addCompany(query)}
+                style={{ display: 'block', width: '100%', padding: '10px 14px', border: 'none', background: '#fff4ec', textAlign: 'left', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--orange)', fontWeight: 600 }}>
+                + Block "{query}" (not in list)
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -148,7 +202,7 @@ export default function EditProfile({ onNavigate }) {
       languages: form.languages,
       open_to_travel: form.open_to_travel,
       has_passport: form.has_passport,
-      blocked_companies: form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [],
+      blocked_companies: Array.isArray(form.blocked_companies) ? form.blocked_companies : (form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : []),
     }).eq('id', candidate.id)
 
     if (err) { setError(err.message); setSaving(false); return }
@@ -292,6 +346,15 @@ export default function EditProfile({ onNavigate }) {
           <label className="form-label">Last 3 Roles</label>
           <CareerHistory value={form.career_history} onChange={v => set('career_history', v)} />
         </div>
+        <div className="form-group">
+          <label className="form-label">Years Specifically in {form.primary_function || 'Your Primary Function'}</label>
+          <div className="form-hint" style={{ marginBottom: 8 }}>Of your total experience, how many years have been in this function?</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input className="form-input" type="number" min="0" max="50" placeholder="e.g. 8" style={{ maxWidth: 100 }}
+              value={form.years_in_function} onChange={e => set('years_in_function', e.target.value)} />
+            <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>years</span>
+          </div>
+        </div>
       </>}
 
       {/* SECTION 3 — Skills */}
@@ -313,10 +376,6 @@ export default function EditProfile({ onNavigate }) {
           <input className="form-input" type="number" placeholder="e.g. 35" value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Years in Current Function</label>
-          <input className="form-input" type="number" placeholder="e.g. 8" value={form.years_in_function} onChange={e => set('years_in_function', e.target.value)} />
-        </div>
-        <div className="form-group">
           <label className="form-label">Preferred Locations</label>
           <CandidateLocationPicker value={form.preferred_locations} onChange={v => set('preferred_locations', v)} />
         </div>
@@ -326,8 +385,7 @@ export default function EditProfile({ onNavigate }) {
         </div>
         <div className="form-group">
           <label className="form-label">Companies to Block</label>
-          <input className="form-input" placeholder="Comma separated — e.g. Company A, Company B"
-            value={form.blocked_companies} onChange={e => set('blocked_companies', e.target.value)} />
+          <CompanySearch value={Array.isArray(form.blocked_companies) ? form.blocked_companies : (form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : [])} onChange={v => set('blocked_companies', v)} />
         </div>
       </>}
 

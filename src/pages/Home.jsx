@@ -60,10 +60,10 @@ export default function Home({ onNavigate }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
           {/* CANDIDATE */}
-          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(22,93,123,0.12)', border: '1px solid rgba(22,93,123,0.06)' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(22,93,123,0.12)', border: '1px solid rgba(22,93,123,0.06)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>👤</div>
             <div style={{ fontSize: 14, fontWeight: 800, color: '#165D7B', marginBottom: 4, lineHeight: 1.2 }}>Candidate</div>
-            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16 }}>Explore opportunities without anyone knowing</div>
+            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16, flex: 1 }}>Explore opportunities without anyone knowing</div>
             <button onClick={() => onNavigate('register')} style={{
               width: '100%', background: '#165D7B', color: 'white', border: 'none',
               borderRadius: 8, padding: '10px 8px', fontSize: 12, fontWeight: 700,
@@ -77,10 +77,10 @@ export default function Home({ onNavigate }) {
           </div>
 
           {/* EMPLOYER */}
-          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(255,157,82,0.12)', border: '1px solid rgba(255,157,82,0.08)' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '20px 14px', boxShadow: '0 4px 24px rgba(255,157,82,0.12)', border: '1px solid rgba(255,157,82,0.08)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>🏢</div>
             <div style={{ fontSize: 14, fontWeight: 800, color: '#165D7B', marginBottom: 4, lineHeight: 1.2 }}>Employer</div>
-            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16 }}>Find talent matched to your skills requirement</div>
+            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.5, marginBottom: 16, flex: 1 }}>Find talent matched to your skills requirement</div>
             <button onClick={() => onNavigate('corporate-login')} style={{
               width: '100%', background: '#FF9D52', color: 'white', border: 'none',
               borderRadius: 8, padding: '10px 8px', fontSize: 12, fontWeight: 700,

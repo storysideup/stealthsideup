@@ -71,13 +71,25 @@ const TOTAL_STEPS = 7 // Verify + 6 sections
 
 function TagSelect({ options, value = [], onChange, max }) {
   const toggle = (opt) => {
-    if (value.includes(opt)) onChange(value.filter(v => v !== opt))
-    else if (!max || value.length < max) onChange([...value, opt])
+    if (max === 1) {
+      onChange(value.includes(opt) ? [] : [opt])
+    } else if (value.includes(opt)) {
+      onChange(value.filter(v => v !== opt))
+    } else if (!max || value.length < max) {
+      onChange([...value, opt])
+    }
   }
   return (
     <div className="tag-cloud">
       {options.map(opt => (
-        <button key={opt} type="button" className={`tag ${value.includes(opt) ? 'selected' : ''}`} onClick={() => toggle(opt)}>{opt}</button>
+        <button
+          key={opt}
+          type="button"
+          className={`tag ${value.includes(opt) ? 'selected' : ''}`}
+          onPointerDown={e => { e.preventDefault(); toggle(opt) }}
+          style={{ touchAction: 'manipulation', userSelect: 'none' }}>
+          {opt}
+        </button>
       ))}
     </div>
   )

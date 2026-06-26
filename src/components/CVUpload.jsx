@@ -61,8 +61,17 @@ export default function CVUploadSection({ onExtracted }) {
       const clean = rawText.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
 
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        onExtracted({ skill_tree: parsed })
+      // Handle both array (skills) and object (skills + profile data)
+      const skillTree = Array.isArray(parsed) ? parsed : (parsed.skills || [])
+      const profileData = Array.isArray(parsed) ? {} : parsed
+      if (skillTree.length > 0 || profileData.current_industry) {
+        onExtracted({
+          skill_tree: skillTree,
+          current_industry: profileData.current_industry || null,
+          previous_industries: profileData.previous_industries || [],
+          role_type: profileData.role_type || null,
+          years_experience: profileData.years_experience || null,
+        })
         setExtracted(true)
         setShowSection(false)
       } else {

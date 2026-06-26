@@ -587,7 +587,7 @@ export default function Register({ onNavigate }) {
 
             <div className="form-group">
               <label className="form-label">Current CTC Breakup <span className="required">*</span></label>
-              <div className="form-hint" style={{ marginBottom: 10 }}>All figures in Lakhs <strong>per annum</strong> (₹L). E.g. 25 means ₹25 Lakhs per year.</div>
+              <div className="form-hint" style={{ marginBottom: 10 }}>Figures in Lakhs per annum. E.g. 25 = ₹25L. For Crores use decimals — e.g. 1.5 Cr = 150, 2 Cr = 200.</div>
               {[
                 { key: 'ctc_fixed', label: 'Fixed / Base Salary' },
                 { key: 'ctc_variable', label: 'Variable / Bonus' },

@@ -63,6 +63,16 @@ export const SKILL_TREE = {
         "HR Compliance & Labour Law": ["PF / ESI / PT", "Shops & Establishments", "Contract Labour Act", "Maternity Benefit Act", "Factory Act"],
       }
     },
+    "Talent Management": {
+      specialisations: ["Succession Planning", "Hi-Po Identification & Development", "Leadership Pipeline", "Career Frameworks & Pathing", "Performance Calibration", "Retention Strategy", "Talent Reviews"],
+      depth: {
+        "Succession Planning": ["9-box Grid", "Successor Identification", "Succession Gaps", "Board-level Succession", "Accelerated Development Plans"],
+        "Hi-Po Identification & Development": ["Hi-Po Assessment Criteria", "Fast Track Programmes", "Stretch Assignments", "Executive Sponsorship", "Hi-Po Cohort Management"],
+        "Leadership Pipeline": ["First-time Manager Programmes", "Senior Leader Development", "GM / P&L Leader Pipeline", "External Leadership Hiring Strategy"],
+        "Career Frameworks & Pathing": ["Job Architecture", "Career Ladder Design", "IC vs Manager Tracks", "Career Conversation Frameworks"],
+        "Retention Strategy": ["Stay Interview Process", "Flight Risk Identification", "Critical Talent Retention Plans", "Counter-offer Management"],
+      }
+    },
     "Organisational Development": {
       specialisations: ["Culture & Values", "Change Management", "Org Design & Restructuring", "Competency Frameworks", "Employee Engagement", "360 Feedback & Assessments"],
       depth: {

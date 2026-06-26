@@ -1,4 +1,8 @@
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const { text } = req.body
@@ -14,23 +18,27 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 1500,
         messages: [{
           role: 'user',
-          content: `Read this CV. Extract the candidate's top skills with proof points from their actual experience.
+          content: `Read this CV carefully. Extract the following information and return ONLY a JSON object, no markdown:
 
-Return ONLY a JSON array, no markdown, no explanation:
-[
-  {
-    "subFunction": "specific skill area name",
-    "proficiency": "familiar or proficient or expert",
-    "specialisation": "most relevant specialisation if clear",
-    "proofPoint": "one specific achievement proving this skill — under 140 chars, no company names, use numbers where possible",
-    "customDepth": "any specific tool or platform"
-  }
-]
+{
+  "current_industry": "the industry of their most recent/current role — pick from: FMCG, Banking / Financial Services, Insurance, Fintech, IT / Software, SaaS / Product, Internet / E-commerce, Telecom / Wireless, Pharma / Healthcare, Auto / Manufacturing, Retail, Consulting / Professional Services, Media / Entertainment, Real Estate, Education, Events / Hospitality, Other",
+  "previous_industries": ["array of up to 3 industries from previous roles, same options as above"],
+  "role_type": "Individual Contributor or Team Manager",
+  "years_experience": "total years of experience as a number e.g. 15",
+  "skills": [
+    {
+      "subFunction": "specific skill area name",
+      "proficiency": "familiar or proficient or expert",
+      "specialisation": "most relevant specialisation if clear",
+      "proofPoint": "one specific achievement proving this skill — under 140 chars, no company names, use numbers where possible"
+    }
+  ]
+}
 
-Maximum 8 entries. Only include skills with clear evidence. Do not invent skills.
+Maximum 8 skill entries. Only include skills with clear evidence.
 
 CV text:
 ${text.slice(0, 8000)}`

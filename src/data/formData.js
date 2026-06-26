@@ -53,12 +53,6 @@ export const INDUSTRIES = [
   { sector: "Industrial / Manufacturing", items: ["Automotive / Auto Ancillary", "Chemicals / Pharma / Life Sciences", "Infrastructure / Real Estate / Construction", "Energy / Oil & Gas / Renewables", "Industrial Manufacturing", "Logistics / Supply Chain / 3PL", "Packaging / Paper / Textiles", "Defence / Aerospace"] },
   { sector: "Services", items: ["Consulting / Professional Services", "Events / Entertainment / Sports", "Hospitality / Travel & Tourism", "Education / EdTech", "Healthcare / Hospitals / Diagnostics", "Media / Advertising / PR", "Legal / Law Firms", "Staffing / Recruitment / HR Services"] },
   { sector: "Social / Development", items: ["NGO / Development Sector", "Government / PSU"] }
-] },
-  { sector: "Consumer", items: ["FMCG / Food & Beverage", "Retail — Organised / E-commerce", "Luxury / Premium Fashion & Lifestyle", "Consumer Durables / Electronics", "D2C Brands"] },
-  { sector: "Technology", items: ["IT Services / ITES / BPO", "SaaS / Product Companies", "E-commerce / Marketplace", "Emerging Tech (AI / Deeptech / Healthtech)"] },
-  { sector: "Industrial / Manufacturing", items: ["Automotive / Auto Ancillary", "Chemicals / Pharma / Life Sciences", "Infrastructure / Real Estate / Construction", "Energy / Oil & Gas / Renewables", "Industrial Manufacturing"] },
-  { sector: "Services", items: ["Consulting / Professional Services", "Events / Entertainment / Sports", "Hospitality / Travel & Tourism", "Education / EdTech", "Healthcare / Hospitals / Diagnostics", "Media / Advertising / PR"] },
-  { sector: "Social / Development", items: ["NGO / Development Sector", "Government / PSU"] }
 ]
 
 export const INSTITUTES = [

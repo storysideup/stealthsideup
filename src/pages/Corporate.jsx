@@ -34,12 +34,13 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: btoa(password), subscription_tier: 'free', is_active: true, tokens: 3
+      ...form, work_email: email, password_hash: btoa(password), subscription_tier: 'free', is_active: true, tokens: 5,
+      token_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
     setMode('login')
     setError('')
-    alert('Account created! You have been given 3 free tokens to start. Please login.')
+    alert('Account created! You have been given 5 free tokens valid for 30 days. No card required. Please login.')
     setLoading(false)
   }
 
@@ -61,6 +62,44 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
         <div className="form-group">
           <label className="form-label">Your Name <span className="required">*</span></label>
           <input className="form-input" placeholder="Full name" value={form.contact_person} onChange={e => set('contact_person', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Your Role <span className="required">*</span></label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { value: 'admin', label: 'Admin / Decision Maker', desc: 'I manage hiring strategy, budgets and the team. I will also invite recruiters if needed.' },
+              { value: 'recruiter', label: 'Recruiter / TA Professional', desc: 'I work on specific mandates assigned to me.' }
+            ].map(opt => (
+              <button key={opt.value} type="button"
+                onClick={() => set('user_role', opt.value)}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px',
+                  border: form.user_role === opt.value ? '2px solid var(--teal)' : '1.5px solid var(--grey-200)',
+                  borderRadius: 10, background: form.user_role === opt.value ? 'var(--teal-light)' : 'white',
+                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left'
+                }}>
+                <div style={{
+                  width: 16, height: 16, borderRadius: '50%', flexShrink: 0, marginTop: 2,
+                  border: form.user_role === opt.value ? '5px solid var(--teal)' : '2px solid var(--grey-300)',
+                  background: 'white'
+                }} />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: form.user_role === opt.value ? 'var(--teal)' : 'var(--grey-800)' }}>{opt.label}</div>
+                  <div style={{ fontSize: 12, color: 'var(--grey-400)', marginTop: 2, lineHeight: 1.5 }}>{opt.desc}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Free trial explanation */}
+        <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 10, padding: '14px', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', marginBottom: 6 }}>🎁 You get 5 free tokens on signup</div>
+          <div style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
+            <strong>What is a token?</strong> A token is a credit you use to express interest in a candidate profile. Every time you click "Express Interest" on a matched profile, 1 token is used. Think of it like a message credit — you only spend it when you actively choose to reach out to someone.
+            <br /><br />
+            Your 5 free tokens are valid for 30 days. No card required to start.
+          </div>
         </div>
       </>}
 
@@ -885,7 +924,7 @@ export function CorporateDashboard({ corporate, onNavigate }) {
       <div className="flex-between" style={{ marginBottom: 20 }}>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)' }}>{corporate.company_name}</h2>
-          <div className="text-muted">{corporate.contact_person} · <span className="badge badge-teal">{corporate.subscription_tier?.toUpperCase()}</span></div>
+          <div className="text-muted">{corporate.contact_person}</div>
         </div>
         <button type="button" onClick={() => {
           localStorage.removeItem('ssu_corporate')
@@ -896,6 +935,34 @@ export function CorporateDashboard({ corporate, onNavigate }) {
           cursor: 'pointer', fontFamily: 'inherit'
         }}>
           Log out
+        </button>
+      </div>
+
+      {/* TOKEN BALANCE */}
+      <div style={{
+        background: (corporate.tokens || 0) <= 2 ? '#fff4ec' : 'var(--teal-light)',
+        border: `1.5px solid ${(corporate.tokens || 0) <= 2 ? 'var(--orange-border)' : 'var(--teal-border)'}`,
+        borderRadius: 12, padding: '14px 16px', marginBottom: 16,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+      }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Token Balance</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: (corporate.tokens || 0) <= 2 ? 'var(--orange)' : 'var(--teal)' }}>
+            {corporate.tokens || 0} tokens
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 2 }}>
+            {(corporate.tokens || 0) <= 2
+              ? '⚠ Running low — buy more to keep matching'
+              : '1 token used per candidate you express interest in'}
+          </div>
+        </div>
+        <button type="button" onClick={() => onNavigate('buy-tokens')}
+          style={{
+            background: 'var(--orange)', color: 'white', border: 'none', borderRadius: 8,
+            padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'inherit', boxShadow: '0 2px 8px rgba(255,157,82,0.3)'
+          }}>
+          Buy Tokens
         </button>
       </div>
 

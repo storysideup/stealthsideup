@@ -8,6 +8,7 @@ import Register from './pages/Register'
 import EditProfile from './pages/EditProfile'
 import { CorporateLogin, PostJD, CorporateDashboard } from './pages/Corporate'
 import CandidateProfile from './pages/CandidateProfile'
+import BuyTokens from './pages/BuyTokens'
 
 function HomeIcon({ active }) {
   return <svg viewBox="0 0 24 24" fill={active ? '#165D7B' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -30,6 +31,7 @@ const PAGE_HEADERS = {
   'corporate-dashboard': { title: 'Dashboard', subtitle: 'Your active mandates' },
   'post-jd': { title: 'Post a Role', subtitle: 'Structured for better matching' },
   'candidate-profile': { title: 'My Dashboard', subtitle: 'Your matches and responses' },
+  'buy-tokens': { title: 'Buy Tokens', subtitle: 'Top up your token balance' },
 }
 
 export default function App() {
@@ -72,6 +74,7 @@ export default function App() {
         {page === 'corporate-dashboard' && <CorporateDashboard corporate={corporate} onNavigate={navigate} />}
         {page === 'post-jd' && <PostJD corporate={corporate} onNavigate={navigate} />}
         {page === 'candidate-profile' && <CandidateProfile onNavigate={navigate} />}
+        {page === 'buy-tokens' && <BuyTokens corporate={corporate} onNavigate={navigate} onCorporateUpdate={setCorporateAndSave} />}
       </div>
       <nav className="bottom-nav">
         <button className={`nav-item ${page === 'home' ? 'active' : ''}`} onClick={() => navigate('home')}>

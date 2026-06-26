@@ -47,9 +47,12 @@ export default function Home({ onNavigate }) {
       {/* HERO */}
       <div style={{ background: 'linear-gradient(160deg, #165D7B 0%, #165D7B 100%)', padding: '32px 20px 40px' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>by StorySideUp</div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'white', lineHeight: 1.25, marginBottom: 0, letterSpacing: '-0.5px' }}>
-          Get matched to jobs anonymously: based on your skills and experience.
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'white', lineHeight: 1.25, marginBottom: 10, letterSpacing: '-0.5px' }}>
+          India's first anonymous talent marketplace.
         </h1>
+        <p style={{ fontSize: 15, color: '#E8621A', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
+          Finally something for those who want to explore their market value — without anyone finding out.
+        </p>
       </div>
 
       {/* TWO PATH CARDS — float over hero */}

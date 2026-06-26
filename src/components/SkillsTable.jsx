@@ -224,6 +224,25 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
         </div>
       )}
 
+      {/* Proficiency definitions */}
+      {mode === 'candidate' && (
+        <div style={{ display: 'flex', gap: 5, marginBottom: 12 }}>
+          {[
+            { level: 'Familiar', color: LEVEL_COLORS.Familiar, desc: 'Worked in this area, understand it well' },
+            { level: 'Proficient', color: LEVEL_COLORS.Proficient, desc: 'Delivered independently, can lead without guidance' },
+            { level: 'Expert', color: LEVEL_COLORS.Expert, desc: 'Built or owned this at an organisational level' },
+          ].map(({ level, color, desc }) => (
+            <div key={level} style={{
+              flex: 1, background: color.bg, border: `1px solid ${color.border}`,
+              borderRadius: 8, padding: '8px 6px', textAlign: 'center'
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: color.text, marginBottom: 3 }}>{level}</div>
+              <div style={{ fontSize: 10, color: '#6b7280', lineHeight: 1.4 }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Column headers */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8, borderBottom: '2px solid var(--grey-200)', marginBottom: 4 }}>
         <div style={{ flex: 1, fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5 }}>

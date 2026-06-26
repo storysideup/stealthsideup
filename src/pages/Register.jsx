@@ -57,7 +57,6 @@ function InstituteSearch({ value, onChange }) {
   )
 }
 import { CandidateLocationPicker } from '../components/LocationPicker'
-import { COMPANIES } from '../data/companies'
 import CareerHistory from '../components/CareerHistory'
 import CVUploadSection from '../components/CVUpload'
 import {

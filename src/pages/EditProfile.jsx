@@ -103,8 +103,8 @@ export default function EditProfile({ onNavigate }) {
   // Load from session
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem('ssu_candidate')
-      const savedContact = sessionStorage.getItem('ssu_candidate_contact')
+      const saved = localStorage.getItem('ssu_candidate')
+      const savedContact = localStorage.getItem('ssu_candidate_contact')
       if (saved) {
         const c = JSON.parse(saved)
         setCandidate(c)

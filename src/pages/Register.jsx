@@ -2,6 +2,60 @@ import React from 'react'
 import { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillTreeSelector from '../components/SkillTreeSelector'
+
+function InstituteSearch({ value, onChange }) {
+  const [query, setQuery] = React.useState(value || '')
+  const [showOptions, setShowOptions] = React.useState(false)
+  const filtered = query.length > 1
+    ? INSTITUTES.filter(i => i.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
+    : []
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <input className="form-input"
+        placeholder="Start typing your institute name..."
+        value={query}
+        onChange={e => { setQuery(e.target.value); onChange(''); setShowOptions(true) }}
+        onFocus={() => setShowOptions(true)}
+        onBlur={() => setTimeout(() => setShowOptions(false), 200)}
+      />
+      {value && <div style={{ fontSize: 12, color: 'var(--teal)', marginTop: 4, fontWeight: 600 }}>✓ {value}</div>}
+      {showOptions && filtered.length > 0 && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+          background: 'white', border: '1.5px solid var(--teal-border)',
+          borderRadius: 8, boxShadow: 'var(--shadow-md)', maxHeight: 200, overflowY: 'auto'
+        }}>
+          {filtered.map(inst => (
+            <button key={inst} type="button"
+              onMouseDown={() => { onChange(inst); setQuery(inst); setShowOptions(false) }}
+              style={{
+                display: 'block', width: '100%', padding: '10px 14px', border: 'none',
+                borderBottom: '1px solid var(--grey-100)', background: 'white',
+                textAlign: 'left', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                color: 'var(--grey-800)'
+              }}
+              onMouseEnter={e => e.target.style.background = 'var(--teal-light)'}
+              onMouseLeave={e => e.target.style.background = 'white'}>
+              {inst}
+            </button>
+          ))}
+          {query.length > 1 && (
+            <button type="button"
+              onMouseDown={() => { onChange(query); setShowOptions(false) }}
+              style={{
+                display: 'block', width: '100%', padding: '10px 14px', border: 'none',
+                background: 'var(--orange-light)', textAlign: 'left', fontSize: 12,
+                cursor: 'pointer', fontFamily: 'inherit', color: 'var(--orange)', fontWeight: 600
+              }}>
+              + Add "{query}" (not in list)
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 import { CandidateLocationPicker } from '../components/LocationPicker'
 import CareerHistory from '../components/CareerHistory'
 import CVUploadSection from '../components/CVUpload'
@@ -381,11 +435,7 @@ export default function Register({ onNavigate }) {
 
           <div className="form-group">
             <label className="form-label">Institute</label>
-            <SingleSelect options={INSTITUTES} value={form.institute} onChange={v => set('institute', v)} placeholder="Select institute..." />
-            {form.institute === 'Other (please specify)' && (
-              <input className="form-input" style={{ marginTop: 8 }} placeholder="Enter institute name"
-                value={form.institute_other} onChange={e => set('institute_other', e.target.value)} />
-            )}
+            <InstituteSearch value={form.institute} onChange={v => set('institute', v)} />
           </div>
 
           <div className="form-group">

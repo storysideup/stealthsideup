@@ -401,12 +401,23 @@ export const SKILL_TREE = {
 
   "Design & Creative": {
     "Fashion Design": {
-      specialisations: ["Womenswear Design", "Menswear Design", "Accessories Design", "Textile & Surface Design", "Kidswear Design", "Bridal & Occasion Wear"],
+      specialisations: ["Womenswear Design", "Menswear Design", "Accessories Design", "Textile & Surface Design", "Kidswear Design", "Bridal & Occasion Wear", "Couture & Luxury Design"],
       depth: {
-        "Womenswear Design": ["Ready-to-wear", "Couture / Luxury", "Athleisure", "Ethnic / Fusion", "Western Formals", "CAD — Gerber / Lectra / CLO3D"],
-        "Accessories Design": ["Handbags", "Footwear", "Jewellery", "Belts & Small Leather Goods", "Scarves & Neckwear"],
-        "Textile & Surface Design": ["Print Design", "Embroidery", "Weave Design", "Fabric Sourcing", "Surface Embellishment"],
-        "Menswear Design": ["Formal Wear", "Casual / Streetwear", "Sportswear", "Ethnic Menswear", "Pattern Cutting"],
+        "Womenswear Design": ["Ready-to-wear", "Couture / Luxury", "Athleisure", "Ethnic / Fusion", "Western Formals", "CAD — Gerber / Lectra / CLO3D", "Draping & Toile", "Silhouette Development"],
+        "Couture & Luxury Design": ["Haute Couture", "Bridal Couture", "Red Carpet / Evening Wear", "Hand Embroidery Direction", "Zardozi / Aari Work", "Embellishment Design", "Luxury RTW", "Seasonal Collection Development", "Lookbook & Presentation"],
+        "Accessories Design": ["Handbags", "Footwear", "Jewellery", "Belts & Small Leather Goods", "Scarves & Neckwear", "Millinery"],
+        "Textile & Surface Design": ["Print Design", "Embroidery", "Weave Design", "Fabric Sourcing", "Surface Embellishment", "Hand Craft & Artisan Techniques", "Dyeing & Printing Techniques"],
+        "Menswear Design": ["Formal Wear", "Casual / Streetwear", "Sportswear", "Ethnic Menswear", "Pattern Cutting", "Bespoke Tailoring"],
+        "Bridal & Occasion Wear": ["Bridal Lehenga", "Sherwani", "Indo-western Bridal", "Wedding Guest Styling", "Trousseau Planning"],
+      }
+    },
+    "Creative Direction & Styling": {
+      specialisations: ["Creative Direction", "Fashion Styling", "Visual Merchandising", "Editorial Styling", "Campaign Direction", "Brand Aesthetic Development"],
+      depth: {
+        "Creative Direction": ["Seasonal Vision Setting", "Mood Board Development", "Collection Story", "Photoshoot Direction", "Brand Identity through Design", "Collaborations & Partnerships"],
+        "Fashion Styling": ["Editorial Styling", "Celebrity Styling", "Lookbook Styling", "E-commerce Styling", "Personal Styling", "Prop & Set Styling"],
+        "Campaign Direction": ["Campaign Concept", "Photographer Briefing", "Model Direction", "Post-production Direction", "Social Media Campaign"],
+        "Visual Merchandising": ["Window Display", "In-store VM", "Planogram", "Retail Experience Design", "VM Guidelines"],
       }
     },
     "UI / UX Design": {
@@ -707,6 +718,51 @@ export const SKILL_TREE = {
       depth: {
         "Sea / Air / Rail Freight": ["FCL / LCL", "Air Freight Consolidation", "Dedicated Freight Corridor", "Port Operations", "Customs at Port"],
         "Carrier Negotiation": ["Rate Negotiation", "SLA with Carriers", "Space Booking", "Freight Cost Benchmarking"],
+      }
+    },
+  },
+
+  "Events & Experiential": {
+    "MICE Sales": {
+      specialisations: ["Corporate Event Sales", "Incentive Travel Sales", "Conference & Convention Sales", "Exhibition Sales", "Wedding & Social Events Sales", "Government & PSU Events"],
+      depth: {
+        "Corporate Event Sales": ["C-suite Client Management", "RFP Response & Proposal Writing", "End-to-end Event Pitching", "Retainer Account Management", "Cross-sell & Upsell"],
+        "Incentive Travel Sales": ["Domestic Incentive Tours", "International Incentive Travel", "Group Travel Sales", "Travel Package Design", "DMC Coordination"],
+        "Conference & Convention Sales": ["MICE RFP Management", "Venue Tie-ups", "PCO — Professional Conference Organiser", "Speaker & Delegate Management"],
+        "Government & PSU Events": ["Tender & Bid Management", "Government Protocol Events", "GeM Portal", "State / National Level Events"],
+      }
+    },
+    "Event Operations & Production": {
+      specialisations: ["Event Planning & Execution", "Stage & Production Management", "Vendor & Supplier Management", "On-ground Operations", "Large Format Events", "Virtual & Hybrid Events"],
+      depth: {
+        "Stage & Production Management": ["Stage Design", "AV Production", "LED & Lighting", "Sound Engineering", "Rigging & Staging", "Technical Rider Management"],
+        "Large Format Events": ["IPL / Sports Events", "Music Festivals", "Award Shows", "Product Launches", "Brand Activations", "Events with 1000+ Pax", "Events with 5000+ Pax"],
+        "Virtual & Hybrid Events": ["Virtual Platform Management", "Live Streaming", "Hybrid Event Production", "Webinar Management", "OBS / Zoom / Teams Events"],
+        "Vendor & Supplier Management": ["Vendor Empanelment", "Rate Negotiation", "Decorator & Fabricator Management", "Catering Coordination", "Entertainment Booking"],
+      }
+    },
+    "Client Servicing — Events": {
+      specialisations: ["Key Account Management", "Brief Taking & Conceptualisation", "Proposal & Budget Management", "Post-event Reporting", "Client Retention"],
+      depth: {
+        "Brief Taking & Conceptualisation": ["Creative Brief Analysis", "Theme & Concept Development", "Moodboard Presentation", "Competitive Benchmarking"],
+        "Proposal & Budget Management": ["Event Budgeting", "Cost Optimisation", "Markup & Margin Management", "Budget vs Actuals Tracking"],
+        "Post-event Reporting": ["Event ROI Analysis", "Feedback Collection", "Photo & Video Compilation", "Post-event Presentation to Client"],
+      }
+    },
+    "Venue & Logistics Management": {
+      specialisations: ["Venue Scouting & Selection", "Hotel & Resort Coordination", "Travel & Transport Logistics", "F&B Planning", "VVIP Protocol Management"],
+      depth: {
+        "Venue Scouting & Selection": ["Site Inspection", "Venue Negotiation", "Contract Management", "Capacity Planning", "Fallback Planning"],
+        "Travel & Transport Logistics": ["Group Air Ticketing", "Coach & Transfer Management", "Visa & Documentation", "Airport Handling", "Room Blocking"],
+        "VVIP Protocol Management": ["State Guest Protocol", "Security Coordination", "Green Room & Hospitality", "Escort & Itinerary Management"],
+      }
+    },
+    "Event Tech & Digital": {
+      specialisations: ["Event Management Software", "Registration & Ticketing", "Event App Development", "Live Polling & Engagement Tools", "RFID & Access Management"],
+      depth: {
+        "Event Management Software": ["Cvent", "Eventbrite", "Whova", "Zoho Backstage", "Hubilo", "Airmeet"],
+        "Registration & Ticketing": ["Online Registration Setup", "Badge Printing", "QR Code Check-in", "Waitlist Management"],
+        "Live Polling & Engagement": ["Slido", "Mentimeter", "Kahoot", "Q&A Management", "Audience Engagement Strategy"],
       }
     },
   },

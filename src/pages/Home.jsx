@@ -51,7 +51,7 @@ export default function Home({ onNavigate }) {
           India's first anonymous talent marketplace.
         </h1>
         <p style={{ fontSize: 15, color: '#E8621A', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
-          Finally something for those who want to explore their market value — without anyone finding out.
+          For those who are curious, not desperate.
         </p>
       </div>
 

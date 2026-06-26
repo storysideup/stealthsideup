@@ -192,11 +192,10 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
       {mode === 'candidate' && !uploadDone && (
         <div style={{ background: '#f9fafb', border: '1.5px solid var(--grey-200)', borderRadius: 10, padding: 14, marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-800)', marginBottom: 4 }}>
-            ⚡ Upload your CV to pre-fill your skill levels
+            ⚡ Upload your CV to auto-fill your skills below
           </div>
           <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 12, lineHeight: 1.6 }}>
-            AI will suggest proficiency levels based on your experience. You can review and change everything.
-            <strong style={{ color: 'var(--teal)' }}> Your CV is never stored or shared.</strong>
+            AI reads your CV and ticks the right proficiency levels for each skill area. Review and change anything. <strong style={{ color: 'var(--teal)' }}>Your CV is never stored or shared.</strong>
           </div>
           {uploadError && <div className="error-msg" style={{ marginBottom: 8 }}>{uploadError}</div>}
           <div style={{ display: 'flex', gap: 8 }}>

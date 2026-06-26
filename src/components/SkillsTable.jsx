@@ -138,14 +138,18 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
     if (!file) return
     setUploading(true); setUploadError('')
     try {
-      const base64 = await new Promise((resolve, reject) => {
+      // Read file as text directly for better compatibility
+      const cvText = await new Promise((resolve, reject) => {
         const reader = new FileReader()
-        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.onload = () => resolve(reader.result?.slice(0, 6000) || '')
         reader.onerror = reject
-        reader.readAsDataURL(file)
+        // Use readAsText for all file types - works for PDF text content too
+        reader.readAsText(file)
       })
 
-      const cvText = atob(base64).slice(0, 6000)
+      if (!cvText || cvText.trim().length < 50) {
+        throw new Error('CV appears empty or unreadable')
+      }
       const subFunctionList = subFunctions.join(', ')
 
       const apiKey = import.meta.env.VITE_ANTHROPIC_KEY

@@ -9,6 +9,7 @@ import EditProfile from './pages/EditProfile'
 import { CorporateLogin, PostJD, CorporateDashboard } from './pages/Corporate'
 import CandidateProfile from './pages/CandidateProfile'
 import BuyTokens from './pages/BuyTokens'
+import AdminPanel from './pages/AdminPanel'
 
 function HomeIcon({ active }) {
   return <svg viewBox="0 0 24 24" fill={active ? '#165D7B' : 'none'} stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -56,6 +57,9 @@ export default function App() {
   }
   const header = PAGE_HEADERS[page] || PAGE_HEADERS.home
   const isCorporatePage = ['corporate-login','corporate-dashboard','post-jd'].includes(page)
+
+  // Admin panel gets full screen — no app shell
+  if (page === 'admin') return <AdminPanel />
 
   return (
     <div className="app-shell">

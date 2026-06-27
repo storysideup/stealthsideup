@@ -299,7 +299,7 @@ export default function AdminPanel() {
                       <td style={{ padding: '12px 16px', color: '#374151', fontWeight: 600 }}>{c.primary_function || '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.current_industry || '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.years_experience || '—'}</td>
-                      <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.ctc_total ? `₹${c.ctc_total}L` : '—'}</td>
+                      <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.ctc_total ? (parseFloat(c.ctc_total) >= 100 ? `₹${(parseFloat(c.ctc_total)/100).toFixed(1)}Cr` : `₹${c.ctc_total}L`) : '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: 11 }}>{c.job_search_status?.split('(')[0]?.trim() || '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#9ca3af', fontSize: 11 }}>{new Date(c.created_at).toLocaleDateString('en-IN')}</td>
                       <td style={{ padding: '12px 16px' }}>

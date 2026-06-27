@@ -262,6 +262,42 @@ function CompanySearch({ value = [], onChange }) {
   )
 }
 
+function CTCInput({ label, value, onChange }) {
+  const num = parseFloat(value) || 0
+  const isHigh = num > 500
+  const isSuspect = num > 1000
+
+  return (
+    <div className="ctc-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4, marginBottom: 12 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-600)', textTransform: 'uppercase', letterSpacing: 0.4 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--grey-600)' }}>₹</span>
+        <input className="ctc-input" type="number" placeholder="e.g. 25" min="0" max="9999"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          style={{ flex: 1, borderColor: isSuspect ? '#ef4444' : isHigh ? 'var(--orange)' : undefined }}
+        />
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--grey-600)', whiteSpace: 'nowrap' }}>Lakhs pa</span>
+      </div>
+      {num > 0 && !isSuspect && (
+        <div style={{ fontSize: 11, color: 'var(--grey-400)' }}>
+          = ₹{num >= 100 ? `${(num/100).toFixed(2)} Crores` : `${num} Lakhs`} per annum
+        </div>
+      )}
+      {isHigh && !isSuspect && (
+        <div style={{ fontSize: 11, color: 'var(--orange)', fontWeight: 600 }}>
+          ⚠ Double-check — this is ₹{(num/100).toFixed(1)} Crores. If correct, ignore this.
+        </div>
+      )}
+      {isSuspect && (
+        <div style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>
+          ⚠ This looks like you may have entered the full amount in Rupees. Please enter in Lakhs — e.g. ₹23 Lakhs = 23, not 2300000.
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Register({ onNavigate }) {
   const [step, setStep] = useState(0) // 0=contact, 1=verify, 2-7=form sections
   const [contact, setContact] = useState('')

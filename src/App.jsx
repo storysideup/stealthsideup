@@ -37,7 +37,11 @@ const PAGE_HEADERS = {
 
 export default function App() {
   const [page, setPage] = useState(() => {
-    try { return sessionStorage.getItem('ssu_page') || 'home' } catch { return 'home' }
+    try {
+      // Check URL hash for admin route
+      if (window.location.hash === '#admin' || window.location.pathname.includes('admin')) return 'admin'
+      return sessionStorage.getItem('ssu_page') || 'home'
+    } catch { return 'home' }
   })
   const [corporate, setCorporate] = useState(() => {
     try {

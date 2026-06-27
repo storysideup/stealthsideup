@@ -19,6 +19,7 @@ export default function CandidateProfile({ onNavigate }) {
     } catch { return null }
   })
   const [interests, setInterests] = useState([])
+  const [intelligence, setIntelligence] = useState(null)
   const [decliningInterest, setDecliningInterest] = useState(null)
   const [declineReasons, setDeclineReasons] = useState([])
   const [declineOther, setDeclineOther] = useState('')
@@ -50,6 +51,81 @@ export default function CandidateProfile({ onNavigate }) {
       .eq('candidate_id', candidate.id)
       .order('created_at', { ascending: false })
     setInterests(interestData || [])
+
+    // Load intelligence data
+    const fn = data.primary_function
+    const seniority = data.seniority_open_to?.[0] || ''
+    const ctcTotal = data.ctc_total
+
+    // Market pay — get CTC data for same function
+    const { data: marketData } = await supabase
+      .from('candidates')
+      .select('ctc_total')
+      .eq('primary_function', fn)
+      .not('ctc_total', 'is', null)
+      .limit(50)
+
+    const ctcValues = (marketData || []).map(c => parseFloat(c.ctc_total)).filter(v => v > 0).sort((a,b) => a-b)
+    const marketMin = ctcValues.length ? Math.round(ctcValues[Math.floor(ctcValues.length * 0.25)]) : null
+    const marketMax = ctcValues.length ? Math.round(ctcValues[Math.floor(ctcValues.length * 0.75)]) : null
+    const myCtc = parseFloat(ctcTotal) || 0
+    const marketMedian = ctcValues.length ? ctcValues[Math.floor(ctcValues.length / 2)] : null
+    const ctcPercentile = marketMedian && myCtc ? Math.round((myCtc / marketMedian) * 100) : null
+
+    // Demand signal — JDs in their function this week
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: jdData } = await supabase
+      .from('jds')
+      .select('id, skill_tree_requirement, location, max_notice_period, ctc_fixed_max')
+      .eq('function', fn)
+      .eq('is_active', true)
+      .gte('created_at', oneWeekAgo)
+
+    const totalSearches = (jdData || []).length
+
+    // Skill gap — what skills are JDs asking for that candidate doesn't have
+    const candidateSkills = Object.keys(data.skill_tree || {})
+    const jdSkillCounts = {}
+    ;(jdData || []).forEach(jd => {
+      Object.keys(jd.skill_tree_requirement || {}).forEach(skill => {
+        jdSkillCounts[skill] = (jdSkillCounts[skill] || 0) + 1
+      })
+    })
+    const missingSkills = Object.entries(jdSkillCounts)
+      .filter(([skill]) => !candidateSkills.includes(skill))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([skill, count]) => ({ skill, count }))
+
+    // Profile strength
+    const profileFields = [
+      { field: 'headline', label: 'Professional headline', weight: 15 },
+      { field: 'primary_function', label: 'Primary function', weight: 10 },
+      { field: 'years_experience', label: 'Years of experience', weight: 5 },
+      { field: 'current_industry', label: 'Current industry', weight: 10 },
+      { field: 'ctc_total', label: 'Current CTC', weight: 10 },
+      { field: 'notice_period', label: 'Notice period', weight: 10 },
+      { field: 'min_expected_ctc', label: 'Minimum expected CTC', weight: 10 },
+      { field: 'skill_tree', label: 'Skills', weight: 15, check: v => v && Object.keys(v).length > 0 },
+      { field: 'career_history', label: 'Career history', weight: 10, check: v => v && v.length > 0 },
+      { field: 'preferred_locations', label: 'Preferred locations', weight: 5, check: v => v?.cities?.length > 0 },
+    ]
+    let strength = 0
+    const missing = []
+    profileFields.forEach(({ field, label, weight, check }) => {
+      const val = data[field]
+      const filled = check ? check(val) : (val !== null && val !== undefined && val !== '')
+      if (filled) strength += weight
+      else missing.push(label)
+    })
+
+    setIntelligence({
+      marketMin, marketMax, myCtc, ctcPercentile, ctcValues: ctcValues.length,
+      totalSearches, missingSkills,
+      profileStrength: strength, missingFields: missing.slice(0, 3),
+      function: fn
+    })
+
     // Save session so Edit Profile doesn't ask for OTP again
     try {
       localStorage.setItem('ssu_candidate', JSON.stringify(data))
@@ -440,6 +516,82 @@ export default function CandidateProfile({ onNavigate }) {
           ))}
         </div>
 
+        {/* CAREER INTELLIGENCE */}
+        {intelligence && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>
+              Your Career Intelligence
+            </div>
+
+            {/* 1. Market Pay */}
+            {intelligence.marketMin && intelligence.myCtc > 0 && (
+              <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid var(--teal)' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', marginBottom: 6 }}>💰 How your CTC compares to the market</div>
+                <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7 }}>
+                  {intelligence.function} professionals on StealthSideUp are earning between <strong>₹{intelligence.marketMin}L–₹{intelligence.marketMax}L</strong>.
+                  {intelligence.ctcPercentile < 90
+                    ? ` Your current CTC of ₹${intelligence.myCtc}L is ${intelligence.ctcPercentile < 100 ? 'below' : 'at'} market median — you may be undervalued.`
+                    : ` Your current CTC of ₹${intelligence.myCtc}L is at or above market median.`}
+                </div>
+                {intelligence.ctcValues < 5 && (
+                  <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4 }}>Based on limited data — will improve as more professionals register.</div>
+                )}
+              </div>
+            )}
+
+            {/* 2. Demand Signal */}
+            <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid var(--orange)' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--orange)', marginBottom: 6 }}>📊 Demand for your profile this week</div>
+              <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7 }}>
+                {intelligence.totalSearches === 0
+                  ? `No new ${intelligence.function} searches were posted this week. Your profile is active and will be matched as new searches come in.`
+                  : `${intelligence.totalSearches} new search${intelligence.totalSearches > 1 ? 'es were' : ' was'} posted for ${intelligence.function} professionals this week. Your profile is being matched against ${intelligence.totalSearches > 1 ? 'all of them' : 'it'}.`}
+              </div>
+            </div>
+
+            {/* 3. Skill Gap */}
+            {intelligence.missingSkills.length > 0 && (
+              <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid #7c3aed' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed', marginBottom: 6 }}>🎯 Skills companies are asking for</div>
+                <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7, marginBottom: 8 }}>
+                  Companies hiring in your function frequently ask for skills not yet on your profile:
+                </div>
+                {intelligence.missingSkills.map(({ skill, count }) => (
+                  <div key={skill} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--grey-100)' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--grey-800)' }}>{skill}</span>
+                    <span style={{ fontSize: 11, color: 'var(--grey-400)' }}>asked in {count} search{count > 1 ? 'es' : ''}</span>
+                  </div>
+                ))}
+                <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 8 }}>Add these to your profile to improve your match rate.</div>
+              </div>
+            )}
+
+            {/* 4. Profile Strength */}
+            {intelligence.profileStrength < 100 && (
+              <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid #059669' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#059669', marginBottom: 8 }}>✅ Profile strength — {intelligence.profileStrength}%</div>
+                <div style={{ background: 'var(--grey-100)', borderRadius: 4, height: 6, marginBottom: 10 }}>
+                  <div style={{ background: intelligence.profileStrength >= 80 ? '#059669' : intelligence.profileStrength >= 50 ? 'var(--orange)' : '#ef4444', height: 6, borderRadius: 4, width: `${intelligence.profileStrength}%`, transition: 'width 0.5s' }} />
+                </div>
+                {intelligence.missingFields.length > 0 && (
+                  <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7 }}>
+                    Adding <strong>{intelligence.missingFields.join(', ')}</strong> will significantly improve how many roles you match to.
+                  </div>
+                )}
+                <button className="btn-secondary btn-sm" style={{ marginTop: 10 }} onClick={() => onNavigate('edit-profile')}>
+                  Complete My Profile →
+                </button>
+              </div>
+            )}
+
+            {intelligence.profileStrength === 100 && (
+              <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid #059669', background: '#f0fdf4' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#059669' }}>✅ Profile is 100% complete — great work!</div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Roles awaiting response */}
         {activeInterests.length > 0 && (
           <div style={{ marginBottom: 24 }}>
@@ -471,10 +623,28 @@ export default function CandidateProfile({ onNavigate }) {
                   </div>
                 )}
                 {interest.jds?.role_context && (
-                  <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 12, padding: '8px 10px', background: 'var(--grey-50)', borderRadius: 6 }}>
+                  <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.6, marginBottom: 10, padding: '8px 10px', background: 'var(--grey-50)', borderRadius: 6 }}>
                     {interest.jds?.role_context}
                   </div>
                 )}
+
+                {/* Why this matched */}
+                <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 7, padding: '8px 12px', marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.4 }}>Why this matched you</div>
+                  <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.7 }}>
+                    {[
+                      candidate?.primary_function === interest.jds?.function && `Your function (${candidate?.primary_function}) matches this role`,
+                      candidate?.current_industry && `Your ${candidate?.current_industry} background is relevant`,
+                      candidate?.years_experience && `Your ${candidate?.years_experience} years of experience fits the seniority level`,
+                      candidate?.notice_period && interest.jds?.max_notice_period && `Your notice period is within their requirement`,
+                    ].filter(Boolean).map((reason, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 2 }}>
+                        <span style={{ color: 'var(--teal)', flexShrink: 0 }}>✓</span>
+                        <span>{reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {interest.jds?.stealth_mode && (
                   <div style={{ fontSize: 12, color: 'var(--grey-600)', background: '#f3f4f6', borderRadius: 6, padding: '8px 10px', marginBottom: 12 }}>
                     🕵️ This company posted in stealth mode. If you say yes, their name will be revealed to you — and only then will you decide whether to share your contact.

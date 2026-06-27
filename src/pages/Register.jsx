@@ -61,7 +61,7 @@ import CareerHistory from '../components/CareerHistory'
 import CVUploadSection from '../components/CVUpload'
 import {
   FUNCTIONS, SKILLS_BY_FUNCTION, INDUSTRIES, INSTITUTES,
-  NOTICE_PERIODS, LANGUAGES,
+  NOTICE_PERIODS, LANGUAGES, AGE_RANGES,
   CURRENT_EMPLOYMENT_TYPES, DESIRED_EMPLOYMENT_TYPES, DEGREES,
   TENURES, AVG_TENURES, TEAM_SIZES, GEOGRAPHIES,
   SENIORITY_LEVELS, ORG_TYPES, JOB_SEARCH_STATUSES, FREELANCE_ENGAGEMENT_SIZES
@@ -272,7 +272,7 @@ export default function Register({ onNavigate }) {
   const [success, setSuccess] = useState(false)
 
   const [form, setForm] = useState({
-    gender: '', current_employment_type: '', desired_employment_type: [],
+    gender: '', age_range: '', current_employment_type: '', desired_employment_type: [],
     years_experience: '', primary_function: '',
     highest_degree: '', institute: '', institute_other: '', year_of_passing: '',
     certifications: '',
@@ -328,6 +328,7 @@ export default function Register({ onNavigate }) {
         contact: contact.trim(),
         contact_type: contactType,
         gender: form.gender,
+        age_range: form.age_range,
         current_employment_type: form.current_employment_type,
         desired_employment_type: form.desired_employment_type,
         years_experience: parseInt(form.years_experience) || null,
@@ -402,10 +403,10 @@ export default function Register({ onNavigate }) {
         <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7 }}>
           ✓ Your profile is anonymous — no one can identify you<br />
           ✓ We match JDs against your profile in the background<br />
-          ✓ You get a WhatsApp notification on your registered number<br />
-          ✓ Standard roles show full company details. Stealth roles show only industry and role level<br />
-          ✓ In stealth mode, you reveal yourself first — then see the company name before deciding<br />
-          ✓ App push notifications coming soon on the StealthSideUp mobile app<br />
+          ✓ You will get a WhatsApp on your registered number when a company wants to reach out<br />
+          ✓ Some companies share their name upfront. Others prefer to stay anonymous — in that case you will see their industry and role level first, and their name only after you say yes<br />
+          ✓ You decide whether to share your CV and contact. Nobody gets your details without your consent<br />
+          ✓ You can say no at any point — your identity is never revealed if you decline<br />
           ✓ You say yes or no — your choice, always
         </div>
       </div>
@@ -492,6 +493,11 @@ export default function Register({ onNavigate }) {
           <div className="form-group">
             <label className="form-label">Gender</label>
             <TagSelect options={['Male','Female','Non-binary','Prefer not to say']} value={form.gender ? [form.gender] : []} onChange={v => set('gender', v[v.length-1] || '')} max={1} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Age Range</label>
+            <TagSelect options={AGE_RANGES} value={form.age_range ? [form.age_range] : []} onChange={v => set('age_range', v[v.length-1] || '')} max={1} />
           </div>
 
           <div className="form-group">

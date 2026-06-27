@@ -585,6 +585,43 @@ export const SKILL_TREE = {
   },
 
   "Research & Development": {
+    "Biomedical & Life Sciences Research": {
+      specialisations: ["Drug Discovery", "Biomedical Research", "Molecular Biology", "Genomics & Proteomics", "Immunology & Cell Biology", "Translational Research", "Pre-clinical Research"],
+      depth: {
+        "Drug Discovery": ["Target Identification", "Hit-to-Lead", "Lead Optimisation", "ADMET Studies", "Computational Drug Design", "Fragment-based Drug Discovery"],
+        "Biomedical Research": ["In-vitro Studies", "In-vivo Animal Models", "Histopathology", "Flow Cytometry", "ELISA / Western Blot", "PCR / qPCR"],
+        "Molecular Biology": ["Gene Cloning", "CRISPR", "Sequencing (NGS / Sanger)", "Protein Expression", "Recombinant DNA Technology"],
+        "Genomics & Proteomics": ["Whole Genome Sequencing", "RNA-seq", "Mass Spectrometry", "Bioinformatics Analysis", "Pathway Analysis"],
+        "Translational Research": ["Biomarker Identification", "Clinical Translation", "IND-enabling Studies", "Proof of Concept Studies"],
+      }
+    },
+    "Clinical Research": {
+      specialisations: ["Clinical Trial Management", "Site Management", "Data Management", "Pharmacovigilance / Drug Safety", "Medical Writing", "Biostatistics", "Regulatory Affairs — Clinical"],
+      depth: {
+        "Clinical Trial Management": ["Phase I / II / III / IV Trials", "Protocol Development", "CRO Management", "IRB / IEC Submissions", "ICH GCP Compliance", "eTMF Management"],
+        "Pharmacovigilance / Drug Safety": ["Adverse Event Reporting", "ICSR Processing", "Signal Detection", "PSUR / PBRER Writing", "EudraVigilance", "FDA MedWatch"],
+        "Medical Writing": ["Clinical Study Reports", "Regulatory Submissions", "Protocol Writing", "Investigator Brochure", "Patient Information Leaflets", "Publications / Manuscripts"],
+        "Biostatistics": ["Statistical Analysis Plan", "SAS Programming", "R Programming", "Sample Size Calculation", "Survival Analysis", "Mixed Models"],
+        "Site Management": ["Site Identification", "Site Initiation", "Monitoring Visits", "Protocol Deviation Management", "Patient Recruitment"],
+      }
+    },
+    "Medical Affairs": {
+      specialisations: ["Medical Science Liaison", "KOL Management", "Medical Information", "Health Economics & Outcomes Research", "Medical Education", "Real World Evidence"],
+      depth: {
+        "Medical Science Liaison": ["Scientific Engagement", "Advisory Boards", "Congress Coverage", "Investigator-initiated Studies", "Publication Strategy"],
+        "Health Economics & Outcomes Research": ["HEOR Modelling", "Cost-effectiveness Analysis", "Budget Impact Models", "Patient Reported Outcomes", "Health Technology Assessment"],
+        "Real World Evidence": ["RWE Study Design", "Claims Data Analysis", "Registry Studies", "Electronic Health Records Analysis"],
+      }
+    },
+    "Laboratory Sciences": {
+      specialisations: ["Analytical Chemistry", "Microbiology", "Quality Control Laboratory", "Formulation Lab", "Stability Testing", "Instrument Operation & Qualification"],
+      depth: {
+        "Analytical Chemistry": ["HPLC / UPLC", "GC / GC-MS", "LC-MS / MS", "NMR Spectroscopy", "ICP-MS", "Method Development & Validation"],
+        "Microbiology": ["Sterility Testing", "Microbial Limit Tests", "Endotoxin Testing", "Environmental Monitoring", "Microbial Identification"],
+        "Quality Control Laboratory": ["In-process Testing", "Finished Product Testing", "OOS Investigations", "Laboratory Investigations", "LIMS"],
+        "Stability Testing": ["ICH Stability Studies", "Accelerated Studies", "Shelf-life Prediction", "Stability Chambers Management"],
+      }
+    },
     "Product Development": {
       specialisations: ["New Product Introduction (NPI)", "Technology Transfer", "Scale-up", "Stability Studies", "Product Lifecycle Management"],
       depth: {

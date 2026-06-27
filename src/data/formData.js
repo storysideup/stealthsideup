@@ -240,6 +240,16 @@ export const GENDER_PREFERENCE = [
   "Role specifically requires men"
 ]
 
+export const AGE_RANGES = [
+  'Under 25',
+  '25 to 30',
+  '30 to 35',
+  '35 to 40',
+  '40 to 45',
+  '45 to 50',
+  '50 and above'
+]
+
 export const NOTICE_PERIODS = [
   "Immediate",
   "Up to 30 days",

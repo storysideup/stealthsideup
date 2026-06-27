@@ -49,7 +49,7 @@ export const COMPANIES = [
   // MNC Tech
   "Google India", "Microsoft India", "Amazon India", "Meta India", "Apple India",
   "IBM India", "Accenture India", "Capgemini India", "Cognizant", "Wipro",
-  "SAP India", "Oracle India", "Salesforce India", "Adobe India", "Cisco India",
+  "SAP India", "Oracle India", "Salesforce India", "Adobe", "Adobe India", "Cisco India",
   "Dell India", "HP India", "Lenovo India", "Intel India", "Qualcomm India",
 
   // E-commerce & Consumer Internet

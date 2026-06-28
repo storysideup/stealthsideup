@@ -43,22 +43,30 @@ export default function CandidateProfile({ onNavigate }) {
   const handleVerifyOtp = async () => {
     const code = otp.join('')
     if (code.length < 6) { setError('Enter the 6-digit OTP'); return }
+    if (!candidate) { setError('Session expired — please go back and enter your number again.'); return }
     setLoading(true)
-    // Load interests for this candidate
-    const { data: interestData } = await supabase
-      .from('interests')
-      .select('*, jds(*), corporates(*)')
-      .eq('candidate_id', candidate.id)
-      .order('created_at', { ascending: false })
-    setInterests(interestData || [])
 
-    // Save session so Edit Profile doesn't ask for OTP again
+    const timeout = setTimeout(() => {
+      setLoading(false)
+      setError('Taking too long — please try again.')
+    }, 12000)
+
     try {
-      localStorage.setItem('ssu_candidate', JSON.stringify(data))
+      const { data: interestData } = await supabase
+        .from('interests')
+        .select('*, jds(*), corporates(*)')
+        .eq('candidate_id', candidate.id)
+        .order('created_at', { ascending: false })
+      setInterests(interestData || [])
+      localStorage.setItem('ssu_candidate', JSON.stringify(candidate))
       localStorage.setItem('ssu_candidate_contact', contact)
-    } catch {}
+    } catch(e) {
+      console.error('Verify error:', e)
+    }
+
     clearTimeout(timeout)
-    setTimeout(() => { setLoading(false); setStep(2) }, 500)
+    setLoading(false)
+    setStep(2)
   }
 
   const handleOtpChange = (idx, val) => {

@@ -16,6 +16,14 @@ function CollapsibleSection({ title, children }) {
           {children}
         </div>
       )}
+      {/* Footer */}
+      <div style={{ padding: '24px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 8 }}>
+          <button onClick={() => onNavigate('privacy')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Privacy Policy</button>
+          <button onClick={() => onNavigate('terms')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Terms of Service</button>
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>© 2026 StorySideUp · stealthsideup.com</div>
+      </div>
     </div>
   )
 }
@@ -191,6 +199,14 @@ export default function Home({ onNavigate }) {
           </div>
         </div>
 
+      </div>
+      {/* Footer */}
+      <div style={{ padding: '24px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 8 }}>
+          <button onClick={() => onNavigate('privacy')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Privacy Policy</button>
+          <button onClick={() => onNavigate('terms')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Terms of Service</button>
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>© 2026 StorySideUp · stealthsideup.com</div>
       </div>
     </div>
   )

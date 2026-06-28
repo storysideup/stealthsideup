@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+
+async function hashPassword(password) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password + 'ssu_salt_2026')
+  const hash = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
 import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
@@ -34,7 +41,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: btoa(password), subscription_tier: 'free', is_active: true, tokens: 5,
+      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5,
       token_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }

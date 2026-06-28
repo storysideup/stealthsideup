@@ -53,6 +53,7 @@ export default function CandidateProfile({ onNavigate }) {
     setInterests(interestData || [])
 
     // Load intelligence data
+    try {
     const fn = data.primary_function
     const seniority = data.seniority_open_to?.[0] || ''
     const ctcTotal = data.ctc_total
@@ -125,12 +126,14 @@ export default function CandidateProfile({ onNavigate }) {
       profileStrength: strength, missingFields: missing.slice(0, 3),
       function: fn
     })
+    } catch(e) { console.error('Intelligence failed silently', e) }
 
     // Save session so Edit Profile doesn't ask for OTP again
     try {
       localStorage.setItem('ssu_candidate', JSON.stringify(data))
       localStorage.setItem('ssu_candidate_contact', contact)
     } catch {}
+    clearTimeout(timeout)
     setTimeout(() => { setLoading(false); setStep(2) }, 500)
   }
 

@@ -298,6 +298,163 @@ function CTCInput({ label, value, onChange }) {
   )
 }
 
+function CVPreFill({ form, set, onSkip }) {
+  const [uploading, setUploading] = React.useState(false)
+  const [done, setDone] = React.useState(false)
+  const [error, setError] = React.useState('')
+  const [extracted, setExtracted] = React.useState(null)
+  const fileRef = React.useRef()
+
+  const handleUpload = async (file) => {
+    if (!file) return
+    setUploading(true); setError('')
+    try {
+      const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
+      const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const prompt = `Read this CV carefully and extract the following information. Return ONLY valid JSON, no markdown or explanation.
+
+{
+  "years_experience": "total years as a number e.g. 15",
+  "primary_function": "one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Design & Creative, Legal & Compliance, General Management / P&L, Training & Facilitation, Events & Experiential, Procurement & Sourcing, Research & Development",
+  "current_industry": "one of: Banking — PSU, Banking — Private / Co-operative, Fintech / Payments / Lending Tech, Insurance — Life / General / Health, Wealth / Asset Management / Broking, NBFC / Microfinance, FMCG / Food & Beverage, Retail — Organised / E-commerce, Luxury / Premium Fashion & Lifestyle, Consumer Durables / Electronics, D2C Brands, Agri / Food Processing / Agritech, IT Services / ITES / BPO, SaaS / Product Companies, E-commerce / Marketplace, Emerging Tech (AI / Deeptech / Healthtech), Telecom, Telco Infrastructure (Towers / Fibre / Passive Infra), Automotive / Auto Ancillary, Chemicals / Pharma / Life Sciences, Infrastructure / Real Estate / Construction, Energy / Oil & Gas / Renewables, Industrial Manufacturing, Logistics / Supply Chain / 3PL, Packaging / Paper / Textiles, Defence / Aerospace, Consulting / Professional Services, Events / Entertainment / Sports, Hospitality / Travel & Tourism, Education / EdTech, Healthcare / Hospitals / Diagnostics, Media / Advertising / PR, Legal / Law Firms, Staffing / Recruitment / HR Services, NGO / Development Sector, Government / PSU",
+  "previous_industries": ["up to 2 previous industries from same list"],
+  "role_type": "Individual Contributor or Team Manager",
+  "current_employment_type": "one of: Full-time Employee, Freelance / Independent Consultant, Fractional / Part-time, Not currently employed",
+  "headline": "a one-line professional summary under 100 chars — no name, no company, no title — just what they do and their impact",
+  "career_history": [
+    {
+      "roleLabel": "Current Role",
+      "industry": "industry name",
+      "orgType": "one of: Large Indian conglomerate, Mid-size Indian company, MNC / International company, Indian Startup, Consulting / Agency, Family Business, Government / PSU, NGO",
+      "roleType": "Individual Contributor or Team Manager",
+      "teamSize": "number or range",
+      "tenureYears": "years in this role as number",
+      "salaryHikePercent": "",
+      "reasonForLeaving": ""
+    },
+    {
+      "roleLabel": "Previous Role",
+      "industry": "industry",
+      "orgType": "org type",
+      "roleType": "IC or TM",
+      "teamSize": "",
+      "tenureYears": "",
+      "salaryHikePercent": "% hike when joining this role",
+      "reasonForLeaving": "brief reason"
+    },
+    {
+      "roleLabel": "Role Before That",
+      "industry": "industry",
+      "orgType": "org type",
+      "roleType": "IC or TM",
+      "teamSize": "",
+      "tenureYears": "",
+      "salaryHikePercent": "",
+      "reasonForLeaving": "brief reason"
+    }
+  ]
+}
+
+Only extract what is clearly stated. Leave fields empty string if not found.`
+
+      const messageContent = isPDF
+        ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }, { type: 'text', text: prompt }]
+        : [{ type: 'text', text: prompt + '\n\nCV:\n' + atob(base64).slice(0, 6000) }]
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: messageContent }]
+        })
+      })
+
+      const data = await response.json()
+      const text = data.content?.[0]?.text || ''
+      const clean = text.replace(/```json|```/g, '').trim()
+      const parsed = JSON.parse(clean)
+      setExtracted(parsed)
+
+      // Pre-fill the form
+      if (parsed.years_experience) set('years_experience', parsed.years_experience)
+      if (parsed.primary_function) set('primary_function', parsed.primary_function)
+      if (parsed.current_industry) set('current_industry', parsed.current_industry)
+      if (parsed.previous_industries?.length) set('previous_industries', parsed.previous_industries)
+      if (parsed.role_type) set('role_type', parsed.role_type)
+      if (parsed.current_employment_type) set('current_employment_type', parsed.current_employment_type)
+      if (parsed.headline) set('headline', parsed.headline)
+      if (parsed.career_history?.length) set('career_history', parsed.career_history)
+
+      setDone(true)
+    } catch(e) {
+      setError('Could not read CV: ' + (e.message || 'Unknown error') + '. Please fill manually.')
+    }
+    setUploading(false)
+  }
+
+  if (done && extracted) return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', marginBottom: 10 }}>✓ CV read — here is what we picked up</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[
+            { label: 'Function', value: extracted.primary_function },
+            { label: 'Industry', value: extracted.current_industry },
+            { label: 'Experience', value: extracted.years_experience ? extracted.years_experience + ' years' : null },
+            { label: 'Role type', value: extracted.role_type },
+            { label: 'Career history', value: extracted.career_history?.length ? extracted.career_history.length + ' roles extracted' : null },
+            { label: 'Headline', value: extracted.headline },
+          ].filter(f => f.value).map(({ label, value }) => (
+            <div key={label} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+              <span style={{ color: 'var(--grey-400)', width: 90, flexShrink: 0 }}>{label}</span>
+              <span style={{ color: 'var(--grey-800)', fontWeight: 600 }}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 10 }}>Review and change anything in the form below. AI suggestions are a starting point — not final.</div>
+      </div>
+      <button type="button" onClick={() => { setDone(false); setExtracted(null); fileRef.current && (fileRef.current.value = '') }}
+        style={{ background: 'none', border: 'none', color: 'var(--grey-400)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
+        Upload a different CV
+      </button>
+    </div>
+  )
+
+  return (
+    <div style={{ background: '#f9fafb', border: '1.5px solid var(--grey-200)', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--grey-800)', marginBottom: 4 }}>⚡ Start with your CV — save time</div>
+      <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.7, marginBottom: 12 }}>
+        Upload your CV and AI will pre-fill your function, industry, experience, career history and headline. You review and change anything. <strong style={{ color: 'var(--teal)' }}>Your CV is never stored or shared.</strong>
+      </div>
+      {error && <div className="error-msg" style={{ marginBottom: 10 }}>{error}</div>}
+      <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
+        onChange={e => handleUpload(e.target.files?.[0])} />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button type="button" className="btn-primary btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? '⏳ Reading CV...' : '📎 Upload CV'}
+        </button>
+        <button type="button" className="btn-secondary btn-sm" onClick={onSkip}>
+          Fill manually
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Register({ onNavigate }) {
   const [step, setStep] = useState(0) // 0=contact, 1=verify, 2-7=form sections
   const [contact, setContact] = useState('')
@@ -521,6 +678,11 @@ export default function Register({ onNavigate }) {
       </div>
 
       <div className="page">
+
+        {/* CV PRE-FILL — before Section A */}
+        {formStep === 0 && !cvSkipped && (
+          <CVPreFill form={form} set={set} onSkip={() => setCvSkipped(true)} />
+        )}
 
         {/* SECTION A — About You */}
         {formStep === 0 && <>

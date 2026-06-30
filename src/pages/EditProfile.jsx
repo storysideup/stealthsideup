@@ -258,7 +258,7 @@ export default function EditProfile({ onNavigate }) {
       <p style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 20 }}>Enter the 6-digit code sent to {contact}</p>
       <div className="otp-container">
         {otp.map((d, i) => (
-          <input key={i} id={`eotp-${i}`} className="otp-input" maxLength={1} value={d}
+          <input key={i} id={`eotp-${i}`} className="otp-input" type="tel" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={1} value={d}
             onChange={e => handleOtpChange(i, e.target.value)}
             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) document.getElementById(`eotp-${i-1}`)?.focus() }} />
         ))}

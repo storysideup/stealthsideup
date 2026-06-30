@@ -242,7 +242,7 @@ export default function CandidateProfile({ onNavigate }) {
       <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>Enter the 6-digit code sent to {contact}</p>
       <div className="otp-container">
         {otp.map((d, i) => (
-          <input key={i} id={`potp-${i}`} className="otp-input" maxLength={1} value={d}
+          <input key={i} id={`potp-${i}`} className="otp-input" type="tel" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={1} value={d}
             onChange={e => handleOtpChange(i, e.target.value)}
             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) document.getElementById(`potp-${i-1}`)?.focus() }} />
         ))}
@@ -254,6 +254,20 @@ export default function CandidateProfile({ onNavigate }) {
       </button>
     </div>
   )
+
+  // Step 2 but candidate missing — fallback instead of blank screen
+  if (step === 2 && !candidate) {
+    return (
+      <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
+        <div style={{ fontSize: 14, color: 'var(--grey-600)', marginBottom: 20 }}>
+          Something went wrong loading your profile. Please try logging in again.
+        </div>
+        <button className="btn-primary" onClick={() => { setStep(0); setCandidate(null); try { localStorage.removeItem('ssu_candidate') } catch {} }}>
+          Log In Again
+        </button>
+      </div>
+    )
+  }
 
   // Step 2 — Dashboard
   if (step === 2 && candidate) {
@@ -485,13 +499,13 @@ export default function CandidateProfile({ onNavigate }) {
             </div>
 
             {/* 3. Skill Gap */}
-            {intelligence.missingSkills.length > 0 && (
+            {(intelligence.missingSkills?.length > 0) && (
               <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid #7c3aed' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed', marginBottom: 6 }}>🎯 Skills companies are asking for</div>
                 <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7, marginBottom: 8 }}>
                   Companies hiring in your function frequently ask for skills not yet on your profile:
                 </div>
-                {intelligence.missingSkills.map(({ skill, count }) => (
+                {(intelligence.missingSkills || []).map(({ skill, count }) => (
                   <div key={skill} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--grey-100)' }}>
                     <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--grey-800)' }}>{skill}</span>
                     <span style={{ fontSize: 11, color: 'var(--grey-400)' }}>asked in {count} search{count > 1 ? 'es' : ''}</span>
@@ -502,15 +516,15 @@ export default function CandidateProfile({ onNavigate }) {
             )}
 
             {/* 4. Profile Strength */}
-            {intelligence.profileStrength < 100 && (
+            {(intelligence.profileStrength !== undefined && intelligence.profileStrength < 100) && (
               <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid #059669' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#059669', marginBottom: 8 }}>✅ Profile strength — {intelligence.profileStrength}%</div>
                 <div style={{ background: 'var(--grey-100)', borderRadius: 4, height: 6, marginBottom: 10 }}>
                   <div style={{ background: intelligence.profileStrength >= 80 ? '#059669' : intelligence.profileStrength >= 50 ? 'var(--orange)' : '#ef4444', height: 6, borderRadius: 4, width: `${intelligence.profileStrength}%`, transition: 'width 0.5s' }} />
                 </div>
-                {intelligence.missingFields.length > 0 && (
+                {(intelligence.missingFields?.length > 0) && (
                   <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7 }}>
-                    Adding <strong>{intelligence.missingFields.join(', ')}</strong> will significantly improve how many roles you match to.
+                    Adding <strong>{(intelligence.missingFields || []).join(', ')}</strong> will significantly improve how many roles you match to.
                   </div>
                 )}
                 <button className="btn-secondary btn-sm" style={{ marginTop: 10 }} onClick={() => onNavigate('edit-profile')}>

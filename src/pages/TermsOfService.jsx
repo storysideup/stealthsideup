@@ -12,7 +12,7 @@ export default function TermsOfService({ onNavigate }) {
       {[
         {
           title: '1. About StealthSideUp',
-          body: `StealthSideUp is an anonymous talent marketplace operated by StorySideUp (sole proprietorship, UDYAM-DL-11-0161070), New Delhi, India. The platform enables senior professionals to be matched to relevant career opportunities without revealing their identity unless they choose to.\n\nBy registering on StealthSideUp — as a candidate or as a corporate employer — you agree to these Terms of Service. If you do not agree, please do not use the platform.`
+          body: `StealthSideUp is an anonymous talent platform operated by StorySideUp (sole proprietorship, UDYAM-DL-11-0161070), New Delhi, India. The platform enables senior professionals to be matched to relevant career opportunities without revealing their identity unless they choose to.\n\nBy registering on StealthSideUp — as a candidate or as a corporate employer — you agree to these Terms of Service. If you do not agree, please do not use the platform.`
         },
         {
           title: '2. Candidate Terms',

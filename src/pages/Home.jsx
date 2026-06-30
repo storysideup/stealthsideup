@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 function CollapsibleSection({ title, children }) {
   const [open, setOpen] = useState(false)
@@ -16,14 +17,6 @@ function CollapsibleSection({ title, children }) {
           {children}
         </div>
       )}
-      {/* Footer */}
-      <div style={{ padding: '24px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 8 }}>
-          <button onClick={() => onNavigate('privacy')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Privacy Policy</button>
-          <button onClick={() => onNavigate('terms')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Terms of Service</button>
-        </div>
-        <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>© 2026 StorySideUp · stealthsideup.com</div>
-      </div>
     </div>
   )
 }
@@ -32,6 +25,22 @@ const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjd
 
 export default function Home({ onNavigate }) {
   const [howTab, setHowTab] = useState('candidate')
+  const [livePostings, setLivePostings] = useState([])
+
+  useEffect(() => {
+    const loadPostings = async () => {
+      try {
+        const { data } = await supabase
+          .from('jds')
+          .select('role_title, function, location, ctc_fixed_min, ctc_fixed_max, industry, seniority_level, stealth_mode')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(4)
+        setLivePostings(data || [])
+      } catch (e) { console.error(e) }
+    }
+    loadPostings()
+  }, [])
 
   const candidateSteps = [
     { num: '1', icon: '👤', label: 'Register', desc: 'Create an anonymous profile — no name, no employer, no photo' },
@@ -56,7 +65,7 @@ export default function Home({ onNavigate }) {
       <div style={{ background: 'linear-gradient(160deg, #165D7B 0%, #165D7B 100%)', padding: '32px 20px 40px' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 16 }}>by StorySideUp</div>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'white', lineHeight: 1.25, marginBottom: 10, letterSpacing: '-0.5px' }}>
-          India's first anonymous talent marketplace.
+          India's first anonymous talent platform.
         </h1>
         <p style={{ fontSize: 15, color: '#E8621A', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>
           For those who are curious, not desperate.
@@ -104,6 +113,41 @@ export default function Home({ onNavigate }) {
       </div>
 
       <div style={{ padding: '32px 20px 0' }}>
+
+        {/* LIVE POSTINGS TEASER */}
+        {livePostings.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
+              Live on the platform right now
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {livePostings.map((jd, i) => (
+                <div key={i} style={{
+                  background: 'white', borderRadius: 12, padding: '14px 16px',
+                  boxShadow: '0 2px 8px rgba(22,93,123,0.06)', border: '1px solid rgba(22,93,123,0.06)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#165D7B', marginBottom: 4 }}>
+                      {jd.stealth_mode ? jd.function : (jd.role_title || jd.function)}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>
+                      {jd.industry || 'Industry confidential'} · {jd.location || 'Location flexible'}
+                      {jd.ctc_fixed_min && jd.ctc_fixed_max && ` · ₹${jd.ctc_fixed_min}–${jd.ctc_fixed_max}L`}
+                    </div>
+                  </div>
+                  <span style={{
+                    background: '#EBF4F8', color: '#165D7B', fontSize: 10, fontWeight: 700,
+                    padding: '4px 9px', borderRadius: 10, flexShrink: 0, textTransform: 'uppercase', letterSpacing: 0.3
+                  }}>Live</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10, textAlign: 'center' }}>
+              Register to see if you match — and to discover roles not shown here.
+            </div>
+          </div>
+        )}
 
         {/* HOW IT WORKS */}
         <div style={{ marginBottom: 32 }}>
@@ -196,6 +240,43 @@ export default function Home({ onNavigate }) {
                 <span style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: 16 }}>→</span>
               </a>
             ))}
+          </div>
+        </div>
+
+        {/* TRUST / SOCIAL PROOF */}
+        <div style={{ marginBottom: 100 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
+            Why trust StealthSideUp
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #165D7B 0%, #0F4A61 100%)', borderRadius: 16,
+            padding: '24px 20px', boxShadow: '0 4px 20px rgba(22,93,123,0.18)'
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              {[
+                { value: '20+', label: 'Years in Executive Search & HR Consulting' },
+                { value: '500+', label: 'Professionals Placed or Coached' },
+                { value: '6', label: 'Partner Organisations' },
+                { value: 'ICF & Hogan', label: 'Certified Credentials' },
+              ].map(({ value, label }) => (
+                <div key={label}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 2 }}>{value}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 16 }} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>
+              Trusted by and partnered with
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {['ThreeFish Consulting', 'VMentor', 'Think Talent', 'Salto Dee Fe', 'Right Management', 'TalkReady.ai'].map(name => (
+                <span key={name} style={{
+                  fontSize: 11, color: 'white', background: 'rgba(255,255,255,0.12)',
+                  padding: '5px 11px', borderRadius: 20, fontWeight: 600
+                }}>{name}</span>
+              ))}
+            </div>
           </div>
         </div>
 

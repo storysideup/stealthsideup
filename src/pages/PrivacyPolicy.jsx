@@ -12,7 +12,7 @@ export default function PrivacyPolicy({ onNavigate }) {
       {[
         {
           title: '1. Who We Are',
-          body: `StealthSideUp is an anonymous talent marketplace operated by StorySideUp, a sole proprietorship registered under UDYAM-DL-11-0161070, based in New Delhi, India. We connect senior professionals with relevant career opportunities while protecting their identity throughout the process.\n\nFor any privacy-related queries, contact us at: privacy@storysideup.com`
+          body: `StealthSideUp is an anonymous talent platform operated by StorySideUp, a sole proprietorship registered under UDYAM-DL-11-0161070, based in New Delhi, India. We connect senior professionals with relevant career opportunities while protecting their identity throughout the process.\n\nFor any privacy-related queries, contact us at: privacy@storysideup.com`
         },
         {
           title: '2. What Data We Collect',

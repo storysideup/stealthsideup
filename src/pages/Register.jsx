@@ -644,7 +644,7 @@ export default function Register({ onNavigate }) {
       <p style={{ fontWeight: 600, marginBottom: 20 }}>{contact}</p>
       <div className="otp-container">
         {otp.map((d, i) => (
-          <input key={i} id={`otp-${i}`} className="otp-input" maxLength={1} value={d}
+          <input key={i} id={`otp-${i}`} className="otp-input" type="tel" inputMode="numeric" pattern="[0-9]*" autoComplete="one-time-code" maxLength={1} value={d}
             onChange={e => handleOtpChange(i, e.target.value)}
             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) document.getElementById(`otp-${i - 1}`)?.focus() }} />
         ))}

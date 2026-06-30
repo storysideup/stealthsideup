@@ -243,10 +243,10 @@ export default function Home({ onNavigate }) {
           </div>
         </div>
 
-        {/* TRUST / SOCIAL PROOF */}
+        {/* TRUST / SOCIAL PROOF — anonymous, consistent with platform promise */}
         <div style={{ marginBottom: 100 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
-            Built by someone who has done this for 20 years
+            Built by someone who has spent 20 years inside the hiring room
           </div>
           <div style={{
             background: 'linear-gradient(135deg, #165D7B 0%, #0F4A61 100%)', borderRadius: 16,
@@ -254,10 +254,10 @@ export default function Home({ onNavigate }) {
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               {[
-                { value: '20+', label: 'Years in Executive Search & Talent Strategy' },
+                { value: '20+', label: 'Years in Executive Search, Talent Strategy & HR Consulting' },
                 { value: '1000+', label: 'Candidates Interviewed Across Levels & Functions' },
-                { value: 'MBA — HR', label: 'Specialised Postgraduate Qualification' },
                 { value: '12+', label: 'Industries — BFSI, Retail, Fashion, Manufacturing, Events & More' },
+                { value: 'MBA — HR', label: 'Specialised Postgraduate Qualification' },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 2 }}>{value}</div>
@@ -266,16 +266,8 @@ export default function Home({ onNavigate }) {
               ))}
             </div>
             <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 16 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>
-              HR & talent work done in organisations like
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {['Eicher Motors', 'Airtel', 'Reliance Retail', 'Gaurav Gupta Studio', 'Wizard Events', 'Cognitio Analytics', 'Duke Pumps'].map(name => (
-                <span key={name} style={{
-                  fontSize: 11, color: 'white', background: 'rgba(255,255,255,0.12)',
-                  padding: '5px 11px', borderRadius: 20, fontWeight: 600
-                }}>{name}</span>
-              ))}
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>
+              Executive search · Compensation design · Assessment centres · Leadership coaching · Talent strategy — for organisations from large conglomerates to fast-growing startups.
             </div>
           </div>
         </div>

@@ -257,7 +257,7 @@ export default function Home({ onNavigate }) {
                 { value: '20+', label: 'Years in Executive Search & Talent Strategy' },
                 { value: '1000+', label: 'Candidates Interviewed Across Levels & Functions' },
                 { value: 'MBA — HR', label: 'Specialised Postgraduate Qualification' },
-                { value: '8+', label: 'Industries — BFSI, Retail, Fashion, Manufacturing & More' },
+                { value: '12+', label: 'Industries — BFSI, Retail, Fashion, Manufacturing, Events & More' },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 2 }}>{value}</div>
@@ -267,10 +267,10 @@ export default function Home({ onNavigate }) {
             </div>
             <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 16 }} />
             <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>
-              Client organisations worked with
+              HR & talent work done in organisations like
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {['Reliance Retail', 'Bharti Airtel', 'Spice Money', 'Gaurav Gupta Studio', 'VMart', 'BKT Tyres', 'Wizard Events'].map(name => (
+              {['Eicher Motors', 'Airtel', 'Reliance Retail', 'Gaurav Gupta Studio', 'Wizard Events', 'Cognitio Analytics', 'Duke Pumps'].map(name => (
                 <span key={name} style={{
                   fontSize: 11, color: 'white', background: 'rgba(255,255,255,0.12)',
                   padding: '5px 11px', borderRadius: 20, fontWeight: 600

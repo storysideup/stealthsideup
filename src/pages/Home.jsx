@@ -246,7 +246,7 @@ export default function Home({ onNavigate }) {
         {/* TRUST / SOCIAL PROOF */}
         <div style={{ marginBottom: 100 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
-            Why trust StealthSideUp
+            Built by someone who has done this for 20 years
           </div>
           <div style={{
             background: 'linear-gradient(135deg, #165D7B 0%, #0F4A61 100%)', borderRadius: 16,
@@ -254,10 +254,10 @@ export default function Home({ onNavigate }) {
           }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               {[
-                { value: '20+', label: 'Years in Executive Search & HR Consulting' },
-                { value: '500+', label: 'Professionals Placed or Coached' },
-                { value: '6', label: 'Partner Organisations' },
-                { value: 'ICF & Hogan', label: 'Certified Credentials' },
+                { value: '20+', label: 'Years in Executive Search & Talent Strategy' },
+                { value: '1000+', label: 'Candidates Interviewed Across Levels & Functions' },
+                { value: 'MBA — HR', label: 'Specialised Postgraduate Qualification' },
+                { value: '8+', label: 'Industries — BFSI, Retail, Fashion, Manufacturing & More' },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <div style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 2 }}>{value}</div>
@@ -267,10 +267,10 @@ export default function Home({ onNavigate }) {
             </div>
             <div style={{ height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 16 }} />
             <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 10 }}>
-              Trusted by and partnered with
+              Client organisations worked with
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {['ThreeFish Consulting', 'VMentor', 'Think Talent', 'Salto Dee Fe', 'Right Management', 'TalkReady.ai'].map(name => (
+              {['Reliance Retail', 'Bharti Airtel', 'Spice Money', 'Gaurav Gupta Studio', 'VMart', 'BKT Tyres', 'Wizard Events'].map(name => (
                 <span key={name} style={{
                   fontSize: 11, color: 'white', background: 'rgba(255,255,255,0.12)',
                   padding: '5px 11px', borderRadius: 20, fontWeight: 600

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
+import { sendCandidateWelcome } from '../lib/whatsapp'
 import SkillsTable from '../components/SkillsTable'
 import { COMPANIES } from '../data/companies'
 

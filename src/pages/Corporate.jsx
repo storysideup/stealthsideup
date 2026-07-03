@@ -42,7 +42,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5,
+      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
       token_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }

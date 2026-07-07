@@ -83,7 +83,7 @@ export default function App() {
         {page === 'register' && <Register onNavigate={navigate} />}
         {page === 'edit-profile' && <EditProfile onNavigate={navigate} />}
         {page === 'corporate-login' && <CorporateLogin onNavigate={navigate} onCorporateLogin={setCorporateAndSave} />}
-        {page === 'corporate-dashboard' && <CorporateDashboard corporate={corporate} onNavigate={navigate} />}
+        {page === 'corporate-dashboard' && <CorporateDashboard corporate={corporate} onNavigate={navigate} onCorporateUpdate={setCorporateAndSave} />}
         {page === 'post-jd' && <PostJD corporate={corporate} onNavigate={navigate} />}
         {page === 'candidate-profile' && <CandidateProfile onNavigate={navigate} />}
         {page === 'buy-tokens' && <BuyTokens corporate={corporate} onNavigate={navigate} onCorporateUpdate={setCorporateAndSave} />}

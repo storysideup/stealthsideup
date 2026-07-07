@@ -30,15 +30,20 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     const { data, error: err } = await supabase.from('corporates').select('*').eq('work_email', email).single()
     if (err || !data) { setError('Account not found. Please register first.'); setLoading(false); return }
     // Simple password check (in production use proper auth)
-    if (data.password_hash !== btoa(password)) { setError('Incorrect password'); setLoading(false); return }
+    if (data.password_hash !== await hashPassword(password)) { setError('Incorrect password'); setLoading(false); return }
     onCorporateLogin(data)
     onNavigate('corporate-dashboard')
     setLoading(false)
   }
 
   const handleRegister = async () => {
-    if (!email || !password || !form.company_name || !form.contact_person) {
-      setError('Company name, your name, email and password are required'); return
+    if (!email || !password || !form.company_name || !form.contact_person || !form.mobile) {
+      setError('Company name, your name, WhatsApp number, email and password are required'); return
+    }
+    const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'rediffmail.com', 'icloud.com']
+    const emailDomain = email.split('@')[1]?.toLowerCase()
+    if (freeEmailDomains.includes(emailDomain)) {
+      setError('Please use your company email address — not Gmail, Yahoo, Hotmail, or similar'); return
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
@@ -46,6 +51,10 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
       token_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
+
+    // Fire WhatsApp welcome message — never blocks registration success on failure
+    sendCorporateWelcome(form.mobile, form.contact_person, 5).catch(e => console.error('Corporate welcome message failed:', e))
+
     setMode('login')
     setError('')
     alert('Account created! You have been given 5 free tokens valid for 30 days. No card required. Please login.')
@@ -70,6 +79,11 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
         <div className="form-group">
           <label className="form-label">Your Name <span className="required">*</span></label>
           <input className="form-input" placeholder="Full name" value={form.contact_person} onChange={e => set('contact_person', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Your WhatsApp Number <span className="required">*</span></label>
+          <input className="form-input" type="tel" placeholder="+91 98765 43210" value={form.mobile || ''} onChange={e => set('mobile', e.target.value)} />
+          <div className="form-hint">We'll send you a welcome message and important account updates here</div>
         </div>
         <div className="form-group">
           <label className="form-label">Your Role <span className="required">*</span></label>
@@ -672,7 +686,7 @@ JD: ${textToExtract.slice(0, 3000)}`
 }
 
 // ── CORPORATE DASHBOARD ──────────────────────────────────
-export function CorporateDashboard({ corporate, onNavigate }) {
+export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate }) {
   const [jds, setJds] = useState([])
   const [matches, setMatches] = useState({})
   const [loading, setLoading] = useState(true)
@@ -712,15 +726,42 @@ export function CorporateDashboard({ corporate, onNavigate }) {
   }
 
   const handleExpressInterest = async (jd, candidate) => {
+    const currentTokens = corporate.tokens || 0
+    if (currentTokens <= 0) {
+      alert('You are out of tokens. Please buy more to express interest in additional profiles.')
+      onNavigate('buy-tokens')
+      return
+    }
+
     const { error } = await supabase.from('interests').insert({
       jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'notified'
     })
-    if (!error) {
-      if (jd.stealth_mode) {
-        alert('Interest expressed in Stealth Mode. The candidate will receive a notification showing only your industry, location, role level and CTC range — not your company name. Your identity is revealed only after they say yes and you choose to proceed.')
-      } else {
-        alert(`Interest expressed. The candidate will receive a notification from ${corporate.company_name} with full role details.`)
+    if (error) return
+
+    // Deduct 1 token and sync it back to shared app state
+    const newTokenCount = currentTokens - 1
+    const { error: tokenErr } = await supabase.from('corporates').update({ tokens: newTokenCount }).eq('id', corporate.id)
+    if (!tokenErr) {
+      const updatedCorporate = { ...corporate, tokens: newTokenCount }
+      onCorporateUpdate && onCorporateUpdate(updatedCorporate)
+      // Low token alert — fired the moment the balance drops to 2
+      if (newTokenCount === 2) {
+        sendLowTokenAlert(corporate.mobile, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert failed:', e))
       }
+    }
+
+    // Notify the candidate — phone-registered candidates only, matches WhatsApp capability
+    if (candidate.contact_type === 'phone') {
+      const roleDetails = jd.stealth_mode
+        ? `${jd.function} role, ${jd.seniority_level || ''}`.trim()
+        : `${jd.role_title} at ${corporate.company_name}`
+      sendMatchNotification(candidate.contact, 'there', jd.function, roleDetails).catch(e => console.error('Match notification failed:', e))
+    }
+
+    if (jd.stealth_mode) {
+      alert('Interest expressed in Stealth Mode. The candidate will receive a notification showing only your industry, location, role level and CTC range — not your company name. Your identity is revealed only after they say yes and you choose to proceed.')
+    } else {
+      alert(`Interest expressed. The candidate will receive a notification from ${corporate.company_name} with full role details.`)
     }
   }
 

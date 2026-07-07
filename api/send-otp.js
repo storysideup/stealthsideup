@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   if (!AUTH_KEY || !TEMPLATE_ID) return res.status(500).json({ error: 'OTP service not configured' })
 
   try {
-    const url = `https://control.msg91.com/api/v5/otp?template_id=${TEMPLATE_ID}&mobile=${mobile}&authkey=${AUTH_KEY}`
+    const url = `https://control.msg91.com/api/v5/otp?template_id=${TEMPLATE_ID}&mobile=${mobile}&authkey=${AUTH_KEY}&otp_length=6`
     const response = await fetch(url, { method: 'POST' })
     const data = await response.json()
 

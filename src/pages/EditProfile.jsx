@@ -160,16 +160,41 @@ export default function EditProfile({ onNavigate }) {
     setLoading(true); setError('')
     const { data } = await supabase.from('candidates').select('*').eq('contact', contact.trim()).single()
     if (!data) { setError('No profile found. Please register first.'); setLoading(false); return }
-    setCandidate(data)
-    initForm(data)
-    setTimeout(() => { setLoading(false); setStep(0.5) }, 500)
+
+    try {
+      const response = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: contact.trim() })
+      })
+      const otpData = await response.json()
+      if (!response.ok) { setError(otpData.error || 'Could not send OTP'); setLoading(false); return }
+      setCandidate(data)
+      initForm(data)
+      setLoading(false); setStep(0.5)
+    } catch (e) {
+      setError('Could not send OTP. Please check your connection and try again.')
+      setLoading(false)
+    }
   }
 
   const handleVerifyOtp = async () => {
     const code = otp.join('')
     if (code.length < 6) { setError('Enter the 6-digit OTP'); return }
-    setLoading(true)
-    setTimeout(() => { setLoading(false); setStep(1) }, 400)
+    setLoading(true); setError('')
+    try {
+      const response = await fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: contact.trim(), otp: code })
+      })
+      const data = await response.json()
+      if (!response.ok) { setError(data.error || 'Incorrect or expired OTP'); setLoading(false); return }
+      setLoading(false); setStep(1)
+    } catch (e) {
+      setError('Could not verify OTP. Please check your connection and try again.')
+      setLoading(false)
+    }
   }
 
   const handleOtpChange = (idx, val) => {
@@ -263,7 +288,7 @@ export default function EditProfile({ onNavigate }) {
             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) document.getElementById(`eotp-${i-1}`)?.focus() }} />
         ))}
       </div>
-      <div className="form-hint" style={{ textAlign: 'center', marginBottom: 20 }}>(Demo — any 6 digits)</div>
+      <div className="form-hint" style={{ textAlign: 'center', marginBottom: 20 }}></div>
       {error && <div className="error-msg">{error}</div>}
       <button className="btn-primary" onClick={handleVerifyOtp} disabled={loading}>{loading ? 'Verifying...' : 'Edit My Profile →'}</button>
     </div>

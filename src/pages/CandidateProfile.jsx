@@ -36,15 +36,28 @@ export default function CandidateProfile({ onNavigate }) {
     setLoading(true); setError('')
     const { data } = await supabase.from('candidates').select('*').eq('contact', contact.trim()).single()
     if (!data) { setError('No profile found with this number. Please register first.'); setLoading(false); return }
-    setCandidate(data)
-    setTimeout(() => { setLoading(false); setStep(1) }, 600)
+
+    try {
+      const response = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: contact.trim() })
+      })
+      const otpData = await response.json()
+      if (!response.ok) { setError(otpData.error || 'Could not send OTP'); setLoading(false); return }
+      setCandidate(data)
+      setLoading(false); setStep(1)
+    } catch (e) {
+      setError('Could not send OTP. Please check your connection and try again.')
+      setLoading(false)
+    }
   }
 
   const handleVerifyOtp = async () => {
     const code = otp.join('')
     if (code.length < 6) { setError('Enter the 6-digit OTP'); return }
     if (!candidate) { setError('Session expired — please go back and enter your number again.'); return }
-    setLoading(true)
+    setLoading(true); setError('')
 
     const timeout = setTimeout(() => {
       setLoading(false)
@@ -52,6 +65,19 @@ export default function CandidateProfile({ onNavigate }) {
     }, 12000)
 
     try {
+      const verifyResponse = await fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: contact.trim(), otp: code })
+      })
+      const verifyData = await verifyResponse.json()
+      if (!verifyResponse.ok) {
+        clearTimeout(timeout)
+        setError(verifyData.error || 'Incorrect or expired OTP')
+        setLoading(false)
+        return
+      }
+
       const { data: interestData } = await supabase
         .from('interests')
         .select('*, jds(*), corporates(*)')
@@ -62,6 +88,10 @@ export default function CandidateProfile({ onNavigate }) {
       localStorage.setItem('ssu_candidate_contact', contact)
     } catch(e) {
       console.error('Verify error:', e)
+      clearTimeout(timeout)
+      setError('Could not verify OTP. Please check your connection and try again.')
+      setLoading(false)
+      return
     }
 
     clearTimeout(timeout)
@@ -247,7 +277,7 @@ export default function CandidateProfile({ onNavigate }) {
             onKeyDown={e => { if (e.key === 'Backspace' && !d && i > 0) document.getElementById(`potp-${i-1}`)?.focus() }} />
         ))}
       </div>
-      <div className="form-hint" style={{ textAlign: 'center', marginBottom: 20 }}>(For demo — enter any 6 digits)</div>
+      <div className="form-hint" style={{ textAlign: 'center', marginBottom: 20 }}></div>
       {error && <div className="error-msg">{error}</div>}
       <button className="btn-primary" onClick={handleVerifyOtp} disabled={loading}>
         {loading ? 'Verifying...' : 'View My Profile →'}

@@ -299,7 +299,7 @@ function CTCInput({ label, value, onChange }) {
   )
 }
 
-function CVPreFill({ form, set, onSkip }) {
+function CVPreFill({ form, set, onSkip, onUploaded }) {
   const [uploading, setUploading] = React.useState(false)
   const [done, setDone] = React.useState(false)
   const [error, setError] = React.useState('')
@@ -390,6 +390,9 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
       const parsed = JSON.parse(clean)
       setExtracted(parsed)
 
+      // Pass raw CV bytes up so the Skills section can reuse them without a second upload
+      onUploaded && onUploaded({ base64, isPDF })
+
       // Pre-fill the form
       if (parsed.years_experience) set('years_experience', parsed.years_experience)
       if (parsed.primary_function) set('primary_function', parsed.primary_function)
@@ -464,6 +467,7 @@ export default function Register({ onNavigate }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [cvData, setCvData] = useState(null) // { base64, isPDF } — reused by Skills section, no second upload
 
   const [form, setForm] = useState({
     gender: '', age_range: '', current_employment_type: '', desired_employment_type: [],
@@ -495,16 +499,50 @@ export default function Register({ onNavigate }) {
   const handleSendOtp = async () => {
     if (!contact.trim()) { setError('Please enter your phone number or email'); return }
     setLoading(true); setError('')
-    // Simulate OTP for now — in production use Supabase Auth or Twilio
-    setTimeout(() => { setLoading(false); setStep(1) }, 800)
+
+    if (contactType === 'phone') {
+      try {
+        const response = await fetch('/api/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contact: contact.trim() })
+        })
+        const data = await response.json()
+        if (!response.ok) { setError(data.error || 'Could not send OTP'); setLoading(false); return }
+        setLoading(false); setStep(1)
+      } catch (e) {
+        setError('Could not send OTP. Please check your connection and try again.')
+        setLoading(false)
+      }
+    } else {
+      // Email OTP not yet built — demo mode for now
+      setTimeout(() => { setLoading(false); setStep(1) }, 800)
+    }
   }
 
   const handleVerifyOtp = async () => {
     const code = otp.join('')
     if (code.length < 6) { setError('Enter the 6-digit OTP'); return }
-    // For demo, accept any 6 digits
     setLoading(true); setError('')
-    setTimeout(() => { setLoading(false); setStep(2) }, 600)
+
+    if (contactType === 'phone') {
+      try {
+        const response = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contact: contact.trim(), otp: code })
+        })
+        const data = await response.json()
+        if (!response.ok) { setError(data.error || 'Incorrect or expired OTP'); setLoading(false); return }
+        setLoading(false); setStep(2)
+      } catch (e) {
+        setError('Could not verify OTP. Please check your connection and try again.')
+        setLoading(false)
+      }
+    } else {
+      // Email OTP not yet built — demo mode for now
+      setTimeout(() => { setLoading(false); setStep(2) }, 600)
+    }
   }
 
   const handleOtpChange = (idx, val) => {
@@ -651,7 +689,7 @@ export default function Register({ onNavigate }) {
         ))}
       </div>
       <div className="form-hint" style={{ textAlign: 'center', marginBottom: 20 }}>
-        (For demo purposes, enter any 6 digits)
+        {contactType === 'email' && '(Email OTP is in demo mode for now — enter any 6 digits)'}
       </div>
       {error && <div className="error-msg">{error}</div>}
       <button className="btn-primary" onClick={handleVerifyOtp} disabled={loading}>
@@ -682,7 +720,7 @@ export default function Register({ onNavigate }) {
 
         {/* CV PRE-FILL — before Section A */}
         {formStep === 0 && !cvSkipped && (
-          <CVPreFill form={form} set={set} onSkip={() => setCvSkipped(true)} />
+          <CVPreFill form={form} set={set} onSkip={() => setCvSkipped(true)} onUploaded={setCvData} />
         )}
 
         {/* SECTION A — About You */}
@@ -866,6 +904,7 @@ export default function Register({ onNavigate }) {
               value={form.skill_tree}
               onChange={v => set('skill_tree', v)}
               mode="candidate"
+              cvData={cvData}
             />
           </div>
 

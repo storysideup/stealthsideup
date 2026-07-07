@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { SKILL_TREE } from '../data/skillTree'
 
 const LEVELS = ['Familiar', 'Proficient', 'Expert']
@@ -102,11 +102,10 @@ function SkillRow({ subFunction, entry, onChange, mode }) {
   )
 }
 
-export default function SkillsTable({ functionName, value = {}, onChange, mode = 'candidate' }) {
-  const [uploading, setUploading] = useState(false)
-  const [uploadDone, setUploadDone] = useState(false)
-  const [uploadError, setUploadError] = useState('')
-  const fileRef = useRef()
+export default function SkillsTable({ functionName, value = {}, onChange, mode = 'candidate', cvData = null }) {
+  const [autoFilling, setAutoFilling] = useState(false)
+  const [autoFillError, setAutoFillError] = useState('')
+  const [autoFillDone, setAutoFillDone] = useState(false)
 
   if (!functionName || !SKILL_TREE[functionName]) {
     return (
@@ -133,94 +132,74 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
     entry?.level === 'Expert' && !entry?.highlight?.trim()
   )
 
-  // CV upload and AI pre-fill
-  const handleCVUpload = async (file) => {
-    if (!file) return
-    setUploading(true); setUploadError('')
-    try {
-      const subFunctionList = subFunctions.join(', ')
-      const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
-      if (!apiKey) throw new Error('API key not configured')
-      const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result.split(',')[1])
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
-      const prompt = `Read this CV carefully. For each sub-function listed, determine proficiency (Familiar/Proficient/Expert). Only include where there is clear evidence. For Expert, extract a one-line achievement with no company names.\n\nSub-functions: ${subFunctionList}\n\nReturn ONLY valid JSON, no markdown:\n{"Talent Acquisition": {"level": "Expert", "highlight": "Led end-to-end hiring for 3 business units"}}\n\nOnly include sub-functions with clear evidence.`
-      const messageContent = isPDF
-        ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }, { type: 'text', text: prompt }]
-        : [{ type: 'text', text: prompt + '\n\nCV text:\n' + atob(base64).slice(0, 5000) }]
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: messageContent }]
-        })
-      })
-      const data = await response.json()
-      const text = data.content?.[0]?.text || ''
-      const clean = text.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean)
+  // Auto-extract skill levels from the CV already uploaded in Section A — no second upload needed
+  useEffect(() => {
+    if (mode !== 'candidate') return
+    if (!cvData?.base64) return
+    if (autoFillDone || autoFilling) return
+    if (Object.keys(value).length > 0) { setAutoFillDone(true); return } // don't overwrite manual edits
 
-      // Merge AI suggestions with existing, marking as AI suggested
-      const updated = { ...value }
-      Object.entries(parsed).forEach(([sf, entry]) => {
-        if (subFunctions.includes(sf) && entry.level) {
-          updated[sf] = { ...entry, aiSuggested: true }
-        }
-      })
-      onChange(updated)
-      setUploadDone(true)
-    } catch (e) {
-      setUploadError('Could not read CV: ' + (e.message || 'Unknown error') + '. Try a Word doc (.docx) instead.')
+    const run = async () => {
+      setAutoFilling(true); setAutoFillError('')
+      try {
+        const subFunctionList = subFunctions.join(', ')
+        const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
+        if (!apiKey) throw new Error('API key not configured')
+        const prompt = `Read this CV carefully. For each sub-function listed, determine proficiency (Familiar/Proficient/Expert). Only include where there is clear evidence. For Expert, extract a one-line achievement with no company names.\n\nSub-functions: ${subFunctionList}\n\nReturn ONLY valid JSON, no markdown:\n{"Talent Acquisition": {"level": "Expert", "highlight": "Led end-to-end hiring for 3 business units"}}\n\nOnly include sub-functions with clear evidence.`
+        const messageContent = cvData.isPDF
+          ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: cvData.base64 } }, { type: 'text', text: prompt }]
+          : [{ type: 'text', text: prompt + '\n\nCV text:\n' + atob(cvData.base64).slice(0, 5000) }]
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: cvData.isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
+            max_tokens: 1000,
+            messages: [{ role: 'user', content: messageContent }]
+          })
+        })
+        const data = await response.json()
+        const text = data.content?.[0]?.text || ''
+        const clean = text.replace(/```json|```/g, '').trim()
+        const parsed = JSON.parse(clean)
+
+        const updated = { ...value }
+        Object.entries(parsed).forEach(([sf, entry]) => {
+          if (subFunctions.includes(sf) && entry.level) {
+            updated[sf] = { ...entry, aiSuggested: true }
+          }
+        })
+        onChange(updated)
+      } catch (e) {
+        setAutoFillError('Could not map skills from your CV automatically — please select levels manually below.')
+      }
+      setAutoFilling(false)
+      setAutoFillDone(true)
     }
-    setUploading(false)
-  }
+    run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cvData, functionName])
 
   return (
     <div>
-      {/* CV upload — candidate only */}
-      {mode === 'candidate' && !uploadDone && (
-        <div style={{ background: '#f9fafb', border: '1.5px solid var(--grey-200)', borderRadius: 10, padding: 14, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-800)', marginBottom: 4 }}>
-            ⚡ Upload your CV to auto-fill your skills below
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 12, lineHeight: 1.6 }}>
-            AI reads your CV and ticks the right proficiency levels for each skill area. Review and change anything. <strong style={{ color: 'var(--teal)' }}>Your CV is never stored or shared.</strong>
-          </div>
-          {uploadError && <div className="error-msg" style={{ marginBottom: 8 }}>{uploadError}</div>}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: 'none' }}
-              onChange={e => handleCVUpload(e.target.files?.[0])} />
-            <button type="button" className="btn-primary btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-              {uploading ? 'Reading CV...' : '📎 Upload CV'}
-            </button>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => setUploadDone(true)}>
-              Fill manually
-            </button>
-          </div>
+      {/* Auto-fill status — driven by the CV uploaded earlier, no second upload here */}
+      {mode === 'candidate' && cvData?.base64 && autoFilling && (
+        <div style={{ background: '#f9fafb', border: '1.5px solid var(--grey-200)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 13, color: 'var(--grey-600)' }}>
+          ⏳ Mapping your skill levels from the CV you already uploaded...
         </div>
       )}
-
-      {uploadDone && mode === 'candidate' && (
-        <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600 }}>
-            ✓ Skill levels pre-filled — review and adjust below
-          </div>
-          <button type="button" onClick={() => { setUploadDone(false); fileRef.current && (fileRef.current.value = '') }}
-            style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>
-            Upload again
-          </button>
+      {mode === 'candidate' && autoFillDone && !autoFillError && Object.keys(value).length > 0 && (
+        <div style={{ background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: 'var(--teal)', fontWeight: 600 }}>
+          ✓ Skill levels mapped from your CV — review and adjust below
         </div>
+      )}
+      {mode === 'candidate' && autoFillError && (
+        <div className="error-msg" style={{ marginBottom: 14 }}>{autoFillError}</div>
       )}
 
       {/* Proficiency definitions */}
@@ -246,6 +225,11 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8, borderBottom: '2px solid var(--grey-200)', marginBottom: 4 }}>
         <div style={{ flex: 1, fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
           {mode === 'candidate' ? 'Skill Area' : 'Skill Requirement'}
+          {mode === 'candidate' && (
+            <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--grey-400)', marginLeft: 6 }}>
+              — leave blank if not applicable
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
           {LEVELS.map(level => (

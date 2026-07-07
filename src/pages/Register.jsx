@@ -465,7 +465,7 @@ export default function Register({ onNavigate }) {
     skill_keywords: [], skill_tree: {}, career_history: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
-    notice_period: '', min_expected_ctc: '', expected_day_rate: '', years_in_function: '',
+    notice_period: '', min_expected_ctc: '', years_in_function: '',
     languages: [], open_to_travel: '', has_passport: '',
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
   })
@@ -586,7 +586,6 @@ export default function Register({ onNavigate }) {
         career_history: form.career_history,
         notice_period: form.notice_period,
         min_expected_ctc: parseFloat(form.min_expected_ctc) || null,
-        expected_day_rate: parseFloat(form.expected_day_rate) || null,
         years_in_function: parseInt(form.years_in_function) || null,
         languages: form.languages,
         open_to_travel: form.open_to_travel,
@@ -944,7 +943,7 @@ export default function Register({ onNavigate }) {
             <TagSelect options={NOTICE_PERIODS} value={form.notice_period ? [form.notice_period] : []} onChange={v => set('notice_period', v[v.length-1] || '')} max={1} />
           </div>
 
-          {!seekingFreelance ? (
+          {!seekingFreelance && (
             <div className="form-group">
               <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -953,16 +952,6 @@ export default function Register({ onNavigate }) {
                 <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>Lakhs per annum</span>
               </div>
               <div className="form-hint">The minimum you would consider moving for. Helps us filter out roles that don't meet your expectations.</div>
-            </div>
-          ) : (
-            <div className="form-group">
-              <label className="form-label">Minimum Day Rate / Project Fee (₹)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input className="form-input" type="number" min="0" placeholder="e.g. 15000" style={{ maxWidth: 160 }}
-                  value={form.expected_day_rate} onChange={e => set('expected_day_rate', e.target.value)} />
-                <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>per day</span>
-              </div>
-              <div className="form-hint">Your typical minimum rate for a project or consulting day. Helps us filter out engagements that don't meet your expectations.</div>
             </div>
           )}
 

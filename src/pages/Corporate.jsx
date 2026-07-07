@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendMatchNotification, sendLowTokenAlert, sendCorporateWelcome } from '../lib/whatsapp'
+import { sendCorporateWelcomeEmail, sendLowTokenAlertEmail } from '../lib/email'
 
 async function hashPassword(password) {
   const encoder = new TextEncoder()
@@ -37,8 +38,8 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   }
 
   const handleRegister = async () => {
-    if (!email || !password || !form.company_name || !form.contact_person || !form.mobile) {
-      setError('Company name, your name, WhatsApp number, email and password are required'); return
+    if (!email || !password || !form.company_name || !form.contact_person) {
+      setError('Company name, your name, email and password are required'); return
     }
     const freeEmailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'rediffmail.com', 'icloud.com']
     const emailDomain = email.split('@')[1]?.toLowerCase()
@@ -52,8 +53,12 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
 
-    // Fire WhatsApp welcome message — never blocks registration success on failure
-    sendCorporateWelcome(form.mobile, form.contact_person, 5).catch(e => console.error('Corporate welcome message failed:', e))
+    // Fire welcome message — WhatsApp if a phone was given, email otherwise. Never blocks registration success.
+    if (form.mobile?.trim()) {
+      sendCorporateWelcome(form.mobile, form.contact_person, 5).catch(e => console.error('Corporate welcome message failed:', e))
+    } else {
+      sendCorporateWelcomeEmail(email, form.contact_person, 5).catch(e => console.error('Corporate welcome email failed:', e))
+    }
 
     setMode('login')
     setError('')
@@ -81,9 +86,9 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           <input className="form-input" placeholder="Full name" value={form.contact_person} onChange={e => set('contact_person', e.target.value)} />
         </div>
         <div className="form-group">
-          <label className="form-label">Your WhatsApp Number <span className="required">*</span></label>
+          <label className="form-label">Your WhatsApp Number <span style={{ color: 'var(--grey-400)', fontWeight: 400 }}>(optional)</span></label>
           <input className="form-input" type="tel" placeholder="+91 98765 43210" value={form.mobile || ''} onChange={e => set('mobile', e.target.value)} />
-          <div className="form-hint">We'll send you a welcome message and important account updates here</div>
+          <div className="form-hint">If given, we'll send account updates via WhatsApp. Otherwise we'll use your email.</div>
         </div>
         <div className="form-group">
           <label className="form-label">Your Role <span className="required">*</span></label>
@@ -746,7 +751,11 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
       onCorporateUpdate && onCorporateUpdate(updatedCorporate)
       // Low token alert — fired the moment the balance drops to 2
       if (newTokenCount === 2) {
-        sendLowTokenAlert(corporate.mobile, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert failed:', e))
+        if (corporate.mobile?.trim()) {
+          sendLowTokenAlert(corporate.mobile, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert failed:', e))
+        } else {
+          sendLowTokenAlertEmail(corporate.work_email, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert email failed:', e))
+        }
       }
     }
 

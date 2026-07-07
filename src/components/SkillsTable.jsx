@@ -107,37 +107,17 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
   const [autoFillError, setAutoFillError] = useState('')
   const [autoFillDone, setAutoFillDone] = useState(false)
 
-  if (!functionName || !SKILL_TREE[functionName]) {
-    return (
-      <div style={{ padding: 14, background: 'var(--grey-100)', borderRadius: 8, fontSize: 13, color: 'var(--grey-400)' }}>
-        Please select your primary function first.
-      </div>
-    )
-  }
-
-  const subFunctions = Object.keys(SKILL_TREE[functionName])
-
-  const updateEntry = (subFunction, entry) => {
-    const updated = { ...value }
-    if (entry === null) {
-      delete updated[subFunction]
-    } else {
-      updated[subFunction] = entry
-    }
-    onChange(updated)
-  }
-
-  const selectedCount = Object.keys(value).length
-  const expertWithoutHighlight = Object.entries(value).filter(([sf, entry]) =>
-    entry?.level === 'Expert' && !entry?.highlight?.trim()
-  )
-
   // Auto-extract skill levels from the CV already uploaded in Section A — no second upload needed
+  // NOTE: this hook must run on every render (Rules of Hooks), so all guards live inside it,
+  // not in an early return before it.
   useEffect(() => {
     if (mode !== 'candidate') return
+    if (!functionName || !SKILL_TREE[functionName]) return
     if (!cvData?.base64) return
     if (autoFillDone || autoFilling) return
     if (Object.keys(value).length > 0) { setAutoFillDone(true); return } // don't overwrite manual edits
+
+    const subFunctions = Object.keys(SKILL_TREE[functionName])
 
     const run = async () => {
       setAutoFilling(true); setAutoFillError('')
@@ -184,6 +164,31 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
     run()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cvData, functionName])
+
+  if (!functionName || !SKILL_TREE[functionName]) {
+    return (
+      <div style={{ padding: 14, background: 'var(--grey-100)', borderRadius: 8, fontSize: 13, color: 'var(--grey-400)' }}>
+        Please select your primary function first.
+      </div>
+    )
+  }
+
+  const subFunctions = Object.keys(SKILL_TREE[functionName])
+
+  const updateEntry = (subFunction, entry) => {
+    const updated = { ...value }
+    if (entry === null) {
+      delete updated[subFunction]
+    } else {
+      updated[subFunction] = entry
+    }
+    onChange(updated)
+  }
+
+  const selectedCount = Object.keys(value).length
+  const expertWithoutHighlight = Object.entries(value).filter(([sf, entry]) =>
+    entry?.level === 'Expert' && !entry?.highlight?.trim()
+  )
 
   return (
     <div>

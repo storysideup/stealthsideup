@@ -594,6 +594,12 @@ export default function Register({ onNavigate }) {
       }
       const { error: dbErr } = await supabase.from('candidates').upsert(payload, { onConflict: 'contact' })
       if (dbErr) throw dbErr
+
+      // Fire WhatsApp welcome message — phone registrants only, never blocks success on failure
+      if (contactType === 'phone') {
+        sendCandidateWelcome(contact.trim(), 'there').catch(e => console.error('Welcome message failed:', e))
+      }
+
       setSuccess(true)
     } catch (e) {
       setError(e.message || 'Something went wrong. Please try again.')

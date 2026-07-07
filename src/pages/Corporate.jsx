@@ -14,25 +14,60 @@ import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
 
+function generateInviteCode() {
+  return Math.random().toString(36).slice(2, 10).toUpperCase()
+}
+
 // ── CORPORATE LOGIN ──────────────────────────────────────
 export function CorporateLogin({ onNavigate, onCorporateLogin }) {
-  const [mode, setMode] = useState('login') // login | register
+  const inviteCode = new URLSearchParams(window.location.search).get('invite')
+  const [mode, setMode] = useState(inviteCode ? 'join' : 'login') // login | register | join
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [form, setForm] = useState({ company_name: '', industry: '', company_type: '', gstin: '', contact_person: '', designation: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [inviteTeam, setInviteTeam] = useState(null) // the root corporate this invite belongs to
+  const [inviteLoading, setInviteLoading] = useState(!!inviteCode)
+
+  useEffect(() => {
+    if (!inviteCode) return
+    supabase.from('corporates').select('id, company_name').eq('invite_code', inviteCode).single()
+      .then(({ data }) => {
+        setInviteTeam(data || false) // false = invalid code, distinct from null (still loading)
+        setInviteLoading(false)
+      })
+  }, [inviteCode])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  // Resolves a logged-in row to the "effective" corporate object the rest of the app should use —
+  // team members' tokens, JDs, and matches all live under the root/admin account, not their own row.
+  const resolveEffectiveCorporate = async (data) => {
+    if (!data.parent_corporate_id) {
+      // Root account — ensure it has an invite code (older accounts created before this feature won't)
+      if (!data.invite_code) {
+        const code = generateInviteCode()
+        await supabase.from('corporates').update({ invite_code: code }).eq('id', data.id)
+        return { ...data, invite_code: code }
+      }
+      return data
+    }
+    const { data: root } = await supabase.from('corporates').select('*').eq('id', data.parent_corporate_id).single()
+    if (!root) return data
+    // Keep the logged-in person's own identity/contact details, but everything else
+    // (tokens, company_name, invite_code) comes from the shared root account
+    return { ...root, contact_person: data.contact_person, work_email: data.work_email, mobile: data.mobile, own_id: data.id, user_role: data.user_role }
+  }
 
   const handleLogin = async () => {
     if (!email || !password) { setError('Please fill all fields'); return }
     setLoading(true); setError('')
     const { data, error: err } = await supabase.from('corporates').select('*').eq('work_email', email).single()
     if (err || !data) { setError('Account not found. Please register first.'); setLoading(false); return }
-    // Simple password check (in production use proper auth)
     if (data.password_hash !== await hashPassword(password)) { setError('Incorrect password'); setLoading(false); return }
-    onCorporateLogin(data)
+    const effective = await resolveEffectiveCorporate(data)
+    onCorporateLogin(effective)
     onNavigate('corporate-dashboard')
     setLoading(false)
   }
@@ -48,11 +83,11 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null
+      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
+      invite_code: generateInviteCode()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
 
-    // Fire welcome message — WhatsApp if a phone was given, email otherwise. Never blocks registration success.
     if (form.mobile?.trim()) {
       sendCorporateWelcome(form.mobile, form.contact_person, 5).catch(e => console.error('Corporate welcome message failed:', e))
     } else {
@@ -63,6 +98,71 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     setError('')
     alert('Account created! You have been given 5 free tokens. No card required. Please login.')
     setLoading(false)
+  }
+
+  const handleJoinTeam = async () => {
+    if (!email || !password || !form.contact_person) {
+      setError('Your name, email and password are required'); return
+    }
+    setLoading(true); setError('')
+    const { error: err } = await supabase.from('corporates').insert({
+      contact_person: form.contact_person, mobile: form.mobile || null,
+      work_email: email, password_hash: await hashPassword(password),
+      company_name: inviteTeam.company_name, parent_corporate_id: inviteTeam.id,
+      user_role: 'recruiter', is_active: true, tokens: 0
+    })
+    if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
+    setMode('login')
+    setError('')
+    alert(`You've joined ${inviteTeam.company_name}'s team! Please login.`)
+    setLoading(false)
+  }
+
+  if (inviteLoading) return <div className="page"><p style={{ color: 'var(--grey-400)' }}>Loading invite...</p></div>
+
+  if (mode === 'join' && inviteTeam) {
+    return (
+      <div className="page">
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Join {inviteTeam.company_name}'s Team</h2>
+        <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>You'll share your team's token pool and see all JDs and matches your teammates post.</p>
+
+        <div className="form-group">
+          <label className="form-label">Your Name <span className="required">*</span></label>
+          <input className="form-input" placeholder="Full name" value={form.contact_person} onChange={e => set('contact_person', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Your WhatsApp Number <span style={{ color: 'var(--grey-400)', fontWeight: 400 }}>(optional)</span></label>
+          <input className="form-input" type="tel" placeholder="+91 98765 43210" value={form.mobile || ''} onChange={e => set('mobile', e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Work Email <span className="required">*</span></label>
+          <input className="form-input" type="email" placeholder="you@company.com" value={email} onChange={e => setEmail(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Password <span className="required">*</span></label>
+          <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+        </div>
+
+        {error && <div className="error-msg">{error}</div>}
+
+        <button className="btn-primary" onClick={handleJoinTeam} disabled={loading}>
+          {loading ? 'Please wait...' : 'Join Team →'}
+        </button>
+        <div className="mt-4">
+          <button className="btn-secondary" onClick={() => onNavigate('home')}>← Back to Home</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'join' && inviteTeam === false) {
+    return (
+      <div className="page">
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Invite Link Invalid</h2>
+        <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>This invite link is no longer valid. Please ask your team admin for a fresh link, or register your own company below.</p>
+        <button className="btn-primary" onClick={() => { setMode('login'); window.history.replaceState({}, '', window.location.pathname) }}>Continue →</button>
+      </div>
+    )
   }
 
   return (
@@ -1047,6 +1147,25 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
           Buy Tokens
         </button>
       </div>
+
+      {/* INVITE YOUR TEAM — root accounts only, not team members */}
+      {!corporate.own_id && corporate.invite_code && (
+        <div style={{ background: 'var(--grey-50)', border: '1.5px solid var(--grey-200)', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-800)', marginBottom: 6 }}>👥 Invite Your Team</div>
+          <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 10, lineHeight: 1.6 }}>
+            Share this link with recruiters on your team. They'll share your company's token pool and see all JDs and matches.
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input readOnly value={`${window.location.origin}/?invite=${corporate.invite_code}`}
+              style={{ flex: 1, border: '1.5px solid var(--grey-200)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: 'var(--grey-600)', fontFamily: 'monospace' }} />
+            <button type="button"
+              onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?invite=${corporate.invite_code}`); alert('Invite link copied!') }}
+              style={{ background: 'var(--teal)', color: 'white', border: 'none', borderRadius: 7, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+              Copy Link
+            </button>
+          </div>
+        </div>
+      )}
 
       <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Search</button>
 

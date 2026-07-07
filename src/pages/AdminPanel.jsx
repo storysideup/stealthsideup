@@ -52,7 +52,7 @@ export default function AdminPanel() {
 
     setStats({
       candidates: (cands || []).length,
-      corporates: (corps || []).length,
+      corporates: (corps || []).filter(c => !c.parent_corporate_id).length,
       mandates: (jds || []).length,
       interests: (ints || []).length,
       cvSent,
@@ -116,7 +116,7 @@ export default function AdminPanel() {
     </div>
   )
 
-  const filteredCorps = corporates.filter(c =>
+  const filteredCorps = corporates.filter(c => !c.parent_corporate_id).filter(c =>
     c.company_name?.toLowerCase().includes(searchCorp.toLowerCase()) ||
     c.work_email?.toLowerCase().includes(searchCorp.toLowerCase())
   )
@@ -370,7 +370,7 @@ export default function AdminPanel() {
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 16 }}>Token Management</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-              {corporates.map(corp => (
+              {corporates.filter(corp => !corp.parent_corporate_id).map(corp => (
                 <div key={corp.id} style={{ background: 'white', borderRadius: 12, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <div>

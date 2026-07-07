@@ -1,32 +1,15 @@
-const INTERAKT_API_KEY = import.meta.env.VITE_INTERAKT_KEY
-
 const sendWhatsApp = async (phone, templateName, bodyValues, buttonValues = []) => {
-  if (!INTERAKT_API_KEY) { console.warn('Interakt key not set'); return }
-  
-  // Format Indian number
-  const formatted = phone.replace(/\D/g, '')
-  const e164 = formatted.startsWith('91') ? formatted : `91${formatted}`
-
   try {
-    const response = await fetch('https://api.interakt.ai/v1/public/message/', {
+    const response = await fetch('/api/send-whatsapp', {
       method: 'POST',
-      headers: {
-        'Authorization': `Basic ${INTERAKT_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        countryCode: '+91',
-        phoneNumber: e164,
-        type: 'Template',
-        template: {
-          name: templateName,
-          languageCode: 'en',
-          bodyValues,
-          buttonValues
-        }
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, templateName, bodyValues, buttonValues })
     })
     const data = await response.json()
+    if (!response.ok) {
+      console.error('WhatsApp send failed:', templateName, data.error)
+      return
+    }
     console.log('WhatsApp sent:', templateName, data)
     return data
   } catch (e) {

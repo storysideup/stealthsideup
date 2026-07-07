@@ -31,6 +31,79 @@ export default function CandidateProfile({ onNavigate }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Compute Career Intelligence whenever candidate data becomes available
+  // (covers both fresh OTP login and resumed sessions from localStorage)
+  useEffect(() => {
+    if (!candidate) return
+
+    const computeIntelligence = async () => {
+      const result = { function: candidate.primary_function }
+
+      // 1. Market pay comparison — peers with the same primary function
+      const { data: peers } = await supabase
+        .from('candidates')
+        .select('ctc_total')
+        .eq('primary_function', candidate.primary_function)
+        .eq('is_active', true)
+        .not('ctc_total', 'is', null)
+
+      const ctcValues = (peers || []).map(p => p.ctc_total).filter(v => v > 0).sort((a, b) => a - b)
+      if (ctcValues.length >= 3 && candidate.ctc_total > 0) {
+        result.marketMin = ctcValues[Math.floor(ctcValues.length * 0.25)]
+        result.marketMax = ctcValues[Math.floor(ctcValues.length * 0.75)]
+        result.myCtc = candidate.ctc_total
+        result.ctcValues = ctcValues.length
+        const below = ctcValues.filter(v => v <= candidate.ctc_total).length
+        result.ctcPercentile = Math.round((below / ctcValues.length) * 100)
+      }
+
+      // 2. Demand signal — active JDs posted for this function in the last 7 days
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      const { data: recentJds } = await supabase
+        .from('jds')
+        .select('must_have_skills')
+        .eq('function', candidate.primary_function)
+        .eq('is_active', true)
+        .gte('created_at', sevenDaysAgo)
+
+      result.totalSearches = recentJds?.length || 0
+
+      // 3. Skill gap — skills frequently required in those JDs but missing from this candidate's profile
+      if (recentJds?.length > 0) {
+        const skillCounts = {}
+        recentJds.forEach(jd => {
+          (jd.must_have_skills || []).forEach(skill => {
+            skillCounts[skill] = (skillCounts[skill] || 0) + 1
+          })
+        })
+        const candidateSkills = new Set((candidate.skill_keywords || []).map(s => s.toLowerCase()))
+        result.missingSkills = Object.entries(skillCounts)
+          .filter(([skill]) => !candidateSkills.has(skill.toLowerCase()))
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([skill, count]) => ({ skill, count }))
+      }
+
+      // 4. Profile strength — simple weighted completeness check
+      const fieldChecks = [
+        { key: 'headline', label: 'a headline', filled: !!candidate.headline?.trim() },
+        { key: 'ctc_total', label: 'your current CTC', filled: !!candidate.ctc_total },
+        { key: 'skill_tree', label: 'skill ratings', filled: Object.keys(candidate.skill_tree || {}).length > 0 },
+        { key: 'career_history', label: 'career history', filled: (candidate.career_history || []).length > 0 },
+        { key: 'preferred_locations', label: 'preferred locations', filled: (candidate.preferred_locations?.cities || []).length > 0 },
+        { key: 'notice_period', label: 'notice period', filled: !!candidate.notice_period },
+        { key: 'languages', label: 'languages', filled: (candidate.languages || []).length > 0 },
+      ]
+      const filledCount = fieldChecks.filter(f => f.filled).length
+      result.profileStrength = Math.round((filledCount / fieldChecks.length) * 100)
+      result.missingFields = fieldChecks.filter(f => !f.filled).map(f => f.label)
+
+      setIntelligence(result)
+    }
+
+    computeIntelligence().catch(e => console.error('Intelligence computation failed:', e))
+  }, [candidate])
+
   const handleSendOtp = async () => {
     if (!contact.trim()) { setError('Enter your registered phone number'); return }
     setLoading(true); setError('')

@@ -48,8 +48,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
-      token_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
 
@@ -62,7 +61,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
 
     setMode('login')
     setError('')
-    alert('Account created! You have been given 5 free tokens valid for 30 days. No card required. Please login.')
+    alert('Account created! You have been given 5 free tokens. No card required. Please login.')
     setLoading(false)
   }
 
@@ -125,7 +124,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           <div style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
             <strong>What is a token?</strong> A token is a credit you use to express interest in a candidate profile. Every time you click "Express Interest" on a matched profile, 1 token is used. Think of it like a message credit — you only spend it when you actively choose to reach out to someone.
             <br /><br />
-            Your 5 free tokens are valid for 30 days. No card required to start.
+            Your 5 free tokens don't expire. No card required to start.
           </div>
         </div>
       </>}

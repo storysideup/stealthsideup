@@ -67,8 +67,7 @@ export default function AdminPanel() {
     setAddingTokens(true)
     const newTokens = (tokenModal.tokens || 0) + parseInt(tokenAmount)
     await supabase.from('corporates').update({
-      tokens: newTokens,
-      token_expiry: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      tokens: newTokens
     }).eq('id', tokenModal.id)
 
     setCorporates(prev => prev.map(c => c.id === tokenModal.id ? { ...c, tokens: newTokens } : c))
@@ -233,7 +232,7 @@ export default function AdminPanel() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                    {['Company', 'Contact', 'Email', 'Tokens', 'Expiry', 'Status', 'Actions'].map(h => (
+                    {['Company', 'Contact', 'Email', 'Tokens', 'Status', 'Actions'].map(h => (
                       <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700, color: '#6b7280', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                     ))}
                   </tr>
@@ -248,9 +247,6 @@ export default function AdminPanel() {
                         <span style={{ background: (corp.tokens || 0) <= 2 ? '#fee2e2' : '#EBF4F8', color: (corp.tokens || 0) <= 2 ? '#dc2626' : '#165D7B', padding: '3px 10px', borderRadius: 10, fontWeight: 700, fontSize: 12 }}>
                           {corp.tokens || 0}
                         </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', color: '#9ca3af', fontSize: 12 }}>
-                        {corp.token_expiry ? new Date(corp.token_expiry).toLocaleDateString('en-IN') : '—'}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ background: corp.is_active ? '#d1fae5' : '#fee2e2', color: corp.is_active ? '#065f46' : '#991b1b', padding: '3px 10px', borderRadius: 10, fontSize: 11, fontWeight: 700 }}>
@@ -386,11 +382,6 @@ export default function AdminPanel() {
                       <div style={{ fontSize: 10, color: '#9ca3af' }}>tokens</div>
                     </div>
                   </div>
-                  {corp.token_expiry && (
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
-                      Expires: {new Date(corp.token_expiry).toLocaleDateString('en-IN')}
-                    </div>
-                  )}
                   <button onClick={() => { setTokenModal(corp); setTokenAmount('') }}
                     style={{ width: '100%', background: '#0A3D35', color: 'white', border: 'none', borderRadius: 7, padding: '9px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                     + Add Tokens
@@ -446,7 +437,7 @@ export default function AdminPanel() {
               />
               {tokenAmount && !isNaN(tokenAmount) && (
                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
-                  New balance will be: <strong>{(tokenModal.tokens || 0) + parseInt(tokenAmount)} tokens</strong> · Valid 90 days
+                  New balance will be: <strong>{(tokenModal.tokens || 0) + parseInt(tokenAmount)} tokens</strong>
                 </div>
               )}
             </div>

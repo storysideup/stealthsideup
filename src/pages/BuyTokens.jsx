@@ -21,12 +21,10 @@ export default function BuyTokens({ corporate, onNavigate, onCorporateUpdate }) 
   const handleDemoPay = async () => {
     setLoading(true)
     const newTokens = (corporate.tokens || 0) + selectedPack.tokens
-    const expiry = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
     await supabase.from('corporates').update({
-      tokens: newTokens,
-      token_expiry: expiry
+      tokens: newTokens
     }).eq('id', corporate.id)
-    onCorporateUpdate({ ...corporate, tokens: newTokens, token_expiry: expiry })
+    onCorporateUpdate({ ...corporate, tokens: newTokens })
     setLoading(false)
     onNavigate('corporate-dashboard')
   }
@@ -86,7 +84,7 @@ export default function BuyTokens({ corporate, onNavigate, onCorporateUpdate }) 
           <br /><br />
           <strong>You only spend a token when you actively choose to reach out.</strong> Browsing profiles, shortlisting, and marking "Not a fit" are all free.
           <br /><br />
-          Tokens are valid for <strong>90 days</strong> from purchase. Buy as many or as few as you need — no monthly commitment.
+          Buy as many or as few as you need — no monthly commitment.
         </div>
       </div>
 
@@ -135,7 +133,7 @@ export default function BuyTokens({ corporate, onNavigate, onCorporateUpdate }) 
       {selectedPack && (
         <div style={{ background: '#f9fafb', border: '1px solid var(--grey-200)', borderRadius: 10, padding: '12px 14px', marginBottom: 24 }}>
           <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.7 }}>
-            With <strong>{selectedPack.tokens} tokens</strong> you can express interest in up to <strong>{selectedPack.tokens} candidate profiles</strong>. Valid for 90 days from purchase. Your balance after purchase: <strong>{(corporate?.tokens || 0) + selectedPack.tokens} tokens</strong>.
+            With <strong>{selectedPack.tokens} tokens</strong> you can express interest in up to <strong>{selectedPack.tokens} candidate profiles</strong>. Your balance after purchase: <strong>{(corporate?.tokens || 0) + selectedPack.tokens} tokens</strong>.
           </div>
         </div>
       )}

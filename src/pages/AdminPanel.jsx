@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const ADMIN_PASSWORD = 'SSU@Admin2026'
 
-const TABS = ['Overview', 'Corporates', 'Candidates', 'Tokens', 'Declines']
+const TABS = ['Overview', 'Corporates', 'Candidates', 'CVs Sent', 'Tokens', 'Declines']
 
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(false)
@@ -17,6 +17,7 @@ export default function AdminPanel() {
   const [corporates, setCorporates] = useState([])
   const [candidates, setCandidates] = useState([])
   const [interests, setInterests] = useState([])
+  const [jds, setJds] = useState([])
   const [tokenModal, setTokenModal] = useState(null)
   const [tokenAmount, setTokenAmount] = useState('')
   const [addingTokens, setAddingTokens] = useState(false)
@@ -44,6 +45,7 @@ export default function AdminPanel() {
     setCandidates(cands || [])
     setCorporates(corps || [])
     setInterests(ints || [])
+    setJds(jds || [])
 
     const cvSent = (ints || []).filter(i => i.status === 'cv_sent').length
     const totalTokensUsed = (ints || []).filter(i => i.status !== 'saved').length
@@ -313,6 +315,57 @@ export default function AdminPanel() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* CVS SENT */}
+        {!loading && activeTab === 'CVs Sent' && (
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>CVs Shared With Corporates</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>Every CV a candidate has sent — recoverable here even if the recruiter's email was missed.</div>
+            {interests.filter(i => i.status === 'cv_sent').length === 0 ? (
+              <div style={{ color: '#9ca3af', fontSize: 13 }}>No CVs sent yet.</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                <thead>
+                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#9ca3af', textTransform: 'uppercase' }}>Date</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#9ca3af', textTransform: 'uppercase' }}>Candidate</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#9ca3af', textTransform: 'uppercase' }}>Role</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, color: '#9ca3af', textTransform: 'uppercase' }}>CV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interests.filter(i => i.status === 'cv_sent').map(i => {
+                    const cand = candidates.find(c => c.id === i.candidate_id)
+                    const jd = jds.find(j => j.id === i.jd_id)
+                    return (
+                      <tr key={i.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: '#6b7280' }}>{i.candidate_response_at ? new Date(i.candidate_response_at).toLocaleDateString('en-IN') : '—'}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: '#374151' }}>{cand?.headline || cand?.primary_function || '—'}</td>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: '#374151' }}>{jd?.role_title || '—'}</td>
+                        <td style={{ padding: '10px 16px' }}>
+                          {i.cv_storage_path ? (
+                            <button
+                              onClick={async () => {
+                                const { data, error } = await supabase.storage.from('candidate-cvs').createSignedUrl(i.cv_storage_path, 300)
+                                if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+                                else alert('Could not generate download link: ' + (error?.message || 'Unknown error'))
+                              }}
+                              style={{ background: '#0A3D35', color: 'white', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                            >
+                              Download
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: 11, color: '#9ca3af' }}>Not stored (sent before this feature)</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 

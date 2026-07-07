@@ -259,12 +259,27 @@ export default function CandidateProfile({ onNavigate }) {
 
       if (!response.ok) throw new Error('Failed to send')
 
+      // Also store the CV in Supabase Storage — so it's recoverable platform-side
+      // even if the recruiter's email is missed, bounces, or gets filtered as spam
+      let cvStoragePath = null
+      try {
+        const storagePath = `${acceptingInterest}/${cvFile.name}`
+        const { error: uploadErr } = await supabase.storage
+          .from('candidate-cvs')
+          .upload(storagePath, cvFile, { upsert: true })
+        if (!uploadErr) cvStoragePath = storagePath
+        else console.error('CV storage upload failed:', uploadErr)
+      } catch (e) {
+        console.error('CV storage upload error:', e)
+      }
+
       // Update interest status
       await supabase.from('interests').update({
         status: 'cv_sent',
         candidate_response_at: new Date().toISOString(),
         candidate_contact_shared: candidate.contact,
-        candidate_message: candidateNote
+        candidate_message: candidateNote,
+        cv_storage_path: cvStoragePath
       }).eq('id', acceptingInterest)
 
       setAcceptingInterest(null)

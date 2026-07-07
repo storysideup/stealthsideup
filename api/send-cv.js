@@ -57,7 +57,7 @@ Contact: ${contactShared}
       },
       body: JSON.stringify({
         from: 'StealthSideUp <noreply@storysideup.com>',
-        to: [recruiterEmail, 'dorasuri@storysideup.com'],
+        to: [recruiterEmail],
         subject: `StealthSideUp: A candidate is interested in your ${jd?.title || 'role'} search`,
         html: emailBody,
         attachments: [{

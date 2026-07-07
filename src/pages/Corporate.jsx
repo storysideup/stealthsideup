@@ -93,8 +93,8 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           <label className="form-label">Your Role <span className="required">*</span></label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { value: 'admin', label: 'Admin / Decision Maker', desc: 'I manage hiring strategy, budgets and the team. I will also invite recruiters if needed.' },
-              { value: 'recruiter', label: 'Recruiter / TA Professional', desc: 'I work on specific mandates assigned to me.' }
+              { value: 'admin', label: 'Admin / Decision Maker', desc: 'I manage hiring strategy and budgets for my team.' },
+              { value: 'recruiter', label: 'Recruiter / TA Professional', desc: 'I work on hiring mandates for my company.' }
             ].map(opt => (
               <button key={opt.value} type="button"
                 onClick={() => set('user_role', opt.value)}
@@ -696,6 +696,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [loading, setLoading] = useState(true)
   const [activeJd, setActiveJd] = useState(null)
   const [interests, setInterests] = useState([])
+  const [processingInterestFor, setProcessingInterestFor] = useState(null)
 
   useEffect(() => {
     if (!corporate) { onNavigate('corporate-login'); return }
@@ -730,46 +731,66 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   }
 
   const handleExpressInterest = async (jd, candidate) => {
-    const currentTokens = corporate.tokens || 0
-    if (currentTokens <= 0) {
-      alert('You are out of tokens. Please buy more to express interest in additional profiles.')
-      onNavigate('buy-tokens')
-      return
-    }
+    // Hard guard against rapid double-clicks / duplicate submissions
+    if (processingInterestFor === candidate.id) return
+    setProcessingInterestFor(candidate.id)
 
-    const { error } = await supabase.from('interests').insert({
-      jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'notified'
-    })
-    if (error) return
+    try {
+      const currentTokens = corporate.tokens || 0
+      if (currentTokens <= 0) {
+        alert('You are out of tokens. Please buy more to express interest in additional profiles.')
+        onNavigate('buy-tokens')
+        return
+      }
 
-    // Deduct 1 token and sync it back to shared app state
-    const newTokenCount = currentTokens - 1
-    const { error: tokenErr } = await supabase.from('corporates').update({ tokens: newTokenCount }).eq('id', corporate.id)
-    if (!tokenErr) {
-      const updatedCorporate = { ...corporate, tokens: newTokenCount }
-      onCorporateUpdate && onCorporateUpdate(updatedCorporate)
-      // Low token alert — fired the moment the balance drops to 2
-      if (newTokenCount === 2) {
-        if (corporate.mobile?.trim()) {
-          sendLowTokenAlert(corporate.mobile, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert failed:', e))
-        } else {
-          sendLowTokenAlertEmail(corporate.work_email, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert email failed:', e))
+      // Re-check against the latest saved status before inserting — closes the race
+      // where interests state might be momentarily stale from a prior action
+      const { data: existing } = await supabase.from('interests').select('id').eq('jd_id', jd.id).eq('candidate_id', candidate.id).maybeSingle()
+      if (existing) {
+        await loadInterests(jd.id)
+        return
+      }
+
+      const { error } = await supabase.from('interests').insert({
+        jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'notified'
+      })
+      if (error) return
+
+      // Deduct 1 token and sync it back to shared app state
+      const newTokenCount = currentTokens - 1
+      const { error: tokenErr } = await supabase.from('corporates').update({ tokens: newTokenCount }).eq('id', corporate.id)
+      if (!tokenErr) {
+        const updatedCorporate = { ...corporate, tokens: newTokenCount }
+        onCorporateUpdate && onCorporateUpdate(updatedCorporate)
+        // Low token alert — fired the moment the balance drops to 2
+        if (newTokenCount === 2) {
+          if (corporate.mobile?.trim()) {
+            sendLowTokenAlert(corporate.mobile, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert failed:', e))
+          } else {
+            sendLowTokenAlertEmail(corporate.work_email, corporate.contact_person, newTokenCount).catch(e => console.error('Low token alert email failed:', e))
+          }
         }
       }
-    }
 
-    // Notify the candidate — phone-registered candidates only, matches WhatsApp capability
-    if (candidate.contact_type === 'phone') {
-      const roleDetails = jd.stealth_mode
-        ? `${jd.function} role, ${jd.seniority_level || ''}`.trim()
-        : `${jd.role_title} at ${corporate.company_name}`
-      sendMatchNotification(candidate.contact, 'there', jd.function, roleDetails).catch(e => console.error('Match notification failed:', e))
-    }
+      // Notify the candidate — phone-registered candidates only, matches WhatsApp capability
+      if (candidate.contact_type === 'phone') {
+        const roleDetails = jd.stealth_mode
+          ? `${jd.function} role, ${jd.seniority_level || ''}`.trim()
+          : `${jd.role_title} at ${corporate.company_name}`
+        sendMatchNotification(candidate.contact, 'there', jd.function, roleDetails).catch(e => console.error('Match notification failed:', e))
+      }
 
-    if (jd.stealth_mode) {
-      alert('Interest expressed in Stealth Mode. The candidate will receive a notification showing only your industry, location, role level and CTC range — not your company name. Your identity is revealed only after they say yes and you choose to proceed.')
-    } else {
-      alert(`Interest expressed. The candidate will receive a notification from ${corporate.company_name} with full role details.`)
+      // Refresh interests so the button correctly disappears — this was missing before,
+      // which is exactly what let repeated clicks slip through
+      await loadInterests(jd.id)
+
+      if (jd.stealth_mode) {
+        alert('Interest expressed in Stealth Mode. The candidate will receive a notification showing only your industry, location, role level and CTC range — not your company name. Your identity is revealed only after they say yes and you choose to proceed.')
+      } else {
+        alert(`Interest expressed. The candidate will receive a notification from ${corporate.company_name} with full role details.`)
+      }
+    } finally {
+      setProcessingInterestFor(null)
     }
   }
 
@@ -938,7 +959,9 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                         <span className="badge badge-yellow">⭐ Shortlisted</span>
                       </div>
-                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest Now</button>
+                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
+                        {processingInterestFor === c.id ? 'Sending...' : 'Express Interest Now'}
+                      </button>
                     </div>
                   )
                   if (actionStatus === 'not_fit') return (
@@ -959,7 +982,9 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   // No action taken yet
                   return (
                     <div style={{ display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
-                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)}>Express Interest</button>
+                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
+                        {processingInterestFor === c.id ? 'Sending...' : 'Express Interest'}
+                      </button>
                       <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Shortlist</button>
                       <button type="button" onClick={() => handleNotFit(activeJd.id, c.id)}
                         style={{ padding: '8px 14px', fontSize: 13, borderRadius: 6, border: '1.5px solid var(--grey-200)', background: 'white', color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>

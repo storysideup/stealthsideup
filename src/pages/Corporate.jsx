@@ -797,6 +797,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [activeJd, setActiveJd] = useState(null)
   const [interests, setInterests] = useState([])
   const [processingInterestFor, setProcessingInterestFor] = useState(null)
+  const [expandedSkillsFor, setExpandedSkillsFor] = useState({})
 
   useEffect(() => {
     if (!corporate) { onNavigate('corporate-login'); return }
@@ -998,31 +999,48 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   </div>
                 )}
 
-                {/* Skills with highlights */}
-                {c.skill_tree && Object.keys(c.skill_tree).length > 0 && (
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Skills</div>
-                    {Object.entries(c.skill_tree).slice(0, 6).map(([sf, entry]) => (
-                      <div key={sf} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '8px 10px', marginBottom: 6 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: entry?.highlight ? 4 : 0 }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-800)' }}>{sf}</span>
-                          {entry?.level && (
-                            <span style={{
-                              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-                              background: entry.level === 'Expert' ? '#d1fae5' : entry.level === 'Proficient' ? '#FFF4EC' : 'var(--teal-light)',
-                              color: entry.level === 'Expert' ? '#065f46' : entry.level === 'Proficient' ? '#c45f00' : 'var(--teal)'
-                            }}>{entry.level}</span>
+                {/* Skills with highlights — Expert-level skills always shown in full (they carry the
+                    differentiating highlight text); Familiar/Proficient are capped with an expand toggle */}
+                {c.skill_tree && Object.keys(c.skill_tree).length > 0 && (() => {
+                  const allSkills = Object.entries(c.skill_tree)
+                  const expertSkills = allSkills.filter(([, entry]) => entry?.level === 'Expert')
+                  const otherSkills = allSkills.filter(([, entry]) => entry?.level !== 'Expert')
+                  const isExpanded = !!expandedSkillsFor[c.id]
+                  const otherCap = Math.max(0, 6 - expertSkills.length)
+                  const visibleOther = isExpanded ? otherSkills : otherSkills.slice(0, otherCap)
+                  const hiddenCount = otherSkills.length - visibleOther.length
+                  const visibleSkills = [...expertSkills, ...visibleOther]
+                  return (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Skills</div>
+                      {visibleSkills.map(([sf, entry]) => (
+                        <div key={sf} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '8px 10px', marginBottom: 6 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: entry?.highlight ? 4 : 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--grey-800)' }}>{sf}</span>
+                            {entry?.level && (
+                              <span style={{
+                                fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+                                background: entry.level === 'Expert' ? '#d1fae5' : entry.level === 'Proficient' ? '#FFF4EC' : 'var(--teal-light)',
+                                color: entry.level === 'Expert' ? '#065f46' : entry.level === 'Proficient' ? '#c45f00' : 'var(--teal)'
+                              }}>{entry.level}</span>
+                            )}
+                          </div>
+                          {entry?.highlight && (
+                            <div style={{ fontSize: 11, color: 'var(--orange)', fontStyle: 'italic', lineHeight: 1.5 }}>
+                              "{entry.highlight}"
+                            </div>
                           )}
                         </div>
-                        {entry?.highlight && (
-                          <div style={{ fontSize: 11, color: 'var(--orange)', fontStyle: 'italic', lineHeight: 1.5 }}>
-                            "{entry.highlight}"
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                      {hiddenCount > 0 && (
+                        <button type="button" onClick={() => setExpandedSkillsFor(prev => ({ ...prev, [c.id]: true }))}
+                          style={{ background: 'none', border: 'none', color: 'var(--teal)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 0' }}>
+                          + {hiddenCount} more skill{hiddenCount > 1 ? 's' : ''}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 {/* Career arc */}
                 {c.career_history?.length > 0 && (

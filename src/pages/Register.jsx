@@ -468,6 +468,7 @@ export default function Register({ onNavigate }) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [cvData, setCvData] = useState(null) // { base64, isPDF } — reused by Skills section, no second upload
+  const [cvSkipped, setCvSkipped] = useState(false)
 
   const [form, setForm] = useState({
     gender: '', age_range: '', current_employment_type: '', desired_employment_type: [],

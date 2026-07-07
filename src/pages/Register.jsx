@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendCandidateWelcome } from '../lib/whatsapp'
 import SkillsTable from '../components/SkillsTable'
+import IndustrySelect from '../components/IndustrySelect'
 import { COMPANIES } from '../data/companies'
 
 function InstituteSearch({ value, onChange }) {
@@ -105,29 +106,7 @@ function SingleSelect({ options, value, onChange, placeholder }) {
   )
 }
 
-function IndustrySelect({ value = [], onChange, single = false }) {
-  const toggle = (item) => {
-    if (single) { onChange(item); return; }
-    if (value.includes(item)) onChange(value.filter(v => v !== item))
-    else onChange([...value, item])
-  }
-  return (
-    <div>
-      {INDUSTRIES.map(group => (
-        <div key={group.sector} className="industry-group">
-          <div className="industry-group-label">{group.sector}</div>
-          <div className="tag-cloud">
-            {group.items.map(item => (
-              <button key={item} type="button"
-                className={`tag ${(single ? value === item : value.includes(item)) ? 'selected' : ''}`}
-                onClick={() => toggle(item)}>{item}</button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
+// IndustrySelect now lives in src/components/IndustrySelect.jsx (shared with EditProfile)
 
 function TrustBlock() {
   const [open, setOpen] = React.useState(false)
@@ -324,7 +303,7 @@ function CVPreFill({ form, set, onSkip, onUploaded }) {
 {
   "years_experience": "total years as a number e.g. 15",
   "primary_function": "one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Design & Creative, Legal & Compliance, General Management / P&L, Training & Facilitation, Events & Experiential, Procurement & Sourcing, Research & Development",
-  "current_industry": "one of: Banking — PSU, Banking — Private / Co-operative, Fintech / Payments / Lending Tech, Insurance — Life / General / Health, Wealth / Asset Management / Broking, NBFC / Microfinance, FMCG / Food & Beverage, Retail — Organised / E-commerce, Luxury / Premium Fashion & Lifestyle, Consumer Durables / Electronics, D2C Brands, Agri / Food Processing / Agritech, IT Services / ITES / BPO, SaaS / Product Companies, E-commerce / Marketplace, Emerging Tech (AI / Deeptech / Healthtech), Telecom, Telco Infrastructure (Towers / Fibre / Passive Infra), Automotive / Auto Ancillary, Chemicals / Pharma / Life Sciences, Infrastructure / Real Estate / Construction, Energy / Oil & Gas / Renewables, Industrial Manufacturing, Logistics / Supply Chain / 3PL, Packaging / Paper / Textiles, Defence / Aerospace, Consulting / Professional Services, Events / Entertainment / Sports, Hospitality / Travel & Tourism, Education / EdTech, Healthcare / Hospitals / Diagnostics, Media / Advertising / PR, Legal / Law Firms, Staffing / Recruitment / HR Services, NGO / Development Sector, Government / PSU",
+  "current_industry": "array of one or more from: Banking — PSU, Banking — Private / Co-operative, Fintech / Payments / Lending Tech, Insurance — Life / General / Health, Wealth / Asset Management / Broking, NBFC / Microfinance, FMCG / Food & Beverage, Retail — Organised / E-commerce, Luxury / Premium Fashion & Lifestyle, Consumer Durables / Electronics, D2C Brands, Agri / Food Processing / Agritech, IT Services / ITES / BPO, SaaS / Product Companies, E-commerce / Marketplace, Emerging Tech (AI / Deeptech / Healthtech), Telecom, Telco Infrastructure (Towers / Fibre / Passive Infra), Automotive / Auto Ancillary, Chemicals / Pharma / Life Sciences, Infrastructure / Real Estate / Construction, Energy / Oil & Gas / Renewables, Industrial Manufacturing, Logistics / Supply Chain / 3PL, Packaging / Paper / Textiles, Defence / Aerospace, Consulting / Professional Services, Events / Entertainment / Sports, Hospitality / Travel & Tourism, Education / EdTech, Healthcare / Hospitals / Diagnostics, Media / Advertising / PR, Legal / Law Firms, Staffing / Recruitment / HR Services, NGO / Development Sector, Government / PSU — include multiple if the person's role clearly spans several industries (e.g. consulting)",
   "previous_industries": ["up to 2 previous industries from same list"],
   "role_type": "Individual Contributor or Team Manager",
   "current_employment_type": "one of: Full-time Employee, Freelance / Independent Consultant, Fractional / Part-time, Not currently employed",
@@ -396,7 +375,10 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
       // Pre-fill the form
       if (parsed.years_experience) set('years_experience', parsed.years_experience)
       if (parsed.primary_function) set('primary_function', parsed.primary_function)
-      if (parsed.current_industry) set('current_industry', parsed.current_industry)
+      if (parsed.current_industry) {
+        const industries = Array.isArray(parsed.current_industry) ? parsed.current_industry : [parsed.current_industry]
+        set('current_industry', industries)
+      }
       if (parsed.previous_industries?.length) set('previous_industries', parsed.previous_industries)
       if (parsed.role_type) set('role_type', parsed.role_type)
       if (parsed.current_employment_type) set('current_employment_type', parsed.current_employment_type)
@@ -417,7 +399,7 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {[
             { label: 'Function', value: extracted.primary_function },
-            { label: 'Industry', value: extracted.current_industry },
+            { label: 'Industry', value: Array.isArray(extracted.current_industry) ? extracted.current_industry.join(', ') : extracted.current_industry },
             { label: 'Experience', value: extracted.years_experience ? extracted.years_experience + ' years' : null },
             { label: 'Role type', value: extracted.role_type },
             { label: 'Career history', value: extracted.career_history?.length ? extracted.career_history.length + ' roles extracted' : null },
@@ -475,15 +457,15 @@ export default function Register({ onNavigate }) {
     years_experience: '', primary_function: '',
     highest_degree: '', institute: '', institute_other: '', year_of_passing: '',
     certifications: '',
-    current_industry: '', current_tenure: '', company_type_b2b_b2c: '',
+    current_industry: [], current_tenure: '', company_type_b2b_b2c: '',
     role_type: '', team_size: '', geography_managed: [],
     ctc_fixed: '', ctc_variable: '', ctc_joining_bonus: '', ctc_esops: '', ctc_allowances: '',
-    freelance_sector: '', freelance_engagement_size: '', freelance_years: '',
+    freelance_sector: [], freelance_engagement_size: '', freelance_years: '',
     previous_industries: [], average_tenure: '', career_b2b_b2c: '',
     skill_keywords: [], skill_tree: {}, career_history: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
-    notice_period: '', min_expected_ctc: '', years_in_function: '',
+    notice_period: '', min_expected_ctc: '', expected_day_rate: '', years_in_function: '',
     languages: [], open_to_travel: '', has_passport: '',
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
   })
@@ -496,6 +478,7 @@ export default function Register({ onNavigate }) {
   }, [form.ctc_fixed, form.ctc_variable, form.ctc_joining_bonus, form.ctc_esops, form.ctc_allowances])
 
   const isFreelance = ['Freelance / Independent Consultant', 'Entrepreneur / Founder', 'Between roles (available immediately)', 'Sabbatical'].includes(form.current_employment_type)
+  const seekingFreelance = form.desired_employment_type?.includes('Freelance / Consulting engagements')
 
   const handleSendOtp = async () => {
     if (!contact.trim()) { setError('Please enter your phone number or email'); return }
@@ -603,6 +586,7 @@ export default function Register({ onNavigate }) {
         career_history: form.career_history,
         notice_period: form.notice_period,
         min_expected_ctc: parseFloat(form.min_expected_ctc) || null,
+        expected_day_rate: parseFloat(form.expected_day_rate) || null,
         years_in_function: parseInt(form.years_in_function) || null,
         languages: form.languages,
         open_to_travel: form.open_to_travel,
@@ -798,8 +782,9 @@ export default function Register({ onNavigate }) {
 
           {!isFreelance ? <>
             <div className="form-group">
-              <label className="form-label">Current Industry <span className="required">*</span></label>
-              <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={true} />
+              <label className="form-label">Current Industry / Industries <span className="required">*</span></label>
+              <div className="form-hint" style={{ marginBottom: 10 }}>Select more than one if your role spans multiple industries (e.g. consulting, professional services)</div>
+              <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={false} />
             </div>
 
             <div className="form-group">
@@ -853,9 +838,9 @@ export default function Register({ onNavigate }) {
             </div>
           </> : <>
             <div className="form-group">
-              <label className="form-label">Current Industry <span className="required">*</span></label>
-              <div className="form-hint" style={{ marginBottom: 10 }}>The primary industry you are currently working in</div>
-              <IndustrySelect value={form.freelance_sector} onChange={v => set('freelance_sector', v)} single={true} />
+              <label className="form-label">Current Industry / Industries <span className="required">*</span></label>
+              <div className="form-hint" style={{ marginBottom: 10 }}>Select all industries you currently work across</div>
+              <IndustrySelect value={form.freelance_sector} onChange={v => set('freelance_sector', v)} single={false} />
             </div>
             <div className="form-group">
               <label className="form-label">Typical Engagement Size</label>
@@ -959,15 +944,27 @@ export default function Register({ onNavigate }) {
             <TagSelect options={NOTICE_PERIODS} value={form.notice_period ? [form.notice_period] : []} onChange={v => set('notice_period', v[v.length-1] || '')} max={1} />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input className="form-input" type="number" min="0" placeholder="e.g. 35" style={{ maxWidth: 140 }}
-                value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
-              <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>Lakhs per annum</span>
+          {!seekingFreelance ? (
+            <div className="form-group">
+              <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input className="form-input" type="number" min="0" placeholder="e.g. 35" style={{ maxWidth: 140 }}
+                  value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
+                <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>Lakhs per annum</span>
+              </div>
+              <div className="form-hint">The minimum you would consider moving for. Helps us filter out roles that don't meet your expectations.</div>
             </div>
-            <div className="form-hint">The minimum you would consider moving for. Helps us filter out roles that don't meet your expectations.</div>
-          </div>
+          ) : (
+            <div className="form-group">
+              <label className="form-label">Minimum Day Rate / Project Fee (₹)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input className="form-input" type="number" min="0" placeholder="e.g. 15000" style={{ maxWidth: 160 }}
+                  value={form.expected_day_rate} onChange={e => set('expected_day_rate', e.target.value)} />
+                <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>per day</span>
+              </div>
+              <div className="form-hint">Your typical minimum rate for a project or consulting day. Helps us filter out engagements that don't meet your expectations.</div>
+            </div>
+          )}
 
           <div className="form-group">
             <label className="form-label">Languages Known</label>
@@ -1027,7 +1024,7 @@ export default function Register({ onNavigate }) {
               { label: 'Function', value: form.primary_function },
               { label: 'Experience', value: form.years_experience ? form.years_experience + ' years' : '' },
               { label: 'Current Employment', value: form.current_employment_type },
-              { label: 'Current Industry', value: form.current_industry || form.freelance_sector },
+              { label: 'Current Industry', value: (form.current_industry?.length ? form.current_industry : form.freelance_sector)?.join(', ') || '' },
               { label: 'Total CTC', value: ctcTotal ? '\u20b9' + ctcTotal.toFixed(1) + 'L' : '' },
               { label: 'Skill Areas', value: Object.keys(form.skill_tree).length ? Object.keys(form.skill_tree).length + ' added' : '' },
               { label: 'Job Status', value: form.job_search_status },

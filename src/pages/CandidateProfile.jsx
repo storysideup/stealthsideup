@@ -466,7 +466,11 @@ export default function CandidateProfile({ onNavigate }) {
           {[
             { label: 'Function', value: candidate.primary_function },
             { label: 'Experience', value: candidate.years_experience ? candidate.years_experience + ' years' : '—' },
-            { label: 'Current Industry', value: candidate.current_industry || candidate.freelance_sector || '—' },
+            { label: 'Current Industry', value: (() => {
+              const raw = candidate.current_industry?.length ? candidate.current_industry : candidate.freelance_sector
+              if (!raw) return '—'
+              return Array.isArray(raw) ? raw.join(', ') : raw
+            })() },
             { label: 'Current CTC', value: candidate.ctc_total ? '₹' + candidate.ctc_total + 'L' : '—' },
             { label: 'Job Status', value: candidate.job_search_status || '—' },
             { label: 'Skills', value: candidate.skill_tree?.length ? candidate.skill_tree.length + ' area' + (candidate.skill_tree.length > 1 ? 's' : '') : '—' },
@@ -613,7 +617,7 @@ export default function CandidateProfile({ onNavigate }) {
                   <div style={{ fontSize: 12, color: 'var(--grey-600)', lineHeight: 1.7 }}>
                     {[
                       candidate?.primary_function === interest.jds?.function && `Your function (${candidate?.primary_function}) matches this role`,
-                      candidate?.current_industry && `Your ${candidate?.current_industry} background is relevant`,
+                      candidate?.current_industry?.length > 0 && `Your ${candidate.current_industry.join(' / ')} background is relevant`,
                       candidate?.years_experience && `Your ${candidate?.years_experience} years of experience fits the seniority level`,
                       candidate?.notice_period && interest.jds?.max_notice_period && `Your notice period is within their requirement`,
                     ].filter(Boolean).map((reason, i) => (

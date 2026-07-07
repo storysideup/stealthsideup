@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillsTable from '../components/SkillsTable'
+import IndustrySelect from '../components/IndustrySelect'
 import CareerHistory from '../components/CareerHistory'
 import { CandidateLocationPicker } from '../components/LocationPicker'
 import {
-  FUNCTIONS, INDUSTRIES, NOTICE_PERIODS, LANGUAGES,
+  FUNCTIONS, NOTICE_PERIODS, LANGUAGES,
   SENIORITY_LEVELS, ORG_TYPES
 } from '../data/formData'
 import { COMPANIES } from '../data/companies'
@@ -120,13 +121,16 @@ export default function EditProfile({ onNavigate }) {
       // Basic
       gender: c.gender || '',
       current_employment_type: c.current_employment_type || '',
-      desired_employment_type: c.desired_employment_type || '',
+      desired_employment_type: c.desired_employment_type || [],
       years_experience: c.years_experience || '',
       primary_function: c.primary_function || '',
       headline: c.headline || '',
       job_search_status: c.job_search_status || '',
-      // Current role
-      current_industry: c.current_industry || c.freelance_sector || '',
+      // Current role — normalize to array (handles legacy string values from before this was multi-select)
+      current_industry: (() => {
+        const raw = c.current_industry || c.freelance_sector || []
+        return Array.isArray(raw) ? raw : (raw ? [raw] : [])
+      })(),
       previous_industries: c.previous_industries || [],
       role_type: c.role_type || '',
       team_size: c.team_size || '',
@@ -145,6 +149,7 @@ export default function EditProfile({ onNavigate }) {
       preferred_locations: c.preferred_locations || { cities: [], openToNearby: true },
       notice_period: c.notice_period || '',
       min_expected_ctc: c.min_expected_ctc || '',
+      expected_day_rate: c.expected_day_rate || '',
       years_in_function: c.years_in_function || '',
       languages: c.languages || [],
       open_to_travel: c.open_to_travel || '',
@@ -231,6 +236,7 @@ export default function EditProfile({ onNavigate }) {
       preferred_locations: form.preferred_locations,
       notice_period: form.notice_period,
       min_expected_ctc: parseFloat(form.min_expected_ctc) || null,
+      expected_day_rate: parseFloat(form.expected_day_rate) || null,
       years_in_function: parseInt(form.years_in_function) || null,
       languages: form.languages,
       open_to_travel: form.open_to_travel,
@@ -352,11 +358,9 @@ export default function EditProfile({ onNavigate }) {
       {/* SECTION 1 — Current Role */}
       {activeSection === 1 && <>
         <div className="form-group">
-          <label className="form-label">Current Industry</label>
-          <select className="form-select" value={form.current_industry} onChange={e => set('current_industry', e.target.value)}>
-            <option value="">Select industry...</option>
-            {INDUSTRIES.flatMap(g => g.items).map(i => <option key={i} value={i}>{i}</option>)}
-          </select>
+          <label className="form-label">Current Industry / Industries</label>
+          <div className="form-hint" style={{ marginBottom: 10 }}>Select more than one if your role spans multiple industries (e.g. consulting, professional services)</div>
+          <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={false} />
         </div>
         <div className="form-group">
           <label className="form-label">Current CTC — Fixed (₹L per annum)</label>
@@ -404,10 +408,17 @@ export default function EditProfile({ onNavigate }) {
           <label className="form-label">Notice Period</label>
           <TagSelect options={NOTICE_PERIODS} value={form.notice_period ? [form.notice_period] : []} onChange={v => set('notice_period', v[v.length-1] || '')} max={1} />
         </div>
-        <div className="form-group">
-          <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
-          <input className="form-input" type="number" placeholder="e.g. 35" value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
-        </div>
+        {!form.desired_employment_type?.includes('Freelance / Consulting engagements') ? (
+          <div className="form-group">
+            <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
+            <input className="form-input" type="number" placeholder="e.g. 35" value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
+          </div>
+        ) : (
+          <div className="form-group">
+            <label className="form-label">Minimum Day Rate / Project Fee (₹ per day)</label>
+            <input className="form-input" type="number" placeholder="e.g. 15000" value={form.expected_day_rate} onChange={e => set('expected_day_rate', e.target.value)} />
+          </div>
+        )}
         <div className="form-group">
           <label className="form-label">Preferred Locations</label>
           <CandidateLocationPicker value={form.preferred_locations} onChange={v => set('preferred_locations', v)} />

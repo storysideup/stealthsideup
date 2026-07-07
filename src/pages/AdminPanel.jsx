@@ -122,7 +122,7 @@ export default function AdminPanel() {
 
   const filteredCands = candidates.filter(c =>
     c.primary_function?.toLowerCase().includes(searchCand.toLowerCase()) ||
-    c.current_industry?.toLowerCase().includes(searchCand.toLowerCase()) ||
+    (Array.isArray(c.current_industry) ? c.current_industry : [c.current_industry]).some(i => i?.toLowerCase().includes(searchCand.toLowerCase())) ||
     c.headline?.toLowerCase().includes(searchCand.toLowerCase())
   )
 
@@ -194,7 +194,7 @@ export default function AdminPanel() {
                 <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
                   <div>
                     <span style={{ fontWeight: 600, color: '#374151' }}>{c.primary_function || '—'}</span>
-                    <span style={{ color: '#9ca3af', marginLeft: 8 }}>{c.current_industry || '—'} · {c.years_experience || '—'} yrs</span>
+                    <span style={{ color: '#9ca3af', marginLeft: 8 }}>{(Array.isArray(c.current_industry) ? c.current_industry.join(', ') : c.current_industry) || '—'} · {c.years_experience || '—'} yrs</span>
                   </div>
                   <div style={{ color: '#9ca3af' }}>{new Date(c.created_at).toLocaleDateString('en-IN')}</div>
                 </div>
@@ -297,7 +297,7 @@ export default function AdminPanel() {
                     <tr key={c.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                       <td style={{ padding: '12px 16px', fontWeight: 700, color: '#165D7B', fontSize: 11 }}>SSU-{String(i + 1001)}</td>
                       <td style={{ padding: '12px 16px', color: '#374151', fontWeight: 600 }}>{c.primary_function || '—'}</td>
-                      <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.current_industry || '—'}</td>
+                      <td style={{ padding: '12px 16px', color: '#6b7280' }}>{(Array.isArray(c.current_industry) ? c.current_industry.join(', ') : c.current_industry) || '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.years_experience || '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#6b7280' }}>{c.ctc_total ? (parseFloat(c.ctc_total) >= 100 ? `₹${(parseFloat(c.ctc_total)/100).toFixed(1)}Cr` : `₹${c.ctc_total}L`) : '—'}</td>
                       <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: 11 }}>{c.job_search_status?.split('(')[0]?.trim() || '—'}</td>

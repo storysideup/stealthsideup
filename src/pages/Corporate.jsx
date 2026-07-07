@@ -797,11 +797,11 @@ export function CorporateDashboard({ corporate, onNavigate }) {
                 </div>
 
                 {/* Industries */}
-                {(c.current_industry || c.previous_industries?.length > 0) && (
+                {((c.current_industry?.length > 0) || c.previous_industries?.length > 0) && (
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Industry Background</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                      {c.current_industry && <span className="badge badge-teal">{c.current_industry} (current)</span>}
+                      {(Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])).map(ind => <span key={ind} className="badge badge-teal">{ind} (current)</span>)}
                       {c.previous_industries?.slice(0, 3).map(ind => <span key={ind} className="badge badge-grey">{ind}</span>)}
                     </div>
                   </div>
@@ -1078,7 +1078,8 @@ async function matchCandidates(jd, corporate) {
 
     // Industry match (current or previous)
     if (jd.industry) {
-      if (c.current_industry === jd.industry) score += 20
+      const currentInds = Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])
+      if (currentInds.includes(jd.industry)) score += 20
       else if (c.previous_industries?.includes(jd.industry)) score += 10
     }
 
@@ -1107,7 +1108,8 @@ function calcScore(c, jd, corporate) {
   let score = 0
   if (c.primary_function === jd.function) score += 30
   if (jd.seniority_level && c.seniority_open_to?.some(s => s.includes(jd.seniority_level?.split(' ')[0]))) score += 25
-  if (jd.industry && (c.current_industry === jd.industry || c.previous_industries?.includes(jd.industry))) score += 15
+  const currentInds = Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])
+  if (jd.industry && (currentInds.includes(jd.industry) || c.previous_industries?.includes(jd.industry))) score += 15
   const skillOverlap = (jd.must_have_skills || []).filter(s => c.skill_keywords?.includes(s)).length
   score += skillOverlap * 8
   return score

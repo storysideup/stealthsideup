@@ -123,20 +123,13 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
       setAutoFilling(true); setAutoFillError('')
       try {
         const subFunctionList = subFunctions.join(', ')
-        const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
-        if (!apiKey) throw new Error('API key not configured')
         const prompt = `Read this CV carefully. For each sub-function listed, determine proficiency (Familiar/Proficient/Expert). Only include where there is clear evidence. For Expert, extract a one-line achievement with no company names.\n\nSub-functions: ${subFunctionList}\n\nReturn ONLY valid JSON, no markdown:\n{"Talent Acquisition": {"level": "Expert", "highlight": "Led end-to-end hiring for 3 business units"}}\n\nOnly include sub-functions with clear evidence.`
         const messageContent = cvData.isPDF
           ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: cvData.base64 } }, { type: 'text', text: prompt }]
           : [{ type: 'text', text: prompt + '\n\nCV text:\n' + atob(cvData.base64).slice(0, 5000) }]
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('/api/ai-proxy', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             model: cvData.isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
             max_tokens: 1000,

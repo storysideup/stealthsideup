@@ -289,7 +289,6 @@ function CVPreFill({ form, set, onSkip, onUploaded }) {
     if (!file) return
     setUploading(true); setError('')
     try {
-      const apiKey = import.meta.env.VITE_ANTHROPIC_KEY
       const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
       const base64 = await new Promise((resolve, reject) => {
         const reader = new FileReader()
@@ -348,14 +347,9 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
         ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }, { type: 'text', text: prompt }]
         : [{ type: 'text', text: prompt + '\n\nCV:\n' + atob(base64).slice(0, 6000) }]
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/ai-proxy', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
           max_tokens: 2000,

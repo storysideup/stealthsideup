@@ -214,7 +214,7 @@ export default function EditProfile({ onNavigate }) {
       gender: form.gender,
       current_employment_type: form.current_employment_type,
       desired_employment_type: form.desired_employment_type,
-      years_experience: form.years_experience,
+      years_experience: form.years_experience ? parseInt(form.years_experience) || null : null,
       primary_function: form.primary_function,
       headline: form.headline,
       job_search_status: form.job_search_status,
@@ -341,10 +341,8 @@ export default function EditProfile({ onNavigate }) {
         </div>
         <div className="form-group">
           <label className="form-label">Total Years of Experience</label>
-          <select className="form-select" value={form.years_experience} onChange={e => set('years_experience', e.target.value)}>
-            <option value="">Select...</option>
-            {['0-2','3-5','6-8','9-12','13-16','17-20','20+'].map(y => <option key={y} value={y}>{y} years</option>)}
-          </select>
+          <input className="form-input" type="number" min="0" max="50" placeholder="e.g. 12"
+            value={form.years_experience} onChange={e => set('years_experience', e.target.value)} />
         </div>
         <div className="form-group">
           <label className="form-label">Current Employment Type</label>

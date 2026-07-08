@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { sendTokenCreditConfirmationEmail } from '../lib/email'
 
 const ADMIN_PASSWORD = 'SSU@Admin2026'
 
@@ -71,6 +72,13 @@ export default function AdminPanel() {
     }).eq('id', tokenModal.id)
 
     setCorporates(prev => prev.map(c => c.id === tokenModal.id ? { ...c, tokens: newTokens } : c))
+
+    // Confirm to the corporate that their tokens have landed — never blocks the credit itself on failure
+    if (tokenModal.work_email) {
+      sendTokenCreditConfirmationEmail(tokenModal.work_email, tokenModal.company_name, parseInt(tokenAmount), newTokens)
+        .catch(e => console.error('Token confirmation email failed:', e))
+    }
+
     setTokenModal(null)
     setTokenAmount('')
     setAddingTokens(false)

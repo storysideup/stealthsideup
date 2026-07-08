@@ -44,3 +44,10 @@ export const sendPasswordResetEmail = (email, resetLink) =>
      <p style="margin:20px 0;"><a href="${resetLink}" style="background:#0A3D35;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Reset Password</a></p>
      <p style="color:#6b7280;font-size:12px;line-height:1.6;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password won't be changed.</p>`
   ))
+
+export const sendTokenCreditConfirmationEmail = (email, companyName, tokensAdded, newBalance) =>
+  sendEmail(email, 'Your StealthSideUp tokens have been added', wrap('Tokens Added',
+    `<p style="color:#374151;font-size:14px;line-height:1.6;">Hi ${companyName || 'there'},</p>
+     <p style="color:#374151;font-size:14px;line-height:1.6;">Payment confirmed — <strong>${tokensAdded} tokens</strong> have been added to your account. Your new balance is <strong>${newBalance} tokens</strong>.</p>
+     <p style="color:#6b7280;font-size:12px;line-height:1.6;margin-top:20px;">Log in at stealthsideup.com to start expressing interest in matched candidates.</p>`
+  ))

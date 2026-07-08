@@ -1053,12 +1053,33 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
             <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
             <p style={{ color: 'var(--grey-600)', fontSize: 14 }}>No matching profiles yet. As more candidates register, matches will appear here.</p>
           </div>
-        ) : (
-          <>
-            <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 16 }}>
-              <strong style={{ color: 'var(--teal)' }}>{candidateList.length}</strong> anonymous profiles match this role
-            </div>
-            {candidateList.map((c, i) => (
+        ) : (() => {
+          const pendingIndex = candidateList.findIndex(c => !getInterestStatus(c.id))
+          const reviewedCount = candidateList.filter(c => getInterestStatus(c.id)).length
+
+          if (pendingIndex === -1) {
+            return (
+              <div className="card" style={{ textAlign: 'center', padding: 32 }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>✅</div>
+                <p style={{ color: 'var(--grey-800)', fontSize: 15, fontWeight: 700, marginBottom: 6 }}>You've reviewed all {candidateList.length} matches</p>
+                <p style={{ color: 'var(--grey-600)', fontSize: 13 }}>
+                  {candidateList.filter(c => getInterestStatus(c.id) === 'notified').length} interest{candidateList.filter(c => getInterestStatus(c.id) === 'notified').length !== 1 ? 's' : ''} expressed ·{' '}
+                  {candidateList.filter(c => getInterestStatus(c.id) === 'saved').length} saved for later ·{' '}
+                  {candidateList.filter(c => getInterestStatus(c.id) === 'not_fit').length} marked not a fit
+                </p>
+              </div>
+            )
+          }
+
+          return (
+            <>
+              <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 16 }}>
+                Reviewing candidate <strong style={{ color: 'var(--teal)' }}>{reviewedCount + 1}</strong> of <strong style={{ color: 'var(--teal)' }}>{candidateList.length}</strong> matches
+                <div style={{ height: 6, background: 'var(--grey-100)', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${(reviewedCount / candidateList.length) * 100}%`, background: 'var(--teal)', borderRadius: 3, transition: 'width 0.3s' }} />
+                </div>
+              </div>
+              {[{ c: candidateList[pendingIndex], i: pendingIndex }].map(({ c, i }) => (
               <div key={c.id} className="card" style={{ marginBottom: 16 }}>
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
@@ -1199,7 +1220,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   if (actionStatus === 'saved') return (
                     <div style={{ paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span className="badge badge-yellow">⭐ Shortlisted</span>
+                        <span className="badge badge-yellow">📌 Saved for Later</span>
                       </div>
                       <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
                         {processingInterestFor === c.id ? 'Sending...' : 'Express Interest Now'}
@@ -1227,7 +1248,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                       <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
                         {processingInterestFor === c.id ? 'Sending...' : 'Express Interest'}
                       </button>
-                      <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Shortlist</button>
+                      <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>Save for Later</button>
                       <button type="button" onClick={() => handleNotFit(activeJd.id, c.id)}
                         style={{ padding: '8px 14px', fontSize: 13, borderRadius: 6, border: '1.5px solid var(--grey-200)', background: 'white', color: 'var(--grey-400)', cursor: 'pointer', fontFamily: 'inherit' }}>
                         Not a fit
@@ -1236,9 +1257,10 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   )
                 })()}
               </div>
-            ))}
-          </>
-        )}
+              ))}
+            </>
+          )
+        })()}
       </div>
     )
   }

@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useState } from 'react'
 
 function CollapsibleSection({ title, children }) {
   const [open, setOpen] = useState(false)
@@ -25,22 +24,6 @@ const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjd
 
 export default function Home({ onNavigate }) {
   const [howTab, setHowTab] = useState('candidate')
-  const [livePostings, setLivePostings] = useState([])
-
-  useEffect(() => {
-    const loadPostings = async () => {
-      try {
-        const { data } = await supabase
-          .from('jds')
-          .select('role_title, function, location, ctc_fixed_min, ctc_fixed_max, industry, seniority_level, stealth_mode')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(4)
-        setLivePostings(data || [])
-      } catch (e) { console.error(e) }
-    }
-    loadPostings()
-  }, [])
 
   const candidateSteps = [
     { num: '1', icon: '👤', label: 'Register', desc: 'Create an anonymous profile — no name, no employer, no photo' },
@@ -113,41 +96,6 @@ export default function Home({ onNavigate }) {
       </div>
 
       <div style={{ padding: '32px 20px 0' }}>
-
-        {/* LIVE POSTINGS TEASER */}
-        {livePostings.length > 0 && (
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
-              Live on the platform right now
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {livePostings.map((jd, i) => (
-                <div key={i} style={{
-                  background: 'white', borderRadius: 12, padding: '14px 16px',
-                  boxShadow: '0 2px 8px rgba(22,93,123,0.06)', border: '1px solid rgba(22,93,123,0.06)',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10
-                }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#165D7B', marginBottom: 4 }}>
-                      {jd.stealth_mode ? jd.function : (jd.role_title || jd.function)}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#6b7280' }}>
-                      {jd.industry || 'Industry confidential'} · {jd.location || 'Location flexible'}
-                      {jd.ctc_fixed_min && jd.ctc_fixed_max && ` · ₹${jd.ctc_fixed_min}–${jd.ctc_fixed_max}L`}
-                    </div>
-                  </div>
-                  <span style={{
-                    background: '#EBF4F8', color: '#165D7B', fontSize: 10, fontWeight: 700,
-                    padding: '4px 9px', borderRadius: 10, flexShrink: 0, textTransform: 'uppercase', letterSpacing: 0.3
-                  }}>Live</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 10, textAlign: 'center' }}>
-              Register to see if you match — and to discover roles not shown here.
-            </div>
-          </div>
-        )}
 
         {/* HOW IT WORKS */}
         <div style={{ marginBottom: 32 }}>

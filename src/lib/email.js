@@ -37,3 +37,10 @@ export const sendLowTokenAlertEmail = (email, name, tokenCount) =>
     `<p style="color:#374151;font-size:14px;line-height:1.6;">Hi ${name},</p>
      <p style="color:#374151;font-size:14px;line-height:1.6;">You have <strong>${tokenCount} tokens</strong> remaining. Top up to keep expressing interest in matched candidates.</p>`
   ))
+
+export const sendPasswordResetEmail = (email, resetLink) =>
+  sendEmail(email, 'Reset your StealthSideUp password', wrap('Reset Your Password',
+    `<p style="color:#374151;font-size:14px;line-height:1.6;">We received a request to reset your StealthSideUp password.</p>
+     <p style="margin:20px 0;"><a href="${resetLink}" style="background:#0A3D35;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Reset Password</a></p>
+     <p style="color:#6b7280;font-size:12px;line-height:1.6;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email — your password won't be changed.</p>`
+  ))

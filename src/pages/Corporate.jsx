@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendMatchNotification, sendLowTokenAlert, sendCorporateWelcome } from '../lib/whatsapp'
-import { sendCorporateWelcomeEmail, sendLowTokenAlertEmail } from '../lib/email'
+import { sendCorporateWelcomeEmail, sendLowTokenAlertEmail, sendPasswordResetEmail } from '../lib/email'
 
 async function hashPassword(password) {
   const encoder = new TextEncoder()
@@ -18,10 +18,16 @@ function generateInviteCode() {
   return Math.random().toString(36).slice(2, 10).toUpperCase()
 }
 
+function generateResetToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24))
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 // ── CORPORATE LOGIN ──────────────────────────────────────
 export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   const inviteCode = new URLSearchParams(window.location.search).get('invite')
-  const [mode, setMode] = useState(inviteCode ? 'join' : 'login') // login | register | join
+  const resetToken = new URLSearchParams(window.location.search).get('reset')
+  const [mode, setMode] = useState(inviteCode ? 'join' : resetToken ? 'reset' : 'login') // login | register | join | reset
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [form, setForm] = useState({ company_name: '', industry: '', company_type: '', gstin: '', contact_person: '', designation: '' })
@@ -29,6 +35,24 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   const [error, setError] = useState('')
   const [inviteTeam, setInviteTeam] = useState(null) // the root corporate this invite belongs to
   const [inviteLoading, setInviteLoading] = useState(!!inviteCode)
+
+  // Forgot password state
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotSent, setForgotSent] = useState(false)
+  const [resetTokenValid, setResetTokenValid] = useState(resetToken ? null : false) // null = checking, false = invalid/none, true = valid
+  const [resetCorporateId, setResetCorporateId] = useState(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  useEffect(() => {
+    if (!resetToken) return
+    supabase.from('corporates').select('id, reset_token_expiry').eq('reset_token', resetToken).single()
+      .then(({ data }) => {
+        const valid = !!data && new Date(data.reset_token_expiry) > new Date()
+        setResetTokenValid(valid)
+        if (valid) setResetCorporateId(data.id)
+      })
+  }, [resetToken])
 
   useEffect(() => {
     if (!inviteCode) return
@@ -38,6 +62,37 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
         setInviteLoading(false)
       })
   }, [inviteCode])
+
+  const handleRequestReset = async () => {
+    if (!forgotEmail.trim()) { setError('Enter your registered email'); return }
+    setLoading(true); setError('')
+    const { data } = await supabase.from('corporates').select('id').eq('work_email', forgotEmail.trim()).single()
+    if (data) {
+      const token = generateResetToken()
+      const expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+      await supabase.from('corporates').update({ reset_token: token, reset_token_expiry: expiry }).eq('id', data.id)
+      const resetLink = `${window.location.origin}/?reset=${token}`
+      sendPasswordResetEmail(forgotEmail.trim(), resetLink).catch(e => console.error('Reset email failed:', e))
+    }
+    // Same message whether or not the email exists — avoids revealing which emails are registered
+    setForgotSent(true)
+    setLoading(false)
+  }
+
+  const handleSetNewPassword = async () => {
+    if (!newPassword || newPassword.length < 6) { setError('Password must be at least 6 characters'); return }
+    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return }
+    setLoading(true); setError('')
+    const { error: err } = await supabase.from('corporates').update({
+      password_hash: await hashPassword(newPassword),
+      reset_token: null, reset_token_expiry: null
+    }).eq('id', resetCorporateId)
+    if (err) { setError('Something went wrong. Please try again.'); setLoading(false); return }
+    setLoading(false)
+    alert('Password updated! Please login with your new password.')
+    window.history.replaceState({}, '', window.location.pathname)
+    setMode('login')
+  }
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -165,6 +220,69 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     )
   }
 
+  if (mode === 'reset') {
+    if (resetTokenValid === null) {
+      return <div className="page"><p style={{ color: 'var(--grey-400)' }}>Checking your reset link...</p></div>
+    }
+    if (resetTokenValid === false) {
+      return (
+        <div className="page">
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Reset Link Invalid or Expired</h2>
+          <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>This password reset link has expired or was already used. Request a fresh one below.</p>
+          <button className="btn-primary" onClick={() => { setMode('login'); window.history.replaceState({}, '', window.location.pathname) }}>Back to Login</button>
+        </div>
+      )
+    }
+    return (
+      <div className="page">
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Set a New Password</h2>
+        <div className="form-group">
+          <label className="form-label">New Password <span className="required">*</span></label>
+          <input className="form-input" type="password" placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Confirm Password <span className="required">*</span></label>
+          <input className="form-input" type="password" placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+        </div>
+        {error && <div className="error-msg">{error}</div>}
+        <button className="btn-primary" onClick={handleSetNewPassword} disabled={loading}>
+          {loading ? 'Please wait...' : 'Set New Password →'}
+        </button>
+      </div>
+    )
+  }
+
+  if (mode === 'forgot') {
+    return (
+      <div className="page">
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Reset Your Password</h2>
+        {forgotSent ? (
+          <>
+            <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>
+              If an account exists for that email, a reset link has been sent. Please check your inbox (and spam folder).
+            </p>
+            <button className="btn-secondary" onClick={() => { setMode('login'); setForgotSent(false) }}>← Back to Login</button>
+          </>
+        ) : (
+          <>
+            <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 20 }}>Enter your registered work email and we'll send you a link to reset your password.</p>
+            <div className="form-group">
+              <label className="form-label">Work Email <span className="required">*</span></label>
+              <input className="form-input" type="email" placeholder="you@company.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} />
+            </div>
+            {error && <div className="error-msg">{error}</div>}
+            <button className="btn-primary" onClick={handleRequestReset} disabled={loading}>
+              {loading ? 'Please wait...' : 'Send Reset Link →'}
+            </button>
+            <div className="mt-4">
+              <button className="btn-secondary" onClick={() => setMode('login')}>← Back to Login</button>
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="page">
       <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)', marginBottom: 6 }}>Corporate Access</h2>
@@ -237,6 +355,12 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
       <div className="form-group">
         <label className="form-label">Password <span className="required">*</span></label>
         <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+        {mode === 'login' && (
+          <button type="button" onClick={() => { setMode('forgot'); setError('') }}
+            style={{ background: 'none', border: 'none', color: 'var(--teal)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: '6px 0 0', textAlign: 'right', display: 'block', width: '100%' }}>
+            Forgot password?
+          </button>
+        )}
       </div>
 
       {error && <div className="error-msg">{error}</div>}

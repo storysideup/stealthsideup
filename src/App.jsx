@@ -44,8 +44,9 @@ export default function App() {
     try {
       // Check URL hash for admin route
       if (window.location.hash === '#admin' || window.location.pathname.includes('admin')) return 'admin'
-      // Team invite links always land on corporate login, regardless of last-visited page
+      // Team invite links and password reset links always land on corporate login
       if (new URLSearchParams(window.location.search).get('invite')) return 'corporate-login'
+      if (new URLSearchParams(window.location.search).get('reset')) return 'corporate-login'
       return sessionStorage.getItem('ssu_page') || 'home'
     } catch { return 'home' }
   })

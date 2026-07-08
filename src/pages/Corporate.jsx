@@ -66,7 +66,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   const handleRequestReset = async () => {
     if (!forgotEmail.trim()) { setError('Enter your registered email'); return }
     setLoading(true); setError('')
-    const { data } = await supabase.from('corporates').select('id').eq('work_email', forgotEmail.trim()).single()
+    const { data } = await supabase.from('corporates').select('id').eq('work_email', forgotEmail.trim().toLowerCase()).single()
     if (data) {
       const token = generateResetToken()
       const expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
@@ -118,7 +118,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   const handleLogin = async () => {
     if (!email || !password) { setError('Please fill all fields'); return }
     setLoading(true); setError('')
-    const { data, error: err } = await supabase.from('corporates').select('*').eq('work_email', email).single()
+    const { data, error: err } = await supabase.from('corporates').select('*').eq('work_email', email.trim().toLowerCase()).single()
     if (err || !data) { setError('Account not found. Please register first.'); setLoading(false); return }
     if (data.password_hash !== await hashPassword(password)) { setError('Incorrect password'); setLoading(false); return }
     const effective = await resolveEffectiveCorporate(data)
@@ -138,7 +138,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email, password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
+      ...form, work_email: email.trim().toLowerCase(), password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
       invite_code: generateInviteCode()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
@@ -162,7 +162,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     setLoading(true); setError('')
     const { error: err } = await supabase.from('corporates').insert({
       contact_person: form.contact_person, mobile: form.mobile || null,
-      work_email: email, password_hash: await hashPassword(password),
+      work_email: email.trim().toLowerCase(), password_hash: await hashPassword(password),
       company_name: inviteTeam.company_name, parent_corporate_id: inviteTeam.id,
       user_role: 'recruiter', is_active: true, tokens: 0
     })

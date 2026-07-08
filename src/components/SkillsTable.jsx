@@ -144,8 +144,12 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
           })
         })
         const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error?.message || `AI service error (${response.status})`)
+        }
         const text = data.content?.[0]?.text || ''
         const clean = text.replace(/```json|```/g, '').trim()
+        if (!clean) throw new Error('AI returned an empty response')
         const parsed = JSON.parse(clean)
 
         const updated = { ...value }

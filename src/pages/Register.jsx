@@ -364,8 +364,12 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
       })
 
       const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error?.message || `AI service error (${response.status})`)
+      }
       const text = data.content?.[0]?.text || ''
       const clean = text.replace(/```json|```/g, '').trim()
+      if (!clean) throw new Error('AI returned an empty response')
       const parsed = JSON.parse(clean)
       setExtracted(parsed)
 

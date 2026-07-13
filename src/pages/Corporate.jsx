@@ -198,7 +198,23 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
         </div>
 
-        {error && <div className="error-msg">{error}</div>}
+        {error && (
+          <div className="error-msg">
+            {error}
+            {error === 'This email is already registered.' && (
+              <div style={{ marginTop: 10, display: 'flex', gap: 14 }}>
+                <button type="button" onClick={() => { setMode('login'); setError('') }}
+                  style={{ background: 'none', border: 'none', color: 'var(--teal)', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                  Log in instead
+                </button>
+                <button type="button" onClick={() => { setForgotEmail(email); setMode('forgot'); setError('') }}
+                  style={{ background: 'none', border: 'none', color: 'var(--teal)', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                  Forgot password?
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         <button className="btn-primary" onClick={handleJoinTeam} disabled={loading}>
           {loading ? 'Please wait...' : 'Join Team →'}

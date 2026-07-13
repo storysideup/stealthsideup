@@ -441,6 +441,7 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
 
 export default function Register({ onNavigate }) {
   const [step, setStep] = useState(0) // 0=contact, 1=verify, 2-7=form sections
+  const [existingProfileFound, setExistingProfileFound] = useState(false)
   const [contact, setContact] = useState('')
   const [contactType, setContactType] = useState('phone')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -516,6 +517,10 @@ export default function Register({ onNavigate }) {
         })
         const data = await response.json()
         if (!response.ok) { setError(data.error || 'Incorrect or expired OTP'); setLoading(false); return }
+
+        const { data: existing } = await supabase.from('candidates').select('id').eq('contact', contact.trim()).maybeSingle()
+        if (existing) { setExistingProfileFound(true); setLoading(false); return }
+
         setLoading(false); setStep(2)
       } catch (e) {
         setError('Could not verify OTP. Please check your connection and try again.')
@@ -658,6 +663,23 @@ export default function Register({ onNavigate }) {
       <div className="mt-6">
         <button className="btn-primary" onClick={handleSendOtp} disabled={loading}>
           {loading ? 'Sending OTP...' : 'Send OTP →'}
+        </button>
+      </div>
+    </div>
+  )
+
+  // Existing profile found for this contact — offer Dashboard instead of re-registering
+  if (existingProfileFound) return (
+    <div className="page" style={{ textAlign: 'center', paddingTop: 60 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 10 }}>You're already registered</h2>
+      <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+        We found an existing profile for this number. Head to your Dashboard to view or update it, no need to register again.
+      </p>
+      <button className="btn-primary" onClick={() => onNavigate('candidate-profile')}>Go to Dashboard →</button>
+      <div className="mt-4">
+        <button className="btn-secondary btn-sm" style={{ width: 'auto', margin: '0 auto' }}
+          onClick={() => { setExistingProfileFound(false); setStep(2) }}>
+          Continue registering anyway
         </button>
       </div>
     </div>

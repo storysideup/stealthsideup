@@ -10,6 +10,7 @@ async function hashPassword(password) {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
+import mammoth from 'mammoth'
 import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
@@ -219,6 +220,12 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
         <button className="btn-primary" onClick={handleJoinTeam} disabled={loading}>
           {loading ? 'Please wait...' : 'Join Team →'}
         </button>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button type="button" onClick={() => { setMode('login'); setError('') }}
+            style={{ background: 'none', border: 'none', color: 'var(--grey-500)', fontSize: 13, cursor: 'pointer', padding: 0 }}>
+            Already have an account? <span style={{ color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline' }}>Log in</span>
+          </button>
+        </div>
         <div className="mt-4">
           <button className="btn-secondary" onClick={() => onNavigate('home')}>← Back to Home</button>
         </div>
@@ -423,28 +430,52 @@ export function PostJD({ corporate, onNavigate }) {
 
     // Handle file upload
     let textToExtract = jdText
+    let pdfBase64 = null
     if (jdText.startsWith('FILE:')) {
       const b64 = jdText.split(':NAME:')[0].replace('FILE:', '')
-      textToExtract = atob(b64).slice(0, 4000)
+      const fileName = (jdText.split(':NAME:')[1] || '').toLowerCase()
+      if (fileName.endsWith('.pdf')) {
+        pdfBase64 = b64
+        textToExtract = '' // not used when sending as a native document
+      } else if (fileName.endsWith('.docx')) {
+        try {
+          const binary = atob(b64)
+          const bytes = new Uint8Array(binary.length)
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+          const result = await mammoth.extractRawText({ arrayBuffer: bytes.buffer })
+          textToExtract = result.value.slice(0, 4000)
+        } catch (e) {
+          setExtractError('Could not read this .docx file. Please try re-saving it or paste the JD text instead.')
+          setExtracting(false); return
+        }
+      } else if (fileName.endsWith('.doc')) {
+        setExtractError('Older .doc files aren\'t supported for auto-extraction. Please save it as .docx or PDF, or paste the JD text instead.')
+        return
+      } else {
+        // .txt — safe to decode as plain text
+        textToExtract = atob(b64).slice(0, 4000)
+      }
     } else if (jdText.trim().length < 50) {
       setExtractError('Please paste a more detailed JD — at least a few sentences'); return
     }
 
     setExtracting(true); setExtractError('')
     try {
+      const promptText = `Extract structured information from this job description. Return ONLY a valid JSON object, no markdown, no backticks:
+{"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":null,"ctc_fixed_max":null,"skills":[{"subFunction":"specific skill area name relevant to the function","proficiency":"proficient or expert","specialisation":"specific specialisation if clear"}]}
+Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ? '' : '\nJD: ' + textToExtract.slice(0, 3000)}`
+
+      const content = pdfBase64
+        ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } }, { type: 'text', text: promptText }]
+        : promptText
+
       const response = await fetch('/api/ai-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
+          model: pdfBase64 ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: `Extract structured information from this job description. Return ONLY a valid JSON object, no markdown, no backticks:
-{"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":null,"ctc_fixed_max":null,"skills":[{"subFunction":"specific skill area name relevant to the function","proficiency":"proficient or expert","specialisation":"specific specialisation if clear"}]}
-Extract 3-6 most important skills from the JD for the skills array.
-JD: ${textToExtract.slice(0, 3000)}`
-          }]
+          messages: [{ role: 'user', content }]
         })
       })
       if (!response.ok) throw new Error('API error ' + response.status)

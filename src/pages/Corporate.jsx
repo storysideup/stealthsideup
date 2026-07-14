@@ -519,7 +519,17 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       setError('Please enter a valid email address to receive candidate CVs'); return
     }
     setLoading(true); setError('')
-    const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true, min_degree_required: eduPref.min_degree, institute_preference: eduPref.institute_pref, mode_of_study_required: eduPref.mode_of_study })
+    const { error: err } = await supabase.from('jds').insert({
+      ...form,
+      function: form.job_function,
+      corporate_id: corporate.id,
+      is_active: true,
+      min_degree_required: eduPref.min_degree,
+      institute_preference: eduPref.institute_pref,
+      mode_of_study_required: eduPref.mode_of_study,
+      ctc_fixed_min: form.ctc_fixed_min ? parseFloat(form.ctc_fixed_min) : null,
+      ctc_fixed_max: form.ctc_fixed_max ? parseFloat(form.ctc_fixed_max) : null
+    })
     if (err) { setError(err.message); setLoading(false); return }
     setSuccess(true); setLoading(false)
   }
@@ -1484,49 +1494,38 @@ async function matchCandidates(jd, corporate) {
       }
     }
 
-    let score = 0
+    const score = calcScore(c, jd, corporate)
 
-    // Function match (high weight)
-    if (c.primary_function === jd.function) score += 30
-
-    // Seniority match (high weight)
-    if (jd.seniority_level && c.seniority_open_to?.some(s => s.includes(jd.seniority_level?.split(' ')[0]))) score += 25
-
-    // Industry match (current or previous)
-    if (jd.industry) {
-      const currentInds = Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])
-      if (currentInds.includes(jd.industry)) score += 20
-      else if (c.previous_industries?.includes(jd.industry)) score += 10
-    }
-
-    // Employment type
-    if (jd.employment_type && c.desired_employment_type?.some(d => d.toLowerCase().includes(jd.employment_type.toLowerCase().split('/')[0].trim()))) score += 15
-
-    // Org type
-    if (jd.org_type && c.org_type_open_to?.some(o => o.toLowerCase().includes(jd.org_type.toLowerCase().split('—')[0].trim()))) score += 10
-
-    // Skills overlap
-    const mustHave = jd.must_have_skills || []
-    const skillOverlap = mustHave.filter(s => c.skill_keywords?.includes(s)).length
-    score += skillOverlap * 8
-
-    // Minimum threshold to show
-    return score >= 25
-  }).sort((a, b) => {
-    // Sort by match quality
-    const scoreA = calcScore(a, jd, corporate)
-    const scoreB = calcScore(b, jd, corporate)
-    return scoreB - scoreA
-  })
+    // Minimum threshold to show — roughly two solid categories aligning, not just one
+    return score >= 50
+  }).sort((a, b) => calcScore(b, jd, corporate) - calcScore(a, jd, corporate))
 }
 
 function calcScore(c, jd, corporate) {
   let score = 0
+
+  // Function match (high weight)
   if (c.primary_function === jd.function) score += 30
+
+  // Seniority match (high weight)
   if (jd.seniority_level && c.seniority_open_to?.some(s => s.includes(jd.seniority_level?.split(' ')[0]))) score += 25
-  const currentInds = Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])
-  if (jd.industry && (currentInds.includes(jd.industry) || c.previous_industries?.includes(jd.industry))) score += 15
+
+  // Industry match (current or previous)
+  if (jd.industry) {
+    const currentInds = Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])
+    if (currentInds.includes(jd.industry)) score += 20
+    else if (c.previous_industries?.includes(jd.industry)) score += 10
+  }
+
+  // Employment type
+  if (jd.employment_type && c.desired_employment_type?.some(d => d.toLowerCase().includes(jd.employment_type.toLowerCase().split('/')[0].trim()))) score += 15
+
+  // Org type
+  if (jd.org_type && c.org_type_open_to?.some(o => o.toLowerCase().includes(jd.org_type.toLowerCase().split('—')[0].trim()))) score += 10
+
+  // Skills overlap — bonus on top of the fixed-criteria 100, since JDs vary in how many skills they list
   const skillOverlap = (jd.must_have_skills || []).filter(s => c.skill_keywords?.includes(s)).length
   score += skillOverlap * 8
+
   return score
 }

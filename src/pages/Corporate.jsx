@@ -29,6 +29,7 @@ import mammoth from 'mammoth'
 import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
+import LegalModal from '../components/LegalModal'
 
 function generateInviteCode() {
   return Math.random().toString(36).slice(2, 10).toUpperCase()
@@ -46,7 +47,8 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
   const [mode, setMode] = useState(inviteCode ? 'join' : resetToken ? 'reset' : 'login') // login | register | join | reset
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [form, setForm] = useState({ company_name: '', industry: '', company_type: '', gstin: '', contact_person: '', designation: '' })
+  const [form, setForm] = useState({ company_name: '', industry: '', company_type: '', gstin: '', contact_person: '', designation: '', privacy_consent_agreed: false })
+  const [showLegal, setShowLegal] = useState(null) // null | 'privacy' | 'terms'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [inviteTeam, setInviteTeam] = useState(null) // the root corporate this invite belongs to
@@ -176,7 +178,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     catch (e) { setError('Something went wrong processing your password. Please try again.'); setLoading(false); return }
     const { error: err } = await supabase.from('corporates').insert({
       ...form, work_email: email.trim().toLowerCase(), password_hash: hashedPassword, subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
-      invite_code: generateInviteCode()
+      invite_code: generateInviteCode(), privacy_consent_at: new Date().toISOString()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
 
@@ -204,7 +206,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
       contact_person: form.contact_person, mobile: form.mobile || null,
       work_email: email.trim().toLowerCase(), password_hash: hashedPassword,
       company_name: inviteTeam.company_name, parent_corporate_id: inviteTeam.id,
-      user_role: 'recruiter', is_active: true, tokens: 0
+      user_role: 'recruiter', is_active: true, tokens: 0, privacy_consent_at: new Date().toISOString()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
     setMode('login')
@@ -238,6 +240,29 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
         </div>
 
+        <div style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px', marginBottom: 16 }}>
+          <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.privacy_consent_agreed}
+              onChange={e => set('privacy_consent_agreed', e.target.checked)}
+              style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, accentColor: '#165D7B' }} />
+            <span style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
+              I have read and agree to StealthSideUp's{' '}
+              <button type="button" onClick={() => setShowLegal('privacy')}
+                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>
+                Privacy Policy
+              </button>{' '}
+              and{' '}
+              <button type="button" onClick={() => setShowLegal('terms')}
+                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>
+                Terms of Service
+              </button>
+              , and I consent to data being processed as described.
+            </span>
+          </label>
+        </div>
+
+        <LegalModal doc={showLegal} onClose={() => setShowLegal(null)} />
+
         {error && (
           <div className="error-msg">
             {error}
@@ -256,7 +281,7 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
           </div>
         )}
 
-        <button className="btn-primary" onClick={handleJoinTeam} disabled={loading}>
+        <button className="btn-primary" onClick={handleJoinTeam} disabled={loading || !form.privacy_consent_agreed}>
           {loading ? 'Please wait...' : 'Join Team →'}
         </button>
         <div style={{ textAlign: 'center', marginTop: 12 }}>
@@ -425,9 +450,34 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
         )}
       </div>
 
+      {mode === 'register' && (
+        <div style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px', marginBottom: 16 }}>
+          <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.privacy_consent_agreed}
+              onChange={e => set('privacy_consent_agreed', e.target.checked)}
+              style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, accentColor: '#165D7B' }} />
+            <span style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
+              I have read and agree to StealthSideUp's{' '}
+              <button type="button" onClick={() => setShowLegal('privacy')}
+                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>
+                Privacy Policy
+              </button>{' '}
+              and{' '}
+              <button type="button" onClick={() => setShowLegal('terms')}
+                style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>
+                Terms of Service
+              </button>
+              , and I consent to data being processed as described.
+            </span>
+          </label>
+        </div>
+      )}
+
+      <LegalModal doc={showLegal} onClose={() => setShowLegal(null)} />
+
       {error && <div className="error-msg">{error}</div>}
 
-      <button className="btn-primary" onClick={mode === 'login' ? handleLogin : handleRegister} disabled={loading}>
+      <button className="btn-primary" onClick={mode === 'login' ? handleLogin : handleRegister} disabled={loading || (mode === 'register' && !form.privacy_consent_agreed)}>
         {loading ? 'Please wait...' : mode === 'login' ? 'Login →' : 'Create Account →'}
       </button>
       <div className="mt-4">

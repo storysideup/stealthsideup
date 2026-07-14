@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { sendCandidateWelcome } from '../lib/whatsapp'
 import SkillsTable from '../components/SkillsTable'
 import IndustrySelect from '../components/IndustrySelect'
+import LegalModal from '../components/LegalModal'
 import { COMPANIES } from '../data/companies'
 
 function InstituteSearch({ value, onChange }) {
@@ -442,6 +443,7 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
 export default function Register({ onNavigate }) {
   const [step, setStep] = useState(0) // 0=contact, 1=verify, 2-7=form sections
   const [existingProfileFound, setExistingProfileFound] = useState(false)
+  const [showLegal, setShowLegal] = useState(null) // null | 'privacy' | 'terms'
   const [contact, setContact] = useState('')
   const [contactType, setContactType] = useState('phone')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -461,7 +463,7 @@ export default function Register({ onNavigate }) {
     ctc_fixed: '', ctc_variable: '', ctc_joining_bonus: '', ctc_esops: '', ctc_allowances: '',
     freelance_sector: [], freelance_sector_other: '', freelance_engagement_size: '', freelance_years: '',
     previous_industries: [], previous_industries_other: '', average_tenure: '', career_b2b_b2c: '',
-    skill_keywords: [], skill_tree: {}, career_history: [], headline: '', declaration_agreed: false,
+    skill_keywords: [], skill_tree: {}, career_history: [], headline: '', declaration_agreed: false, privacy_consent_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
     notice_period: '', min_expected_ctc: '', years_in_function: '',
@@ -581,6 +583,8 @@ export default function Register({ onNavigate }) {
         skill_keywords: form.skill_keywords,
         skill_tree: form.skill_tree,
         declaration_agreed: form.declaration_agreed,
+        privacy_consent_agreed: form.privacy_consent_agreed,
+        privacy_consent_at: form.privacy_consent_agreed ? new Date().toISOString() : null,
         headline: form.headline,
         job_search_status: form.job_search_status,
         seniority_open_to: form.seniority_open_to,
@@ -1116,7 +1120,7 @@ export default function Register({ onNavigate }) {
           </div>
 
           {/* DECLARATION */}
-          <div style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px', marginBottom: 16 }}>
+          <div style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px', marginBottom: 12 }}>
             <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
               <input type="checkbox" checked={form.declaration_agreed}
                 onChange={e => set('declaration_agreed', e.target.checked)}
@@ -1127,9 +1131,32 @@ export default function Register({ onNavigate }) {
             </label>
           </div>
 
+          <div style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '14px', marginBottom: 16 }}>
+            <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.privacy_consent_agreed}
+                onChange={e => set('privacy_consent_agreed', e.target.checked)}
+                style={{ marginTop: 3, flexShrink: 0, width: 16, height: 16, accentColor: '#165D7B' }} />
+              <span style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.7 }}>
+                I have read and agree to StealthSideUp's{' '}
+                <button type="button" onClick={() => setShowLegal('privacy')}
+                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>
+                  Privacy Policy
+                </button>{' '}
+                and{' '}
+                <button type="button" onClick={() => setShowLegal('terms')}
+                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }}>
+                  Terms of Service
+                </button>
+                , and I consent to my data being processed as described.
+              </span>
+            </label>
+          </div>
+
+          <LegalModal doc={showLegal} onClose={() => setShowLegal(null)} />
+
           {error && <div className="error-msg">{error}</div>}
 
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !form.headline.trim() || !form.job_search_status || !form.declaration_agreed}>
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !form.headline.trim() || !form.job_search_status || !form.declaration_agreed || !form.privacy_consent_agreed}>
             {loading ? 'Saving your profile...' : '\u2713 Submit My Profile'}
           </button>
         </>}

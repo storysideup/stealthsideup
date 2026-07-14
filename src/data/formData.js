@@ -19,6 +19,8 @@ export const FUNCTIONS = [
   "Training & Facilitation",
   "Investor Relations & Corporate Finance",
   "Import / Export & International Trade",
+  "Banking & Financial Services",
+  "Events & Experiential",
   "Other"
 ]
 
@@ -52,7 +54,8 @@ export const INDUSTRIES = [
   { sector: "Technology", items: ["IT Services / ITES / BPO", "SaaS / Product Companies", "E-commerce / Marketplace", "Emerging Tech (AI / Deeptech / Healthtech)", "Telecom", "Telco Infrastructure (Towers / Fibre / Passive Infra)"] },
   { sector: "Industrial / Manufacturing", items: ["Automotive / Auto Ancillary", "Chemicals / Pharma / Life Sciences", "Infrastructure / Real Estate / Construction", "Energy / Oil & Gas / Renewables", "Industrial Manufacturing", "Logistics / Supply Chain / 3PL", "Packaging / Paper / Textiles", "Defence / Aerospace"] },
   { sector: "Services", items: ["Consulting / Professional Services", "Events / Entertainment / Sports", "Hospitality / Travel & Tourism", "Education / EdTech", "Healthcare / Hospitals / Diagnostics", "Media / Advertising / PR", "Legal / Law Firms", "Staffing / Recruitment / HR Services"] },
-  { sector: "Social / Development", items: ["NGO / Development Sector", "Government / PSU"] }
+  { sector: "Social / Development", items: ["NGO / Development Sector", "Government / PSU"] },
+  { sector: "Other", items: ["Other (please specify)"] }
 ]
 
 export const INSTITUTES = [

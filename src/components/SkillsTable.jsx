@@ -162,10 +162,27 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cvData, functionName])
 
-  if (!functionName || !SKILL_TREE[functionName]) {
+  if (!functionName) {
     return (
       <div style={{ padding: 14, background: 'var(--grey-100)', borderRadius: 8, fontSize: 13, color: 'var(--grey-400)' }}>
         Please select your primary function first.
+      </div>
+    )
+  }
+
+  if (!SKILL_TREE[functionName]) {
+    return (
+      <div style={{ padding: 14, background: 'var(--grey-100)', borderRadius: 8 }}>
+        <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 8 }}>
+          We don't have a detailed skill list for "{functionName}" yet. Please describe your key skills and experience below instead.
+        </div>
+        <textarea
+          className="form-input"
+          rows={4}
+          placeholder="e.g. Specific skills, tools, and areas of expertise relevant to your role"
+          value={value?.__customSkillsText || ''}
+          onChange={e => onChange({ ...value, __customSkillsText: e.target.value })}
+        />
       </div>
     )
   }

@@ -456,11 +456,11 @@ export default function Register({ onNavigate }) {
     years_experience: '', primary_function: '',
     highest_degree: '', institute: '', institute_other: '', year_of_passing: '', mode_of_study: '',
     certifications: '',
-    current_industry: [], current_tenure: '', company_type_b2b_b2c: '',
+    current_industry: [], current_industry_other: '', current_tenure: '', company_type_b2b_b2c: '',
     role_type: '', team_size: '', geography_managed: [],
     ctc_fixed: '', ctc_variable: '', ctc_joining_bonus: '', ctc_esops: '', ctc_allowances: '',
-    freelance_sector: [], freelance_engagement_size: '', freelance_years: '',
-    previous_industries: [], average_tenure: '', career_b2b_b2c: '',
+    freelance_sector: [], freelance_sector_other: '', freelance_engagement_size: '', freelance_years: '',
+    previous_industries: [], previous_industries_other: '', average_tenure: '', career_b2b_b2c: '',
     skill_keywords: [], skill_tree: {}, career_history: [], headline: '', declaration_agreed: false,
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
@@ -558,6 +558,7 @@ export default function Register({ onNavigate }) {
         year_of_passing: parseInt(form.year_of_passing) || null,
         certifications: form.certifications,
         current_industry: form.current_industry,
+        current_industry_other: form.current_industry_other,
         current_tenure: form.current_tenure,
         company_type_b2b_b2c: form.company_type_b2b_b2c,
         role_type: form.role_type,
@@ -570,9 +571,11 @@ export default function Register({ onNavigate }) {
         ctc_allowances: parseFloat(form.ctc_allowances) || null,
         ctc_total: ctcTotal || null,
         freelance_sector: form.freelance_sector,
+        freelance_sector_other: form.freelance_sector_other,
         freelance_engagement_size: form.freelance_engagement_size,
         freelance_years: parseInt(form.freelance_years) || null,
         previous_industries: form.previous_industries,
+        previous_industries_other: form.previous_industries_other,
         average_tenure: form.average_tenure,
         career_b2b_b2c: form.career_b2b_b2c,
         skill_keywords: form.skill_keywords,
@@ -820,7 +823,8 @@ export default function Register({ onNavigate }) {
             <div className="form-group">
               <label className="form-label">Current Industry / Industries <span className="required">*</span></label>
               <div className="form-hint" style={{ marginBottom: 10 }}>Select more than one if your role spans multiple industries (e.g. consulting, professional services)</div>
-              <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={false} />
+              <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={false}
+                otherValue={form.current_industry_other} onOtherChange={v => set('current_industry_other', v)} />
             </div>
 
             <div className="form-group">
@@ -876,7 +880,8 @@ export default function Register({ onNavigate }) {
             <div className="form-group">
               <label className="form-label">Current Industry / Industries <span className="required">*</span></label>
               <div className="form-hint" style={{ marginBottom: 10 }}>Select all industries you currently work across</div>
-              <IndustrySelect value={form.freelance_sector} onChange={v => set('freelance_sector', v)} single={false} />
+              <IndustrySelect value={form.freelance_sector} onChange={v => set('freelance_sector', v)} single={false}
+                otherValue={form.freelance_sector_other} onOtherChange={v => set('freelance_sector_other', v)} />
             </div>
             <div className="form-group">
               <label className="form-label">Typical Engagement Size</label>
@@ -900,7 +905,8 @@ export default function Register({ onNavigate }) {
               Industries you have worked in before your current role — select up to 3
               {form.previous_industries.length >= 3 && <span style={{ color: 'var(--orange)', marginLeft: 6 }}>Maximum 3 selected</span>}
             </div>
-            <IndustrySelect value={form.previous_industries} onChange={v => v.length <= 3 ? set('previous_industries', v) : null} />
+            <IndustrySelect value={form.previous_industries} onChange={v => v.length <= 3 ? set('previous_industries', v) : null}
+              otherValue={form.previous_industries_other} onOtherChange={v => set('previous_industries_other', v)} />
           </div>
 
           <div className="form-group">

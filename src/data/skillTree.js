@@ -839,4 +839,132 @@ export const SKILL_TREE = {
       }
     },
   },
+
+  "Strategy & Consulting": {
+    "Strategy Consulting": {
+      specialisations: ["Corporate Strategy", "Growth Strategy", "Market Entry Strategy", "Competitive Strategy", "Portfolio Strategy", "Digital Strategy"],
+      depth: {
+        "Corporate Strategy": ["Long-range Planning", "Scenario Planning", "Strategic Choices Framework", "Board-level Strategy Presentations"],
+        "Market Entry Strategy": ["Market Sizing", "Entry Mode Selection", "Go-to-Market Design", "Regulatory Landscape Assessment"],
+        "Digital Strategy": ["Digital Maturity Assessment", "Technology Roadmap", "Digital Business Models", "Digital Investment Prioritisation"],
+        "Portfolio Strategy": ["Portfolio Review", "Capital Allocation", "Business Unit Prioritisation", "Divest / Invest Framework"],
+      }
+    },
+    "Operations & Performance Consulting": {
+      specialisations: ["Operations Excellence", "Cost Transformation", "Supply Chain Consulting", "Process Reengineering", "Lean / Six Sigma Consulting"],
+      depth: {
+        "Operations Excellence": ["Operating Model Design", "Productivity Improvement", "Benchmarking Studies", "Capacity Optimisation"],
+        "Cost Transformation": ["Zero-based Budgeting", "Cost Diagnostics", "Overhead Reduction", "Should-cost Analysis"],
+        "Process Reengineering": ["Process Mapping", "Value Stream Analysis", "Automation Opportunity Identification", "Standard Operating Procedures Design"],
+      }
+    },
+    "Organisation & People Consulting": {
+      specialisations: ["Org Design", "Change Management", "Culture Transformation", "HR Transformation", "Leadership Advisory"],
+      depth: {
+        "Org Design": ["Org Structure Design", "Span & Layers Analysis", "Role Rationalisation", "Governance Design"],
+        "Change Management": ["Change Impact Assessment", "Stakeholder Management", "Communication Planning", "Change Readiness Diagnostics"],
+        "HR Transformation": ["HR Operating Model Redesign", "HR Shared Services Design", "HR Technology Strategy"],
+      }
+    },
+    "M&A and Corporate Development Advisory": {
+      specialisations: ["Commercial Due Diligence", "Post-merger Integration", "Divestiture Advisory", "Synergy Assessment"],
+      depth: {
+        "Commercial Due Diligence": ["Market Assessment", "Target Screening", "Value Creation Thesis", "Management Interviews"],
+        "Post-merger Integration": ["100-day Planning", "Synergy Tracking", "Integration Management Office", "Cultural Integration"],
+      }
+    },
+    "Research & Market Advisory": {
+      specialisations: ["Market Research & Sizing", "Feasibility Studies", "Competitive Intelligence", "Industry / Sector Research"],
+      depth: {
+        "Market Research & Sizing": ["TAM / SAM / SOM Analysis", "Primary Research Design", "Survey Design", "Expert Interview Programmes"],
+        "Competitive Intelligence": ["Competitor Benchmarking", "Win-loss Analysis", "Pricing Intelligence", "Strategic Group Mapping"],
+        "Feasibility Studies": ["Business Case Development", "Financial Feasibility", "Technical Feasibility Coordination", "Risk Assessment"],
+      }
+    },
+    "Client & Business Development — Consulting": {
+      specialisations: ["Proposal Development", "Client Relationship Management", "Practice / Sector Building"],
+      depth: {
+        "Proposal Development": ["RFP Response", "Pricing Strategy for Engagements", "Solutioning", "Orals / Client Pitches"],
+        "Practice / Sector Building": ["Thought Leadership Development", "Sector Point of View Creation", "Practice P&L Ownership"],
+      }
+    },
+  },
+
+  "Banking & Financial Services": {
+    "Retail & Branch Banking": {
+      specialisations: ["Branch Operations & Management", "Liability Sales — CASA / FD", "Retail Asset Sales — Loans", "Priority / Wealth Banking", "Digital Banking Channels", "Customer Relationship Management"],
+      depth: {
+        "Branch Operations & Management": ["Branch P&L Ownership", "Cash Management", "Compliance & Audit Readiness", "Team Management", "Cross-sell Targets"],
+        "Retail Asset Sales — Loans": ["Home Loans", "Personal Loans", "Auto Loans", "Loan Against Property", "Cross-sell to Existing Base"],
+        "Priority / Wealth Banking": ["HNI Relationship Management", "Portfolio Review", "Investment Product Sales", "Client Retention"],
+        "Digital Banking Channels": ["Net Banking / Mobile App Adoption", "Digital Onboarding", "UPI & Payments Push", "Channel Migration"],
+      }
+    },
+    "Credit & Risk": {
+      specialisations: ["Retail Credit Underwriting", "SME / Commercial Credit", "Risk Analytics & Scoring", "Credit Policy", "Collections & Recovery", "Fraud Risk Management"],
+      depth: {
+        "Retail Credit Underwriting": ["Income Assessment", "Bureau Analysis (CIBIL / Experian)", "Loan Approval Authority", "Portfolio Quality Monitoring"],
+        "SME / Commercial Credit": ["Working Capital Assessment", "Balance Sheet Analysis", "Project Finance Appraisal", "Collateral Evaluation"],
+        "Risk Analytics & Scoring": ["Credit Scorecards", "PD / LGD Modelling", "Portfolio Risk Analytics", "Basel II / III Risk Models"],
+        "Collections & Recovery": ["Early Bucket Collections", "NPA Management", "Legal Recovery / SARFAESI", "Collections Agency Management"],
+      }
+    },
+    "Corporate & Institutional Banking": {
+      specialisations: ["Corporate Relationship Management", "Trade Finance", "Cash Management Services", "Structured Finance", "Loan Syndication"],
+      depth: {
+        "Corporate Relationship Management": ["Large Corporate Coverage", "Mid-market Coverage", "Working Capital Facilities", "Cross-sell — Trade / Treasury / CMS"],
+        "Trade Finance": ["Letters of Credit", "Bank Guarantees", "Export / Import Finance", "Trade Documentation"],
+        "Cash Management Services": ["Collections & Payments Solutions", "Virtual Accounts", "Liquidity Management", "API Banking"],
+      }
+    },
+    "Treasury & Markets": {
+      specialisations: ["Forex Dealing", "Money Market Dealing", "Fixed Income Trading", "Asset Liability Management (ALM)", "Derivatives Trading"],
+      depth: {
+        "Forex Dealing": ["Spot / Forward Trading", "Currency Risk Management", "Corporate Forex Advisory", "RBI FEMA Guidelines"],
+        "Fixed Income Trading": ["G-Sec Trading", "Corporate Bonds", "Portfolio Duration Management", "Primary Dealership"],
+        "Asset Liability Management (ALM)": ["Interest Rate Risk", "Liquidity Risk Management", "ALCO Reporting", "Basel III Liquidity Ratios"],
+      }
+    },
+    "Wealth & Investment Management": {
+      specialisations: ["Relationship Management — HNI / UHNI", "Portfolio Management", "Mutual Fund Distribution", "Insurance Distribution", "Broking & Equity Advisory"],
+      depth: {
+        "Relationship Management — HNI / UHNI": ["Family Office Servicing", "AUM Growth", "Product Cross-sell", "Client Acquisition"],
+        "Portfolio Management": ["Asset Allocation", "PMS / AIF Management", "Performance Reporting", "Risk Profiling"],
+        "Broking & Equity Advisory": ["Equity Research Interface", "Derivatives Advisory", "Trading Desk Support", "Client Onboarding — Demat/Trading"],
+      }
+    },
+    "Insurance Operations": {
+      specialisations: ["Underwriting", "Claims Management", "Actuarial", "Bancassurance", "Agency Channel Management"],
+      depth: {
+        "Underwriting": ["Life Underwriting", "Health / General Underwriting", "Risk Assessment", "Medical Underwriting Guidelines"],
+        "Claims Management": ["Claims Processing", "Claims Investigation", "Fraud Detection — Claims", "TAT & Customer Experience"],
+        "Bancassurance": ["Bank Partner Management", "Cross-sell through Branches", "Training Bank RMs", "Persistency Management"],
+        "Agency Channel Management": ["Agent Recruitment", "Agent Productivity", "Channel Incentive Design", "Agency Training"],
+      }
+    },
+    "NBFC / Microfinance / Lending Tech": {
+      specialisations: ["Microfinance Group Lending", "Digital Lending / Fintech Underwriting", "Loan Against Property", "Vehicle / Consumer Finance", "BC / Agent Network Management"],
+      depth: {
+        "Microfinance Group Lending": ["JLG Model Management", "Field Officer Management", "Rural Distribution", "Financial Literacy Programmes"],
+        "Digital Lending / Fintech Underwriting": ["Alternate Data Underwriting", "API-based Credit Decisioning", "Digital KYC", "Co-lending Partnerships"],
+        "BC / Agent Network Management": ["BC Agent Onboarding", "Agent Network Expansion", "Commission Structure Design", "Last-mile Rural Distribution"],
+      }
+    },
+    "Payments & Fintech Operations": {
+      specialisations: ["Payment Gateway Operations", "UPI / Digital Payments", "Merchant Acquiring", "Payments Compliance", "Payments Fraud & Risk"],
+      depth: {
+        "UPI / Digital Payments": ["UPI Ecosystem", "Wallet Operations", "QR Code Payments", "NPCI Interface"],
+        "Merchant Acquiring": ["Merchant Onboarding", "POS / Payment Aggregator Ops", "Settlement & Reconciliation", "Merchant Risk Assessment"],
+        "Payments Compliance": ["RBI Payment Aggregator Guidelines", "PCI-DSS Compliance", "AML / Transaction Monitoring"],
+      }
+    },
+    "Regulatory & Compliance — Banking": {
+      specialisations: ["RBI Compliance", "AML / KYC", "Basel Norms Implementation", "Internal Audit — Banking", "Regulatory Reporting"],
+      depth: {
+        "RBI Compliance": ["RBI Master Circulars", "Statutory Reporting", "RBI Inspection Readiness", "Priority Sector Lending Compliance"],
+        "AML / KYC": ["Transaction Monitoring", "STR / CTR Filing", "KYC Policy Design", "FATF Guidelines"],
+        "Basel Norms Implementation": ["Basel III Capital Adequacy", "RWA Computation", "ICAAP", "Regulatory Capital Reporting"],
+      }
+    },
+  },
 }

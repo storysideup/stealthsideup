@@ -418,7 +418,7 @@ export function PostJD({ corporate, onNavigate }) {
   const [extractError, setExtractError] = useState('')
   const [extracted, setExtracted] = useState(false)
   const [aiFields, setAiFields] = useState([])
-  const [eduPref, setEduPref] = useState({ min_degree: '', institute_pref: '' })
+  const [eduPref, setEduPref] = useState({ min_degree: '', institute_pref: '', mode_of_study: '' })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const skillOptions = form.job_function && SKILLS_BY_FUNCTION[form.job_function] ? SKILLS_BY_FUNCTION[form.job_function] : []
@@ -519,7 +519,7 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       setError('Please enter a valid email address to receive candidate CVs'); return
     }
     setLoading(true); setError('')
-    const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true, min_degree_required: eduPref.min_degree, institute_preference: eduPref.institute_pref })
+    const { error: err } = await supabase.from('jds').insert({ ...form, function: form.job_function, corporate_id: corporate.id, is_active: true, min_degree_required: eduPref.min_degree, institute_preference: eduPref.institute_pref, mode_of_study_required: eduPref.mode_of_study })
     if (err) { setError(err.message); setLoading(false); return }
     setSuccess(true); setLoading(false)
   }
@@ -854,6 +854,20 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Mode of Study Required</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {['No preference', 'Full-time only'].map(opt => (
+            <button key={opt} type="button"
+              className={`tag ${eduPref.mode_of_study === opt ? 'selected' : ''}`}
+              onClick={() => setEduPref(e => ({ ...e, mode_of_study: opt }))}>
+              {opt}
+            </button>
+          ))}
+        </div>
+        <div className="form-hint">Choose "Full-time only" to exclude correspondence/distance degrees from matches.</div>
       </div>
 
       {/* GENDER PREFERENCE */}
@@ -1425,6 +1439,11 @@ async function matchCandidates(jd, corporate) {
       const needsMen = jd.gender_preference.toLowerCase().includes('men')
       if (needsWomen && c.gender !== 'Female') return false
       if (needsMen && c.gender !== 'Male') return false
+    }
+
+    // Mode of study filter — only excludes candidates when a JD explicitly requires full-time
+    if (jd.mode_of_study_required === 'Full-time only' && c.mode_of_study && c.mode_of_study !== 'Full-time') {
+      return false
     }
 
     // Notice period filter

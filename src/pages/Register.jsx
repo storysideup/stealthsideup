@@ -454,7 +454,7 @@ export default function Register({ onNavigate }) {
   const [form, setForm] = useState({
     gender: '', age_range: '', current_employment_type: '', desired_employment_type: [],
     years_experience: '', primary_function: '',
-    highest_degree: '', institute: '', institute_other: '', year_of_passing: '',
+    highest_degree: '', institute: '', institute_other: '', year_of_passing: '', mode_of_study: '',
     certifications: '',
     current_industry: [], current_tenure: '', company_type_b2b_b2c: '',
     role_type: '', team_size: '', geography_managed: [],
@@ -553,6 +553,7 @@ export default function Register({ onNavigate }) {
         years_experience: parseInt(form.years_experience) || null,
         primary_function: form.primary_function,
         highest_degree: form.highest_degree,
+        mode_of_study: form.mode_of_study,
         institute: form.institute === 'Other (please specify)' ? form.institute_other : form.institute,
         year_of_passing: parseInt(form.year_of_passing) || null,
         certifications: form.certifications,
@@ -777,6 +778,16 @@ export default function Register({ onNavigate }) {
           <div className="form-group">
             <label className="form-label">Highest Degree</label>
             <SingleSelect options={DEGREES} value={form.highest_degree} onChange={v => set('highest_degree', v)} placeholder="Select degree..." />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Mode of Study</label>
+            <div className="tag-group">
+              {['Full-time', 'Part-time', 'Correspondence / Distance'].map(opt => (
+                <button key={opt} type="button" className={`tag ${form.mode_of_study === opt ? 'selected' : ''}`}
+                  onClick={() => set('mode_of_study', opt)}>{opt}</button>
+              ))}
+            </div>
           </div>
 
           <div className="form-group">

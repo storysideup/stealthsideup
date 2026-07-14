@@ -1078,6 +1078,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [closedJds, setClosedJds] = useState([])
   const [jdInterestCounts, setJdInterestCounts] = useState({})
   const [extendingJd, setExtendingJd] = useState(null)
+  const [confirmingCloseJd, setConfirmingCloseJd] = useState(null)
   const [jdActionError, setJdActionError] = useState('')
 
   useEffect(() => {
@@ -1541,16 +1542,17 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
 
       <button className="btn-orange" style={{ marginBottom: 24 }} onClick={() => onNavigate('post-jd')}>+ Post a New Search</button>
 
-      {loading ? <div className="spinner" /> : jds.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 32 }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-          <p style={{ color: 'var(--grey-600)', fontSize: 14, marginBottom: 16 }}>No active searches yet. Post your first search to start matching.</p>
-        </div>
-      ) : (
+      {loading ? <div className="spinner" /> : (
         <>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Active Searches</div>
           {jdActionError && <div className="error-msg" style={{ marginBottom: 12 }}>{jdActionError}</div>}
-          {jds.map(jd => {
+
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Active Searches</div>
+          {jds.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: 32, marginBottom: 12 }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+              <p style={{ color: 'var(--grey-600)', fontSize: 14 }}>No active searches yet. Post your first search to start matching.</p>
+            </div>
+          ) : jds.map(jd => {
             const matched = matches[jd.id] || []
             return (
               <div key={jd.id} className="card" style={{ marginBottom: 12 }}>
@@ -1569,19 +1571,34 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     <div style={{ fontSize: 11, color: 'var(--grey-600)' }}>Matched profiles</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn-primary btn-sm" onClick={async () => { setActiveJd(jd); await loadInterests(jd.id) }}>View Matches →</button>
-                  {extendingJd === jd.id ? (
-                    <>
-                      <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 10)}>+10 days</button>
-                      <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 30)}>+30 days</button>
-                      <button className="btn-secondary btn-sm" onClick={() => setExtendingJd(null)}>Cancel</button>
-                    </>
-                  ) : (
-                    <button className="btn-secondary btn-sm" onClick={() => setExtendingJd(jd.id)}>Extend</button>
-                  )}
-                  <button className="btn-secondary btn-sm" onClick={() => handleCloseJd(jd)}>Mark as Closed</button>
-                </div>
+
+                {confirmingCloseJd === jd.id ? (
+                  <div style={{ background: '#fff7ed', border: '1.5px solid #fed7aa', borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 12.5, color: '#9a3412', lineHeight: 1.6, marginBottom: 10 }}>
+                      {matched.length > 0
+                        ? `This search currently has ${matched.length} matched profile${matched.length > 1 ? 's' : ''}. Closing it stops new matches, but you can still view existing ones from "Closed / Expired Searches" below, and reopen it anytime.`
+                        : `Closing stops new matches. You can reopen it anytime from "Closed / Expired Searches" below.`}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn-secondary btn-sm" onClick={() => { handleCloseJd(jd); setConfirmingCloseJd(null) }}>Yes, close it</button>
+                      <button className="btn-secondary btn-sm" onClick={() => setConfirmingCloseJd(null)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn-primary btn-sm" onClick={async () => { setActiveJd(jd); await loadInterests(jd.id) }}>View Matches →</button>
+                    {extendingJd === jd.id ? (
+                      <>
+                        <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 10)}>+10 days</button>
+                        <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 30)}>+30 days</button>
+                        <button className="btn-secondary btn-sm" onClick={() => setExtendingJd(null)}>Cancel</button>
+                      </>
+                    ) : (
+                      <button className="btn-secondary btn-sm" onClick={() => setExtendingJd(jd.id)}>Extend</button>
+                    )}
+                    <button className="btn-secondary btn-sm" onClick={() => setConfirmingCloseJd(jd.id)}>Mark as Closed</button>
+                  </div>
+                )}
               </div>
             )
           })}

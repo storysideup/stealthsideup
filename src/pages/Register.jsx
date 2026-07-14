@@ -4,6 +4,7 @@ import { sendCandidateWelcome } from '../lib/whatsapp'
 import SkillsTable from '../components/SkillsTable'
 import IndustrySelect from '../components/IndustrySelect'
 import LegalModal from '../components/LegalModal'
+import { lakhsToWordsDisplay } from '../lib/numberToWords'
 import { COMPANIES } from '../data/companies'
 
 function InstituteSearch({ value, onChange }) {
@@ -478,6 +479,19 @@ export default function Register({ onNavigate }) {
     return vals.reduce((sum, k) => sum + (parseFloat(form[k]) || 0), 0)
   }, [form.ctc_fixed, form.ctc_variable, form.ctc_joining_bonus, form.ctc_esops, form.ctc_allowances])
 
+  // A total above ~999L (₹10 Cr) is implausible for the vast majority of candidates and almost
+  // always means someone typed their figures in raw rupees instead of lakhs (e.g. "1400000"
+  // instead of "14"). Flag it clearly rather than silently accepting a broken number.
+  const ctcLikelyWrongUnit = ctcTotal > 999
+  const minCtcLikelyWrongUnit = parseFloat(form.min_expected_ctc) > 999
+
+  const handleFixCtcUnits = () => {
+    ;['ctc_fixed', 'ctc_variable', 'ctc_joining_bonus', 'ctc_esops', 'ctc_allowances'].forEach(k => {
+      const raw = parseFloat(form[k])
+      if (raw > 999) set(k, (raw / 100000).toString())
+    })
+  }
+
   const isFreelance = ['Freelance / Independent Consultant', 'Entrepreneur / Founder', 'Between roles (available immediately)', 'Sabbatical'].includes(form.current_employment_type)
   const seekingFreelance = form.desired_employment_type?.includes('Freelance / Consulting engagements')
 
@@ -543,6 +557,8 @@ export default function Register({ onNavigate }) {
 
   const handleSubmit = async () => {
     if (!form.headline.trim()) { setError('Please add a professional headline'); return }
+    if (ctcLikelyWrongUnit) { setError('Please fix your CTC figures — they look like they\'re in rupees instead of lakhs.'); return }
+    if (minCtcLikelyWrongUnit) { setError('Please fix your Minimum Expected CTC — it looks like it\'s in rupees instead of lakhs.'); return }
     setLoading(true); setError('')
     try {
       const payload = {
@@ -868,17 +884,36 @@ export default function Register({ onNavigate }) {
                 { key: 'ctc_esops', label: 'ESOPs / RSUs' },
                 { key: 'ctc_allowances', label: 'Allowances (total)' },
               ].map(({ key, label }) => (
-                <div key={key} className="ctc-row">
-                  <div className="ctc-label">{label}</div>
-                  <input className="ctc-input" type="number" min="0" placeholder="0"
-                    value={form[key]} onChange={e => set(key, e.target.value)} />
-                  <div style={{ fontSize: 12, color: 'var(--grey-400)', width: 16 }}>L</div>
+                <div key={key} style={{ marginBottom: 4 }}>
+                  <div className="ctc-row">
+                    <div className="ctc-label">{label}</div>
+                    <input className="ctc-input" type="number" min="0" max="9999" placeholder="0"
+                      value={form[key]}
+                      onChange={e => {
+                        const v = e.target.value
+                        set(key, (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+                      }} />
+                    <div style={{ fontSize: 12, color: 'var(--grey-400)', width: 16 }}>L</div>
+                  </div>
+                  {lakhsToWordsDisplay(form[key]) && (
+                    <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 2, marginLeft: 2 }}>
+                      {lakhsToWordsDisplay(form[key])}
+                    </div>
+                  )}
                 </div>
               ))}
               <div className="ctc-total">
                 <span className="ctc-total-label">Total CTC</span>
                 <span className="ctc-total-value">₹{ctcTotal.toFixed(2)}L</span>
               </div>
+              {ctcLikelyWrongUnit && (
+                <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 8, padding: 12, marginTop: 10 }}>
+                  <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6, marginBottom: 10 }}>
+                    ₹{ctcTotal.toFixed(0)}L seems very high — this usually means the figures were entered in rupees instead of lakhs. Did you mean <strong>₹{(ctcTotal / 100000).toFixed(2)}L</strong>?
+                  </div>
+                  <button type="button" className="btn-secondary btn-sm" onClick={handleFixCtcUnits}>Fix automatically</button>
+                </div>
+              )}
             </div>
           </> : <>
             <div className="form-group">
@@ -994,10 +1029,27 @@ export default function Register({ onNavigate }) {
             <div className="form-group">
               <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input className="form-input" type="number" min="0" placeholder="e.g. 35" style={{ maxWidth: 140 }}
-                  value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
+                <input className="form-input" type="number" min="0" max="9999" placeholder="e.g. 35" style={{ maxWidth: 140 }}
+                  value={form.min_expected_ctc}
+                  onChange={e => {
+                    const v = e.target.value
+                    set('min_expected_ctc', (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+                  }} />
                 <span style={{ fontSize: 13, color: 'var(--grey-400)' }}>Lakhs per annum</span>
               </div>
+              {lakhsToWordsDisplay(form.min_expected_ctc) && (
+                <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4 }}>
+                  {lakhsToWordsDisplay(form.min_expected_ctc)}
+                </div>
+              )}
+              {minCtcLikelyWrongUnit && (
+                <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 8, padding: 12, marginTop: 8 }}>
+                  <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6, marginBottom: 10 }}>
+                    That looks like it's in rupees, not lakhs. Did you mean <strong>₹{(parseFloat(form.min_expected_ctc) / 100000).toFixed(2)}L</strong>?
+                  </div>
+                  <button type="button" className="btn-secondary btn-sm" onClick={() => set('min_expected_ctc', (parseFloat(form.min_expected_ctc) / 100000).toString())}>Fix automatically</button>
+                </div>
+              )}
               <div className="form-hint">The minimum you would consider moving for. Helps us filter out roles that don't meet your expectations.</div>
             </div>
           )}

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillsTable from '../components/SkillsTable'
 import IndustrySelect from '../components/IndustrySelect'
 import CareerHistory from '../components/CareerHistory'
+import { lakhsToWordsDisplay } from '../lib/numberToWords'
 import { CandidateLocationPicker } from '../components/LocationPicker'
 import {
   FUNCTIONS, NOTICE_PERIODS, LANGUAGES,
@@ -159,6 +160,21 @@ export default function EditProfile({ onNavigate }) {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const ctcTotal = useMemo(() => {
+    return ['ctc_fixed', 'ctc_variable', 'ctc_bonus'].reduce((sum, k) => sum + (parseFloat(form[k]) || 0), 0)
+  }, [form.ctc_fixed, form.ctc_variable, form.ctc_bonus])
+
+  // Same rupees-vs-lakhs mistake as Register.jsx — flag and offer to fix it here too.
+  const ctcLikelyWrongUnit = ctcTotal > 999
+  const minCtcLikelyWrongUnit = parseFloat(form.min_expected_ctc) > 999
+
+  const handleFixCtcUnits = () => {
+    ;['ctc_fixed', 'ctc_variable', 'ctc_bonus'].forEach(k => {
+      const raw = parseFloat(form[k])
+      if (raw > 999) set(k, (raw / 100000).toString())
+    })
+  }
+
   const handleSendOtp = async () => {
     if (!contact.trim()) { setError('Enter your registered phone number'); return }
     setLoading(true); setError('')
@@ -209,6 +225,8 @@ export default function EditProfile({ onNavigate }) {
   }
 
   const handleSave = async () => {
+    if (ctcLikelyWrongUnit) { setError('Please fix your CTC figures — they look like they\'re in rupees instead of lakhs.'); return }
+    if (minCtcLikelyWrongUnit) { setError('Please fix your Minimum Expected CTC — it looks like it\'s in rupees instead of lakhs.'); return }
     setSaving(true); setError('')
     const { error: err } = await supabase.from('candidates').update({
       gender: form.gender,
@@ -227,7 +245,7 @@ export default function EditProfile({ onNavigate }) {
       ctc_fixed: parseFloat(form.ctc_fixed) || null,
       ctc_variable: parseFloat(form.ctc_variable) || null,
       ctc_bonus: parseFloat(form.ctc_bonus) || null,
-      ctc_total: parseFloat(form.ctc_total) || null,
+      ctc_total: ctcTotal || null,
       career_history: form.career_history,
       skill_tree: form.skill_tree,
       seniority_open_to: form.seniority_open_to,
@@ -360,12 +378,36 @@ export default function EditProfile({ onNavigate }) {
         </div>
         <div className="form-group">
           <label className="form-label">Current CTC — Fixed (₹L per annum)</label>
-          <input className="form-input" type="number" placeholder="e.g. 25" value={form.ctc_fixed} onChange={e => set('ctc_fixed', e.target.value)} />
+          <input className="form-input" type="number" min="0" max="9999" placeholder="e.g. 25"
+            value={form.ctc_fixed}
+            onChange={e => {
+              const v = e.target.value
+              set('ctc_fixed', (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+            }} />
+          {lakhsToWordsDisplay(form.ctc_fixed) && (
+            <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4 }}>{lakhsToWordsDisplay(form.ctc_fixed)}</div>
+          )}
         </div>
         <div className="form-group">
           <label className="form-label">Variable / Bonus (₹L)</label>
-          <input className="form-input" type="number" placeholder="e.g. 5" value={form.ctc_variable} onChange={e => set('ctc_variable', e.target.value)} />
+          <input className="form-input" type="number" min="0" max="9999" placeholder="e.g. 5"
+            value={form.ctc_variable}
+            onChange={e => {
+              const v = e.target.value
+              set('ctc_variable', (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+            }} />
+          {lakhsToWordsDisplay(form.ctc_variable) && (
+            <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4 }}>{lakhsToWordsDisplay(form.ctc_variable)}</div>
+          )}
         </div>
+        {ctcLikelyWrongUnit && (
+          <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 8, padding: 12, marginBottom: 16 }}>
+            <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6, marginBottom: 10 }}>
+              ₹{ctcTotal.toFixed(0)}L seems very high — this usually means the figures were entered in rupees instead of lakhs. Did you mean <strong>₹{(ctcTotal / 100000).toFixed(2)}L</strong>?
+            </div>
+            <button type="button" className="btn-secondary btn-sm" onClick={handleFixCtcUnits}>Fix automatically</button>
+          </div>
+        )}
         <div className="form-group">
           <label className="form-label">Work Preference</label>
           <TagSelect options={['Full-time in office','Hybrid','Remote / Work from home','Open to any']}
@@ -407,7 +449,23 @@ export default function EditProfile({ onNavigate }) {
         {!form.desired_employment_type?.includes('Freelance / Consulting engagements') && (
           <div className="form-group">
             <label className="form-label">Minimum Expected CTC (₹L per annum)</label>
-            <input className="form-input" type="number" placeholder="e.g. 35" value={form.min_expected_ctc} onChange={e => set('min_expected_ctc', e.target.value)} />
+            <input className="form-input" type="number" min="0" max="9999" placeholder="e.g. 35"
+              value={form.min_expected_ctc}
+              onChange={e => {
+                const v = e.target.value
+                set('min_expected_ctc', (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+              }} />
+            {lakhsToWordsDisplay(form.min_expected_ctc) && (
+              <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4 }}>{lakhsToWordsDisplay(form.min_expected_ctc)}</div>
+            )}
+            {minCtcLikelyWrongUnit && (
+              <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 8, padding: 12, marginTop: 8 }}>
+                <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6, marginBottom: 10 }}>
+                  That looks like it's in rupees, not lakhs. Did you mean <strong>₹{(parseFloat(form.min_expected_ctc) / 100000).toFixed(2)}L</strong>?
+                </div>
+                <button type="button" className="btn-secondary btn-sm" onClick={() => set('min_expected_ctc', (parseFloat(form.min_expected_ctc) / 100000).toString())}>Fix automatically</button>
+              </div>
+            )}
           </div>
         )}
         <div className="form-group">

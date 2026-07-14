@@ -30,6 +30,9 @@ export default function CandidateProfile({ onNavigate }) {
   const [sendError, setSendError] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   // Compute Career Intelligence whenever candidate data becomes available
   // (covers both fresh OTP login and resumed sessions from localStorage)
@@ -305,6 +308,43 @@ export default function CandidateProfile({ onNavigate }) {
       localStorage.removeItem('ssu_candidate_contact')
     } catch {}
     setStep(0); setCandidate(null); setInterests([])
+  }
+
+  const handleExportData = () => {
+    const lines = Object.entries(candidate || {})
+      .filter(([key]) => !['id', 'password_hash'].includes(key))
+      .map(([key, value]) => `${key}: ${value === null || value === undefined ? '—' : Array.isArray(value) ? value.join(', ') : typeof value === 'object' ? JSON.stringify(value) : value}`)
+      .join('\n')
+    const content = `Your StealthSideUp data\nExported: ${new Date().toLocaleString('en-IN')}\n\n${lines}`
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `stealthsideup-my-data-${new Date().toISOString().split('T')[0]}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true); setDeleteError('')
+    try {
+      const { data: myInterests } = await supabase.from('interests').select('id, cv_storage_path').eq('candidate_id', candidate.id)
+      const paths = (myInterests || []).map(i => i.cv_storage_path).filter(Boolean)
+      if (paths.length) {
+        await supabase.storage.from('candidate-cvs').remove(paths)
+      }
+      await supabase.from('interests').delete().eq('candidate_id', candidate.id)
+      const { error: delErr } = await supabase.from('candidates').delete().eq('id', candidate.id)
+      if (delErr) throw delErr
+      try {
+        localStorage.removeItem('ssu_candidate')
+        localStorage.removeItem('ssu_candidate_contact')
+      } catch {}
+      setStep(0); setCandidate(null); setInterests([])
+    } catch (e) {
+      setDeleteError('Something went wrong deleting your account. Please try again, or email privacy@storysideup.com.')
+      setDeletingAccount(false)
+    }
   }
 
   const statusBadge = (status, interest) => {
@@ -780,6 +820,44 @@ export default function CandidateProfile({ onNavigate }) {
         <button className="btn-secondary" onClick={() => onNavigate('edit-profile')}>
           Edit My Profile
         </button>
+
+        {/* Privacy & Data */}
+        <div className="divider" />
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Privacy &amp; Data</div>
+
+        <button className="btn-secondary" onClick={handleExportData} style={{ marginBottom: 8 }}>
+          ⬇ Download My Data
+        </button>
+        <button className="btn-secondary" onClick={handleLogout} style={{ marginBottom: 8 }}>
+          Log Out
+        </button>
+
+        {!confirmingDelete ? (
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(true)}
+            style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: '8px 0', textDecoration: 'underline' }}
+          >
+            Delete My Account
+          </button>
+        ) : (
+          <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10, padding: 14, marginTop: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#991b1b', marginBottom: 6 }}>Permanently delete your account?</div>
+            <p style={{ fontSize: 12.5, color: '#7f1d1d', lineHeight: 1.6, marginBottom: 12 }}>
+              This deletes your profile, your CVs on file, and your interest history, permanently. This can't be undone. If you'd rather just stop receiving new matches, use "Paused" above instead of deleting.
+            </p>
+            {deleteError && <div className="error-msg" style={{ marginBottom: 10 }}>{deleteError}</div>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-secondary btn-sm" onClick={handleDeleteAccount} disabled={deletingAccount}
+                style={{ background: '#dc2626', color: 'white', border: 'none' }}>
+                {deletingAccount ? 'Deleting...' : 'Yes, delete permanently'}
+              </button>
+              <button className="btn-secondary btn-sm" onClick={() => { setConfirmingDelete(false); setDeleteError('') }} disabled={deletingAccount}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

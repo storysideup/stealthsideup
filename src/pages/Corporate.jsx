@@ -1075,6 +1075,10 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [interests, setInterests] = useState([])
   const [processingInterestFor, setProcessingInterestFor] = useState(null)
   const [expandedSkillsFor, setExpandedSkillsFor] = useState({})
+  const [closedJds, setClosedJds] = useState([])
+  const [jdInterestCounts, setJdInterestCounts] = useState({})
+  const [extendingJd, setExtendingJd] = useState(null)
+  const [jdActionError, setJdActionError] = useState('')
 
   useEffect(() => {
     if (!corporate) { onNavigate('corporate-login'); return }
@@ -1084,10 +1088,61 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const loadJds = async () => {
     setLoading(true)
     const today = new Date().toISOString().split('T')[0]
-    const { data } = await supabase.from('jds').select('*').eq('corporate_id', corporate.id).eq('is_active', true).or(`end_date.is.null,end_date.gte.${today}`).order('created_at', { ascending: false })
-    setJds(data || [])
-    if (data?.length) await loadMatches(data)
+    const { data: all } = await supabase.from('jds').select('*').eq('corporate_id', corporate.id).order('created_at', { ascending: false })
+    const active = (all || []).filter(jd => jd.is_active && (!jd.end_date || jd.end_date >= today))
+    const closed = (all || []).filter(jd => !jd.is_active || (jd.end_date && jd.end_date < today))
+    setJds(active)
+    setClosedJds(closed)
+    if (all?.length) {
+      await loadMatches(active)
+      const { data: interestRows } = await supabase.from('interests').select('jd_id').in('jd_id', all.map(jd => jd.id))
+      const counts = {}
+      ;(interestRows || []).forEach(r => { counts[r.jd_id] = (counts[r.jd_id] || 0) + 1 })
+      setJdInterestCounts(counts)
+    }
     setLoading(false)
+  }
+
+  const handleExtendJd = async (jd, days) => {
+    setJdActionError('')
+    const base = jd.end_date && jd.end_date >= new Date().toISOString().split('T')[0] ? new Date(jd.end_date) : new Date()
+    base.setDate(base.getDate() + days)
+    const newEndDate = base.toISOString().split('T')[0]
+    const { error: err } = await supabase.from('jds').update({ end_date: newEndDate, is_active: true }).eq('id', jd.id)
+    if (err) { setJdActionError('Could not extend this search. Please try again.'); return }
+    setExtendingJd(null)
+    await loadJds()
+  }
+
+  const handleCloseJd = async (jd) => {
+    setJdActionError('')
+    const { error: err } = await supabase.from('jds').update({ is_active: false }).eq('id', jd.id)
+    if (err) { setJdActionError('Could not close this search. Please try again.'); return }
+    await loadJds()
+  }
+
+  const handleReopenJd = async (jd) => {
+    setJdActionError('')
+    const today = new Date().toISOString().split('T')[0]
+    const needsNewDate = !jd.end_date || jd.end_date < today
+    const updates = needsNewDate
+      ? { is_active: true, end_date: (() => { const d = new Date(); d.setDate(d.getDate() + 10); return d.toISOString().split('T')[0] })() }
+      : { is_active: true }
+    const { error: err } = await supabase.from('jds').update(updates).eq('id', jd.id)
+    if (err) { setJdActionError('Could not reopen this search. Please try again.'); return }
+    await loadJds()
+  }
+
+  const handleDeleteJd = async (jd) => {
+    setJdActionError('')
+    if (jdInterestCounts[jd.id] > 0) {
+      setJdActionError('This search has candidate interest history and can\'t be deleted — please use Close instead, to keep that history intact.')
+      return
+    }
+    if (!window.confirm(`Permanently delete "${jd.role_title}"? This can't be undone.`)) return
+    const { error: err } = await supabase.from('jds').delete().eq('id', jd.id)
+    if (err) { setJdActionError('Could not delete this search. Please try again.'); return }
+    await loadJds()
   }
 
   const loadMatches = async (jdList) => {
@@ -1494,6 +1549,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
       ) : (
         <>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 }}>Active Searches</div>
+          {jdActionError && <div className="error-msg" style={{ marginBottom: 12 }}>{jdActionError}</div>}
           {jds.map(jd => {
             const matched = matches[jd.id] || []
             return (
@@ -1513,10 +1569,46 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     <div style={{ fontSize: 11, color: 'var(--grey-600)' }}>Matched profiles</div>
                   </div>
                 </div>
-                <button className="btn-primary btn-sm" onClick={async () => { setActiveJd(jd); await loadInterests(jd.id) }}>View Matches →</button>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="btn-primary btn-sm" onClick={async () => { setActiveJd(jd); await loadInterests(jd.id) }}>View Matches →</button>
+                  {extendingJd === jd.id ? (
+                    <>
+                      <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 10)}>+10 days</button>
+                      <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 30)}>+30 days</button>
+                      <button className="btn-secondary btn-sm" onClick={() => setExtendingJd(null)}>Cancel</button>
+                    </>
+                  ) : (
+                    <button className="btn-secondary btn-sm" onClick={() => setExtendingJd(jd.id)}>Extend</button>
+                  )}
+                  <button className="btn-secondary btn-sm" onClick={() => handleCloseJd(jd)}>Mark as Closed</button>
+                </div>
               </div>
             )
           })}
+
+          {closedJds.length > 0 && (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, margin: '24px 0 12px' }}>Closed / Expired Searches</div>
+              {closedJds.map(jd => (
+                <div key={jd.id} className="card" style={{ marginBottom: 12, opacity: 0.75 }}>
+                  <div className="flex-between" style={{ marginBottom: 6 }}>
+                    <h3 style={{ fontWeight: 700, fontSize: 15 }}>{jd.role_title}</h3>
+                    <span className="badge" style={{ background: 'var(--grey-200)', color: 'var(--grey-600)' }}>
+                      {!jd.is_active ? 'Closed' : 'Expired'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 6 }}>{jd.function} · {jd.seniority_level}</div>
+                  {jdInterestCounts[jd.id] > 0 && (
+                    <div style={{ fontSize: 11, color: 'var(--grey-400)', marginBottom: 10 }}>{jdInterestCounts[jd.id]} candidate interest{jdInterestCounts[jd.id] > 1 ? 's' : ''} on record</div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn-primary btn-sm" onClick={() => handleReopenJd(jd)}>Reopen</button>
+                    <button className="btn-secondary btn-sm" onClick={() => handleDeleteJd(jd)}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </>
       )}
     </div>

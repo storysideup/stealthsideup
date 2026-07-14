@@ -3,11 +3,26 @@ import { supabase } from '../lib/supabase'
 import { sendMatchNotification, sendLowTokenAlert, sendCorporateWelcome } from '../lib/whatsapp'
 import { sendCorporateWelcomeEmail, sendLowTokenAlertEmail, sendPasswordResetEmail } from '../lib/email'
 
-async function hashPassword(password) {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password + 'ssu_salt_2026')
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+async function hashPasswordServer(password) {
+  const res = await fetch('/api/corporate-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'hash', password })
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Could not process password')
+  return data.hash
+}
+
+async function verifyPasswordServer(password, hash) {
+  const res = await fetch('/api/corporate-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'verify', password, hash })
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Could not verify password')
+  return data // { valid, needsRehash, newHash? }
 }
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
 import mammoth from 'mammoth'
@@ -84,8 +99,11 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     if (!newPassword || newPassword.length < 6) { setError('Password must be at least 6 characters'); return }
     if (newPassword !== confirmPassword) { setError('Passwords do not match'); return }
     setLoading(true); setError('')
+    let hashedPassword
+    try { hashedPassword = await hashPasswordServer(newPassword) }
+    catch (e) { setError('Something went wrong processing your password. Please try again.'); setLoading(false); return }
     const { error: err } = await supabase.from('corporates').update({
-      password_hash: await hashPassword(newPassword),
+      password_hash: hashedPassword,
       reset_token: null, reset_token_expiry: null
     }).eq('id', resetCorporateId)
     if (err) { setError('Something went wrong. Please try again.'); setLoading(false); return }
@@ -121,7 +139,22 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
     setLoading(true); setError('')
     const { data, error: err } = await supabase.from('corporates').select('*').eq('work_email', email.trim().toLowerCase()).single()
     if (err || !data) { setError('Account not found. Please register first.'); setLoading(false); return }
-    if (data.password_hash !== await hashPassword(password)) { setError('Incorrect password'); setLoading(false); return }
+
+    let verifyResult
+    try {
+      verifyResult = await verifyPasswordServer(password, data.password_hash)
+    } catch (e) {
+      setError('Something went wrong verifying your password. Please try again.'); setLoading(false); return
+    }
+    if (!verifyResult.valid) { setError('Incorrect password'); setLoading(false); return }
+
+    // One-time, per-account migration: if this account still has the old hash format,
+    // upgrade it to bcrypt now that we've confirmed the password is correct.
+    if (verifyResult.needsRehash && verifyResult.newHash) {
+      supabase.from('corporates').update({ password_hash: verifyResult.newHash }).eq('id', data.id)
+        .then(() => {}, e => console.error('Password migration failed:', e))
+    }
+
     const effective = await resolveEffectiveCorporate(data)
     onCorporateLogin(effective)
     onNavigate('corporate-dashboard')
@@ -138,8 +171,11 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
       setError('Please use your company email address — not Gmail, Yahoo, Hotmail, or similar'); return
     }
     setLoading(true); setError('')
+    let hashedPassword
+    try { hashedPassword = await hashPasswordServer(password) }
+    catch (e) { setError('Something went wrong processing your password. Please try again.'); setLoading(false); return }
     const { error: err } = await supabase.from('corporates').insert({
-      ...form, work_email: email.trim().toLowerCase(), password_hash: await hashPassword(password), subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
+      ...form, work_email: email.trim().toLowerCase(), password_hash: hashedPassword, subscription_tier: 'free', is_active: true, tokens: 5, mobile: form.mobile || null,
       invite_code: generateInviteCode()
     })
     if (err) { setError(err.message.includes('duplicate') ? 'This email is already registered.' : err.message); setLoading(false); return }
@@ -161,9 +197,12 @@ export function CorporateLogin({ onNavigate, onCorporateLogin }) {
       setError('Your name, email and password are required'); return
     }
     setLoading(true); setError('')
+    let hashedPassword
+    try { hashedPassword = await hashPasswordServer(password) }
+    catch (e) { setError('Something went wrong processing your password. Please try again.'); setLoading(false); return }
     const { error: err } = await supabase.from('corporates').insert({
       contact_person: form.contact_person, mobile: form.mobile || null,
-      work_email: email.trim().toLowerCase(), password_hash: await hashPassword(password),
+      work_email: email.trim().toLowerCase(), password_hash: hashedPassword,
       company_name: inviteTeam.company_name, parent_corporate_id: inviteTeam.id,
       user_role: 'recruiter', is_active: true, tokens: 0
     })

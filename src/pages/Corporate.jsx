@@ -893,7 +893,15 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
         <label className="form-label">Who Are You Looking For? <span className="required">*</span></label>
         <textarea className="form-textarea" maxLength={300} placeholder="e.g. Looking for someone to head HR for a mid-large Indian organization, managing a scale of 10,000+ employees. Should have led HRBP and TA functions at this scale before."
           value={form.role_context} onChange={e => set('role_context', e.target.value)} />
-        <div className="form-hint flex-between"><span>Be specific — this is used to sharpen candidate matching, not just shown as a description</span><span>{form.role_context.length}/300</span></div>
+        <div className="form-hint flex-between">
+          <span style={{ color: 'var(--teal)', fontWeight: 600 }}>The more specific you are, the more precisely we match you to the right candidates</span>
+          <span>{form.role_context.length}/300</span>
+        </div>
+        {form.role_context.trim() && form.role_context.trim().length < 60 && (
+          <div style={{ fontSize: 11.5, color: 'var(--orange)', marginTop: 4 }}>
+            This is quite short — mentioning scale, org type, or specific expectations will get you sharper, better-fit matches.
+          </div>
+        )}
       </div>
 
       <div className="form-group">

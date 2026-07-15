@@ -1135,9 +1135,17 @@ export default function Register({ onNavigate }) {
               placeholder="e.g. I'm looking for CHRO roles in mid-large Indian organizations. I'd also be open to HR Head roles in high-growth startups."
               value={form.headline} onChange={e => set('headline', e.target.value)} />
             <div className="form-hint flex-between">
-              <span>No name, no employer — this helps us match you more precisely, not just describe you</span>
+              <span>No name, no employer</span>
               <span style={{ color: form.headline.length > 130 ? 'var(--orange)' : 'var(--grey-400)' }}>{form.headline.length}/150</span>
             </div>
+            <div style={{ fontSize: 12, color: 'var(--teal)', fontWeight: 600, marginTop: 4 }}>
+              The more specific you are, the sharper we can match you — this isn't just a bio, it's what we compare recruiters' searches against
+            </div>
+            {form.headline.trim() && form.headline.trim().length < 40 && (
+              <div style={{ fontSize: 11.5, color: 'var(--orange)', marginTop: 4 }}>
+                This is quite short — a bit more detail on the roles, company type, or scale you want will get you noticed by the right recruiters more often.
+              </div>
+            )}
           </div>
 
           {/* JOB SEARCH STATUS — editable inline if missing */}

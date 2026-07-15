@@ -172,7 +172,7 @@ export default function Home({ onNavigate }) {
           <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Get in Touch</div>
           <div style={{ background: 'white', borderRadius: 14, padding: '16px', boxShadow: '0 2px 12px rgba(22,93,123,0.06)', border: '1px solid rgba(22,93,123,0.06)' }}>
             {[
-              { icon: '✉️', label: 'Email', value: 'dorasuri@storysideup.com', href: 'mailto:dorasuri@storysideup.com' },
+              { icon: '✉️', label: 'Email', value: 'support@storysideup.com', href: 'mailto:support@storysideup.com' },
               { icon: '💼', label: 'LinkedIn', value: 'StorySideUp', href: 'https://www.linkedin.com/company/story-side-up/' },
               { icon: '🌐', label: 'Website', value: 'storysideup.netlify.app', href: 'https://storysideup.netlify.app' },
             ].map(({ icon, label, value, href }) => (

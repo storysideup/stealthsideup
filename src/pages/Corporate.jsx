@@ -26,6 +26,7 @@ async function verifyPasswordServer(password, hash) {
 }
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
 import mammoth from 'mammoth'
+import { lakhsToWordsDisplay } from '../lib/numberToWords'
 import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
@@ -607,6 +608,9 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
     if (!form.recruiter_email || !form.recruiter_email.includes('@')) {
       setError('Please enter a valid email address to receive candidate CVs'); return
     }
+    if (parseFloat(form.ctc_fixed_min) > 999 || parseFloat(form.ctc_fixed_max) > 999) {
+      setError('Please fix the CTC budget figures — they look like they\'re in rupees instead of lakhs.'); return
+    }
     setLoading(true); setError('')
     const { error: err } = await supabase.from('jds').insert({
       ...form,
@@ -839,10 +843,33 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       <div className="form-group">
         <label className="form-label">Fixed CTC Budget — ₹ Lakhs per annum</label>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input className="form-input" type="number" placeholder="Min e.g. 25" value={form.ctc_fixed_min} onChange={e => set('ctc_fixed_min', e.target.value)} />
+          <input className="form-input" type="number" min="0" max="9999" placeholder="Min e.g. 25"
+            value={form.ctc_fixed_min}
+            onChange={e => {
+              const v = e.target.value
+              set('ctc_fixed_min', (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+            }} />
           <span style={{ color: 'var(--grey-400)' }}>to</span>
-          <input className="form-input" type="number" placeholder="Max e.g. 35" value={form.ctc_fixed_max} onChange={e => set('ctc_fixed_max', e.target.value)} />
+          <input className="form-input" type="number" min="0" max="9999" placeholder="Max e.g. 35"
+            value={form.ctc_fixed_max}
+            onChange={e => {
+              const v = e.target.value
+              set('ctc_fixed_max', (v === '' || parseFloat(v) <= 9999) ? v : '9999')
+            }} />
         </div>
+        {(lakhsToWordsDisplay(form.ctc_fixed_min) || lakhsToWordsDisplay(form.ctc_fixed_max)) && (
+          <div style={{ fontSize: 11, color: 'var(--grey-400)', marginTop: 4, lineHeight: 1.6 }}>
+            {lakhsToWordsDisplay(form.ctc_fixed_min) && <div>Min {lakhsToWordsDisplay(form.ctc_fixed_min)}</div>}
+            {lakhsToWordsDisplay(form.ctc_fixed_max) && <div>Max {lakhsToWordsDisplay(form.ctc_fixed_max)}</div>}
+          </div>
+        )}
+        {(parseFloat(form.ctc_fixed_min) > 999 || parseFloat(form.ctc_fixed_max) > 999) && (
+          <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 8, padding: 12, marginTop: 8 }}>
+            <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6 }}>
+              These figures look like they're in rupees, not lakhs — this would silently break CTC-based candidate matching for this search. Please re-check before posting.
+            </div>
+          </div>
+        )}
         <div className="form-hint">Annual figures only. E.g. 25 means ₹25 Lakhs per annum.</div>
       </div>
 

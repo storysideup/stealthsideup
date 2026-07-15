@@ -552,7 +552,7 @@ export function PostJD({ corporate, onNavigate }) {
     setExtracting(true); setExtractError('')
     try {
       const promptText = `Extract structured information from this job description. Return ONLY a valid JSON object, no markdown, no backticks:
-{"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":null,"ctc_fixed_max":null,"skills":[{"subFunction":"specific skill area name relevant to the function","proficiency":"proficient or expert","specialisation":"specific specialisation if clear"}]}
+{"role_title":"exact job title","job_function":"one of: HR / People & Culture, Sales & Business Development, Marketing & Communications, Finance & Accounts, Operations & Supply Chain, Technology & Product, Legal & Compliance, Strategy & Consulting, General Management / P&L","seniority_level":"one of: Junior (0-5 yrs, individual contributor), Mid (5-12 yrs, may lead small teams), Senior (12-20 yrs, leads functions or large teams), Leadership (20+ yrs, CXO / functional head)","role_type":"Individual Contributor or Team Manager","role_context":"2-3 sentences on what this person owns max 280 chars","why_role":"1-2 sentences on why exciting max 180 chars","employment_type":"Full-time","location":"city name only","ctc_fixed_min":"minimum fixed CTC in LAKHS per annum as a plain number, e.g. if the JD says '80 lakhs' or '₹80L' output 80, NOT 8000000. If the JD states CTC in Crores, convert to lakhs (1 Cr = 100L). null if not mentioned.","ctc_fixed_max":"maximum fixed CTC in LAKHS per annum as a plain number, same conversion rules as ctc_fixed_min. null if not mentioned.","skills":[{"subFunction":"specific skill area name relevant to the function","proficiency":"proficient or expert","specialisation":"specific specialisation if clear"}]}
 Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ? '' : '\nJD: ' + textToExtract.slice(0, 3000)}`
 
       const content = pdfBase64
@@ -596,7 +596,12 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       setForm(f => ({ ...f, ...updates }))
       setExtracted(true)
     } catch (e) {
-      setExtractError('Could not extract: ' + (e.message || 'Unknown error') + '. Please fill the form manually.')
+      console.error('JD extraction failed:', e)
+      if (e instanceof SyntaxError) {
+        setExtractError('We couldn\'t automatically read this JD — it may be in an unusual format. Please fill the form manually below.')
+      } else {
+        setExtractError('Could not extract: ' + (e.message || 'Unknown error') + '. Please fill the form manually.')
+      }
     }
     setExtracting(false)
   }
@@ -621,7 +626,8 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       institute_preference: eduPref.institute_pref,
       mode_of_study_required: eduPref.mode_of_study,
       ctc_fixed_min: form.ctc_fixed_min ? parseFloat(form.ctc_fixed_min) : null,
-      ctc_fixed_max: form.ctc_fixed_max ? parseFloat(form.ctc_fixed_max) : null
+      ctc_fixed_max: form.ctc_fixed_max ? parseFloat(form.ctc_fixed_max) : null,
+      min_years_in_function: form.min_years_in_function ? parseInt(form.min_years_in_function) : null
     })
     if (err) { setError(err.message); setLoading(false); return }
     setSuccess(true); setLoading(false)
@@ -865,9 +871,13 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
         )}
         {(parseFloat(form.ctc_fixed_min) > 999 || parseFloat(form.ctc_fixed_max) > 999) && (
           <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 8, padding: 12, marginTop: 8 }}>
-            <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 12.5, color: '#991b1b', lineHeight: 1.6, marginBottom: 10 }}>
               These figures look like they're in rupees, not lakhs — this would silently break CTC-based candidate matching for this search. Please re-check before posting.
             </div>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => {
+              if (parseFloat(form.ctc_fixed_min) > 999) set('ctc_fixed_min', (parseFloat(form.ctc_fixed_min) / 100000).toString())
+              if (parseFloat(form.ctc_fixed_max) > 999) set('ctc_fixed_max', (parseFloat(form.ctc_fixed_max) / 100000).toString())
+            }}>Fix automatically</button>
           </div>
         )}
         <div className="form-hint">Annual figures only. E.g. 25 means ₹25 Lakhs per annum.</div>

@@ -1127,15 +1127,15 @@ export default function Register({ onNavigate }) {
           {/* HEADLINE — always editable on review */}
           <div className="form-group">
             <label className="form-label" style={{ color: !form.headline.trim() ? 'var(--orange)' : 'var(--grey-600)' }}>
-              Professional Headline <span className="required">*</span>
+              What Are You Looking For? <span className="required">*</span>
               {!form.headline.trim() && <span style={{ fontSize: 10, fontWeight: 400, marginLeft: 6, color: 'var(--orange)', textTransform: 'none' }}>Fill this before submitting</span>}
             </label>
             <textarea className="form-textarea" maxLength={150}
               style={{ borderColor: !form.headline.trim() ? 'var(--orange)' : undefined }}
-              placeholder="e.g. 15 years in FMCG sales, built teams across North and West India, currently managing a national P&L"
+              placeholder="e.g. I'm looking for CHRO roles in mid-large Indian organizations. I'd also be open to HR Head roles in high-growth startups."
               value={form.headline} onChange={e => set('headline', e.target.value)} />
             <div className="form-hint flex-between">
-              <span>No name, no employer, no title — your story in one line</span>
+              <span>No name, no employer — this helps us match you more precisely, not just describe you</span>
               <span style={{ color: form.headline.length > 130 ? 'var(--orange)' : 'var(--grey-400)' }}>{form.headline.length}/150</span>
             </div>
           </div>

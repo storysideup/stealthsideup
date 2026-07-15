@@ -890,10 +890,10 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       </div>
 
       <div className="form-group">
-        <label className="form-label">Role Context <span className="required">*</span></label>
-        <textarea className="form-textarea" maxLength={300} placeholder="What is this role expected to achieve in year one? What does success look like? Max 300 words."
+        <label className="form-label">Who Are You Looking For? <span className="required">*</span></label>
+        <textarea className="form-textarea" maxLength={300} placeholder="e.g. Looking for someone to head HR for a mid-large Indian organization, managing a scale of 10,000+ employees. Should have led HRBP and TA functions at this scale before."
           value={form.role_context} onChange={e => set('role_context', e.target.value)} />
-        <div className="form-hint flex-between"><span>What will this person own in their first year? What does success look like in this role?</span><span>{form.role_context.length}/300</span></div>
+        <div className="form-hint flex-between"><span>Be specific — this is used to sharpen candidate matching, not just shown as a description</span><span>{form.role_context.length}/300</span></div>
       </div>
 
       <div className="form-group">
@@ -1107,6 +1107,43 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [extendingJd, setExtendingJd] = useState(null)
   const [confirmingCloseJd, setConfirmingCloseJd] = useState(null)
   const [jdActionError, setJdActionError] = useState('')
+  const [reranking, setReranking] = useState(false)
+
+  const handleViewMatches = async (jd) => {
+    setActiveJd(jd)
+    await loadInterests(jd.id)
+
+    const candidateList = matches[jd.id] || []
+    if (candidateList.length === 0) return
+
+    setReranking(true)
+    try {
+      const response = await fetch('/api/rerank-matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jd: { role_title: jd.role_title, role_context: jd.role_context, why_role: jd.why_role },
+          candidates: candidateList.map(c => ({ id: c.id, headline: c.headline }))
+        })
+      })
+      const { rankings } = await response.json()
+      const rankMap = {}
+      ;(rankings || []).forEach(r => { rankMap[r.id] = r })
+
+      const annotated = candidateList.map(c => ({
+        ...c,
+        aiFitScore: rankMap[c.id]?.fitScore ?? 50,
+        aiFitNote: rankMap[c.id]?.fitNote || null
+      }))
+      // Re-rank only within the already structurally-qualified shortlist —
+      // this never changes who qualifies, only the order they're reviewed in.
+      annotated.sort((a, b) => b.aiFitScore - a.aiFitScore)
+      setMatches(m => ({ ...m, [jd.id]: annotated }))
+    } catch (e) {
+      console.error('Re-ranking failed, showing structured order:', e)
+    }
+    setReranking(false)
+  }
 
   useEffect(() => {
     if (!corporate) { onNavigate('corporate-login'); return }
@@ -1283,6 +1320,11 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
           )}
         </div>
         <p style={{ color: 'var(--grey-400)', fontSize: 13, marginBottom: 20 }}>{activeJd.function} · {activeJd.seniority_level}</p>
+        {reranking && (
+          <div style={{ fontSize: 12, color: 'var(--grey-400)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className="spinner" style={{ width: 12, height: 12 }} /> Sharpening match order based on what candidates said they're looking for...
+          </div>
+        )}
 
         {candidateList.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: 32 }}>
@@ -1328,6 +1370,11 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
 
                 {/* Headline */}
                 <p style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--grey-600)', lineHeight: 1.5, marginBottom: 12, borderLeft: '3px solid var(--orange)', paddingLeft: 10 }}>"{c.headline}"</p>
+                {c.aiFitNote && (
+                  <div style={{ fontSize: 12.5, color: 'var(--teal)', background: 'var(--teal-pale)', borderRadius: 8, padding: '8px 12px', marginBottom: 12, lineHeight: 1.5 }}>
+                    ✨ {c.aiFitNote}
+                  </div>
+                )}
 
                 {/* Key stats grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
@@ -1613,7 +1660,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   </div>
                 ) : (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button className="btn-primary btn-sm" onClick={async () => { setActiveJd(jd); await loadInterests(jd.id) }}>View Matches →</button>
+                    <button className="btn-primary btn-sm" onClick={() => handleViewMatches(jd)}>View Matches →</button>
                     {extendingJd === jd.id ? (
                       <>
                         <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 10)}>+10 days</button>

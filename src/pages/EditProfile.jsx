@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import SkillsTable from '../components/SkillsTable'
+import { CVPreFill } from './Register'
 import IndustrySelect from '../components/IndustrySelect'
 import CareerHistory from '../components/CareerHistory'
 import { lakhsToWordsDisplay } from '../lib/numberToWords'
@@ -101,6 +102,7 @@ export default function EditProfile({ onNavigate }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [cvData, setCvData] = useState(null) // { base64, isPDF } — transient only, never stored; reused by Skills auto-fill
 
   // Load from session
   useEffect(() => {
@@ -132,7 +134,9 @@ export default function EditProfile({ onNavigate }) {
         const raw = c.current_industry || c.freelance_sector || []
         return Array.isArray(raw) ? raw : (raw ? [raw] : [])
       })(),
+      current_industry_other: c.current_industry_other || '',
       previous_industries: c.previous_industries || [],
+      previous_industries_other: c.previous_industries_other || '',
       role_type: c.role_type || '',
       team_size: c.team_size || '',
       work_preference: c.work_preference || '',
@@ -239,8 +243,10 @@ export default function EditProfile({ onNavigate }) {
       headline: form.headline,
       job_search_status: form.job_search_status,
       current_industry: form.current_industry,
+      current_industry_other: form.current_industry_other,
       freelance_sector: form.current_industry,
       previous_industries: form.previous_industries,
+      previous_industries_other: form.previous_industries_other,
       role_type: form.role_type,
       team_size: form.team_size,
       work_preference: form.work_preference,
@@ -326,6 +332,8 @@ export default function EditProfile({ onNavigate }) {
       <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--teal)', marginBottom: 4 }}>Edit My Profile</h2>
       <p style={{ fontSize: 12, color: 'var(--grey-400)', marginBottom: 16 }}>All changes save immediately when you tap Save.</p>
 
+      <CVPreFill form={form} set={set} onUploaded={setCvData} />
+
       {/* Section tabs */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 24, paddingBottom: 4 }}>
         {SECTIONS.map((s, i) => (
@@ -376,7 +384,8 @@ export default function EditProfile({ onNavigate }) {
         <div className="form-group">
           <label className="form-label">Current Industry / Industries</label>
           <div className="form-hint" style={{ marginBottom: 10 }}>Select more than one if your role spans multiple industries (e.g. consulting, professional services)</div>
-          <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={false} />
+          <IndustrySelect value={form.current_industry} onChange={v => set('current_industry', v)} single={false}
+            otherValue={form.current_industry_other} onOtherChange={v => set('current_industry_other', v)} />
         </div>
         <div className="form-group">
           <label className="form-label">Current CTC — Fixed (₹L per annum)</label>
@@ -438,7 +447,7 @@ export default function EditProfile({ onNavigate }) {
       {activeSection === 3 && <>
         <div className="form-group">
           <label className="form-label">Your Skills — {form.primary_function || 'select function first'}</label>
-          <SkillsTable functionName={form.primary_function} value={form.skill_tree} onChange={v => set('skill_tree', v)} mode="candidate" />
+          <SkillsTable functionName={form.primary_function} value={form.skill_tree} onChange={v => set('skill_tree', v)} mode="candidate" cvData={cvData} />
         </div>
       </>}
 

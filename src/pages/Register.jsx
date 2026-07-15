@@ -280,7 +280,7 @@ function CTCInput({ label, value, onChange }) {
   )
 }
 
-function CVPreFill({ form, set, onSkip, onUploaded }) {
+export function CVPreFill({ form, set, onSkip, onUploaded }) {
   const [uploading, setUploading] = React.useState(false)
   const [done, setDone] = React.useState(false)
   const [error, setError] = React.useState('')
@@ -441,9 +441,11 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
         <button type="button" className="btn-primary btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
           {uploading ? '⏳ Reading CV...' : '📎 Upload CV'}
         </button>
-        <button type="button" className="btn-secondary btn-sm" onClick={onSkip}>
-          Fill manually
-        </button>
+        {onSkip && (
+          <button type="button" className="btn-secondary btn-sm" onClick={onSkip}>
+            Fill manually
+          </button>
+        )}
       </div>
     </div>
   )

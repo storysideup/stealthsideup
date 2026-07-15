@@ -387,7 +387,15 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
 
       setDone(true)
     } catch(e) {
-      setError('Could not read CV: ' + (e.message || 'Unknown error') + '. Please fill manually.')
+      console.error('CV extraction failed:', e)
+      if (e instanceof SyntaxError) {
+        // The AI's response wasn't valid JSON (rare — usually a scanned/image-based PDF
+        // with poor extractable text, or an unusually long CV). Never show the raw
+        // "Unexpected token..." error to the candidate — it reads like gibberish.
+        setError('We couldn\'t automatically read details from this CV — it may be a scanned image or an unusual format. Please fill in the form manually below.')
+      } else {
+        setError('Could not read CV: ' + (e.message || 'Unknown error') + '. Please fill manually.')
+      }
     }
     setUploading(false)
   }

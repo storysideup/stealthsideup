@@ -19,6 +19,16 @@ export default class ErrorBoundary extends React.Component {
     window.location.reload()
   }
 
+  handleGoHome = () => {
+    // As a safety net, clear session keys in case the crash was caused by corrupted
+    // session state, so returning to Home doesn't just re-trigger the same crash.
+    try {
+      sessionStorage.removeItem('ssu_page')
+    } catch {}
+    this.setState({ hasError: false, error: null })
+    window.location.href = window.location.origin
+  }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -37,15 +47,26 @@ export default class ErrorBoundary extends React.Component {
             }}>
               {this.state.error?.message || String(this.state.error)}
             </div>
-            <button
-              onClick={this.handleReset}
-              style={{
-                background: '#0A3D35', color: 'white', border: 'none', borderRadius: 8,
-                padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-              }}
-            >
-              Reload and try again
-            </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={this.handleReset}
+                style={{
+                  background: '#0A3D35', color: 'white', border: 'none', borderRadius: 8,
+                  padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Reload and try again
+              </button>
+              <button
+                onClick={this.handleGoHome}
+                style={{
+                  background: 'white', color: '#0A3D35', border: '1px solid #0A3D35', borderRadius: 8,
+                  padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Go to Home
+              </button>
+            </div>
           </div>
         </div>
       )

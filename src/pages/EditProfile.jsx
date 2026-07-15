@@ -161,14 +161,16 @@ export default function EditProfile({ onNavigate }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const ctcTotal = useMemo(() => {
+    if (!form) return 0
     return ['ctc_fixed', 'ctc_variable', 'ctc_bonus'].reduce((sum, k) => sum + (parseFloat(form[k]) || 0), 0)
-  }, [form.ctc_fixed, form.ctc_variable, form.ctc_bonus])
+  }, [form?.ctc_fixed, form?.ctc_variable, form?.ctc_bonus])
 
   // Same rupees-vs-lakhs mistake as Register.jsx — flag and offer to fix it here too.
   const ctcLikelyWrongUnit = ctcTotal > 999
-  const minCtcLikelyWrongUnit = parseFloat(form.min_expected_ctc) > 999
+  const minCtcLikelyWrongUnit = parseFloat(form?.min_expected_ctc) > 999
 
   const handleFixCtcUnits = () => {
+    if (!form) return
     ;['ctc_fixed', 'ctc_variable', 'ctc_bonus'].forEach(k => {
       const raw = parseFloat(form[k])
       if (raw > 999) set(k, (raw / 100000).toString())

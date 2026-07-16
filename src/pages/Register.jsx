@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendCandidateWelcome } from '../lib/whatsapp'
 import SkillsTable from '../components/SkillsTable'
@@ -457,6 +457,36 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
   )
 }
 
+// Captures utm_source / utm_medium / utm_campaign / utm_term / utm_content / utm_id from the
+// landing URL and persists them in sessionStorage so they survive across the multi-step form
+// (OTP verification, page refreshes) even though the querystring itself isn't preserved.
+const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id']
+const STORAGE_KEY = 'ssu_utm_params'
+
+function captureUtmParams() {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = {}
+    let hasAny = false
+    UTM_KEYS.forEach(key => {
+      const val = params.get(key)
+      if (val) { fromUrl[key] = val; hasAny = true }
+    })
+    if (hasAny) {
+      // Fresh UTM params in the URL always take precedence and overwrite any earlier stored ones,
+      // since a new campaign link means this is the most recent, most relevant source.
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fromUrl))
+      return fromUrl
+    }
+    const stored = sessionStorage.getItem(STORAGE_KEY)
+    return stored ? JSON.parse(stored) : {}
+  } catch (e) {
+    // sessionStorage can throw in some privacy modes — never block registration over this
+    console.error('UTM capture failed:', e)
+    return {}
+  }
+}
+
 export default function Register({ onNavigate }) {
   const [step, setStep] = useState(0) // 0=contact, 1=verify, 2-7=form sections
   const [existingProfileFound, setExistingProfileFound] = useState(false)
@@ -469,6 +499,12 @@ export default function Register({ onNavigate }) {
   const [success, setSuccess] = useState(false)
   const [cvData, setCvData] = useState(null) // { base64, isPDF } — reused by Skills section, no second upload
   const [cvSkipped, setCvSkipped] = useState(false)
+  const [utmParams, setUtmParams] = useState({})
+
+  // Capture UTM params once when the registration page first loads, before any step navigation
+  useEffect(() => {
+    setUtmParams(captureUtmParams())
+  }, [])
 
   const [form, setForm] = useState({
     gender: '', age_range: '', current_employment_type: '', desired_employment_type: [],
@@ -639,7 +675,18 @@ export default function Register({ onNavigate }) {
         languages: asArray(form.languages),
         open_to_travel: form.open_to_travel,
         has_passport: form.has_passport,
-        is_active: true
+        is_active: true,
+        // Only attach UTM fields when we actually captured one — this way, if an existing
+        // candidate comes back later to edit their profile via a plain (untagged) link, we
+        // don't null out their original first-touch attribution on upsert.
+        ...(Object.keys(utmParams).length > 0 ? {
+          utm_source: utmParams.utm_source || null,
+          utm_medium: utmParams.utm_medium || null,
+          utm_campaign: utmParams.utm_campaign || null,
+          utm_term: utmParams.utm_term || null,
+          utm_content: utmParams.utm_content || null,
+          utm_id: utmParams.utm_id || null
+        } : {})
       }
       const { error: dbErr } = await supabase.from('candidates').upsert(payload, { onConflict: 'contact' })
       if (dbErr) throw dbErr

@@ -379,11 +379,17 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
         const industries = Array.isArray(parsed.current_industry) ? parsed.current_industry : [parsed.current_industry]
         set('current_industry', industries)
       }
-      if (parsed.previous_industries?.length) set('previous_industries', parsed.previous_industries)
+      if (parsed.previous_industries) {
+        const prevIndustries = Array.isArray(parsed.previous_industries) ? parsed.previous_industries : []
+        if (prevIndustries.length) set('previous_industries', prevIndustries)
+      }
       if (parsed.role_type) set('role_type', parsed.role_type)
       if (parsed.current_employment_type) set('current_employment_type', parsed.current_employment_type)
       if (parsed.headline) set('headline', parsed.headline)
-      if (parsed.career_history?.length) set('career_history', parsed.career_history)
+      if (parsed.career_history) {
+        const history = Array.isArray(parsed.career_history) ? parsed.career_history : []
+        if (history.length) set('career_history', history)
+      }
 
       setDone(true)
     } catch(e) {
@@ -570,6 +576,12 @@ export default function Register({ onNavigate }) {
     if (ctcLikelyWrongUnit) { setError('Please fix your CTC figures — they look like they\'re in rupees instead of lakhs.'); return }
     if (minCtcLikelyWrongUnit) { setError('Please fix your Minimum Expected CTC — it looks like it\'s in rupees instead of lakhs.'); return }
     setLoading(true); setError('')
+    // Defense-in-depth: guarantee every array-column field is genuinely an array before it
+    // ever reaches Supabase, regardless of how a bad value got into form state (AI extraction
+    // returning a stray string like "None" instead of an empty array, or any other path).
+    // Postgres rejects a plain string for an array column with a cryptic "malformed array
+    // literal" error, so this is the last line of defense against that class of bug.
+    const asArray = v => Array.isArray(v) ? v : []
     try {
       const payload = {
         contact: contact.trim(),
@@ -577,7 +589,7 @@ export default function Register({ onNavigate }) {
         gender: form.gender,
         age_range: form.age_range,
         current_employment_type: form.current_employment_type,
-        desired_employment_type: form.desired_employment_type,
+        desired_employment_type: asArray(form.desired_employment_type),
         years_experience: parseInt(form.years_experience) || null,
         primary_function: form.primary_function,
         highest_degree: form.highest_degree,
@@ -585,7 +597,7 @@ export default function Register({ onNavigate }) {
         institute: form.institute === 'Other (please specify)' ? form.institute_other : form.institute,
         year_of_passing: parseInt(form.year_of_passing) || null,
         certifications: form.certifications,
-        current_industry: form.current_industry,
+        current_industry: asArray(form.current_industry),
         current_industry_other: form.current_industry_other,
         current_tenure: form.current_tenure,
         company_type_b2b_b2c: form.company_type_b2b_b2c,
@@ -598,33 +610,33 @@ export default function Register({ onNavigate }) {
         ctc_esops: parseFloat(form.ctc_esops) || null,
         ctc_allowances: parseFloat(form.ctc_allowances) || null,
         ctc_total: ctcTotal || null,
-        freelance_sector: form.freelance_sector,
+        freelance_sector: asArray(form.freelance_sector),
         freelance_sector_other: form.freelance_sector_other,
         freelance_engagement_size: form.freelance_engagement_size,
         freelance_years: parseInt(form.freelance_years) || null,
-        previous_industries: form.previous_industries,
+        previous_industries: asArray(form.previous_industries),
         previous_industries_other: form.previous_industries_other,
         average_tenure: form.average_tenure,
         career_b2b_b2c: form.career_b2b_b2c,
-        skill_keywords: form.skill_keywords,
+        skill_keywords: asArray(form.skill_keywords),
         skill_tree: form.skill_tree,
         declaration_agreed: form.declaration_agreed,
         privacy_consent_agreed: form.privacy_consent_agreed,
         privacy_consent_at: form.privacy_consent_agreed ? new Date().toISOString() : null,
         headline: form.headline,
         job_search_status: form.job_search_status,
-        seniority_open_to: form.seniority_open_to,
-        org_type_open_to: form.org_type_open_to,
+        seniority_open_to: asArray(form.seniority_open_to),
+        org_type_open_to: asArray(form.org_type_open_to),
         work_preference: form.work_preference,
         relocation: form.relocation,
-        relocation_cities: form.relocation_cities,
-        blocked_companies: form.blocked_companies || [],
-        preferred_locations: form.preferred_locations,
-        career_history: form.career_history,
+        relocation_cities: asArray(form.relocation_cities),
+        blocked_companies: asArray(form.blocked_companies),
+        preferred_locations: asArray(form.preferred_locations),
+        career_history: asArray(form.career_history),
         notice_period: form.notice_period,
         min_expected_ctc: parseFloat(form.min_expected_ctc) || null,
         years_in_function: parseInt(form.years_in_function) || null,
-        languages: form.languages,
+        languages: asArray(form.languages),
         open_to_travel: form.open_to_travel,
         has_passport: form.has_passport,
         is_active: true

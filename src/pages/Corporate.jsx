@@ -27,6 +27,7 @@ async function verifyPasswordServer(password, hash) {
 import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
 import mammoth from 'mammoth'
 import { lakhsToWordsDisplay } from '../lib/numberToWords'
+import { logExtractionFailure } from '../lib/logExtractionFailure'
 import SkillsTable from '../components/SkillsTable'
 import { CityPicker } from '../components/LocationPicker'
 import { CareerHistoryDisplay } from '../components/CareerHistory'
@@ -599,8 +600,10 @@ Extract 3-6 most important skills from the JD for the skills array.${pdfBase64 ?
       console.error('JD extraction failed:', e)
       if (e instanceof SyntaxError) {
         setExtractError('We couldn\'t automatically read this JD — it may be in an unusual format. Please fill the form manually below.')
+        logExtractionFailure({ extractionType: 'jd_extraction', errorType: 'syntax_error', errorMessage: e.message, contact: corporate?.work_email })
       } else {
         setExtractError('Could not extract: ' + (e.message || 'Unknown error') + '. Please fill the form manually.')
+        logExtractionFailure({ extractionType: 'jd_extraction', errorType: 'other', errorMessage: e.message, contact: corporate?.work_email })
       }
     }
     setExtracting(false)

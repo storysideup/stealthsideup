@@ -5,6 +5,7 @@ import SkillsTable from '../components/SkillsTable'
 import IndustrySelect from '../components/IndustrySelect'
 import LegalModal from '../components/LegalModal'
 import { lakhsToWordsDisplay } from '../lib/numberToWords'
+import { logExtractionFailure } from '../lib/logExtractionFailure'
 import { COMPANIES } from '../data/companies'
 
 function InstituteSearch({ value, onChange }) {
@@ -310,6 +311,8 @@ export function CVPreFill({ form, set, onSkip, onUploaded }) {
   "current_employment_type": "one of: Full-time Employee, Freelance / Independent Consultant, Fractional / Part-time, Not currently employed",
   "headline": "a one-line professional summary under 100 chars — no name, no company, no title — just what they do and their impact",
   "career_history": [
+    // Include up to 5 most recent roles only, most recent first — even if the CV lists more.
+    // This keeps the response length predictable regardless of how long someone's career is.
     {
       "roleLabel": "Current Role",
       "industry": "industry name",
@@ -331,7 +334,7 @@ export function CVPreFill({ form, set, onSkip, onUploaded }) {
       "reasonForLeaving": "brief reason"
     },
     {
-      "roleLabel": "Role Before That",
+      "roleLabel": "Role Before That (and so on, up to 5 total roles max)",
       "industry": "industry",
       "orgType": "org type",
       "roleType": "IC or TM",
@@ -354,7 +357,7 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: isPDF ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
-          max_tokens: 2000,
+          max_tokens: 3000,
           messages: [{ role: 'user', content: messageContent }]
         })
       })
@@ -394,13 +397,16 @@ Only extract what is clearly stated. Leave fields empty string if not found.`
       setDone(true)
     } catch(e) {
       console.error('CV extraction failed:', e)
+      const fileType = file.name.toLowerCase().endsWith('.pdf') ? 'pdf' : file.name.toLowerCase().endsWith('.docx') ? 'docx' : file.name.toLowerCase().endsWith('.doc') ? 'doc' : 'txt'
       if (e instanceof SyntaxError) {
         // The AI's response wasn't valid JSON (rare — usually a scanned/image-based PDF
         // with poor extractable text, or an unusually long CV). Never show the raw
         // "Unexpected token..." error to the candidate — it reads like gibberish.
         setError('We couldn\'t automatically read details from this CV — it may be a scanned image or an unusual format. Please fill in the form manually below.')
+        logExtractionFailure({ extractionType: 'cv_prefill', errorType: 'syntax_error', errorMessage: e.message, fileType })
       } else {
         setError('Could not read CV: ' + (e.message || 'Unknown error') + '. Please fill manually.')
+        logExtractionFailure({ extractionType: 'cv_prefill', errorType: 'other', errorMessage: e.message, fileType })
       }
     }
     setUploading(false)

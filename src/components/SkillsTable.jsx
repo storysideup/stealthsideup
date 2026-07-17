@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { SKILL_TREE } from '../data/skillTree'
+import { logExtractionFailure } from '../lib/logExtractionFailure'
 
 const LEVELS = ['Familiar', 'Proficient', 'Expert']
 const LEVEL_COLORS = {
@@ -153,7 +154,9 @@ export default function SkillsTable({ functionName, value = {}, onChange, mode =
         })
         onChange(updated)
       } catch (e) {
+        console.error('Skill auto-fill failed:', e)
         setAutoFillError('Could not map skills from your CV automatically — please select levels manually below.')
+        logExtractionFailure({ extractionType: 'skill_autofill', errorType: e instanceof SyntaxError ? 'syntax_error' : 'other', errorMessage: e.message, fileType: cvData?.isPDF ? 'pdf' : 'text' })
       }
       setAutoFilling(false)
       setAutoFillDone(true)

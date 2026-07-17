@@ -4,7 +4,7 @@ import { sendTokenCreditConfirmationEmail } from '../lib/email'
 
 const ADMIN_PASSWORD = 'SSU@Admin2026'
 
-const TABS = ['Overview', 'Corporates', 'Candidates', 'CVs Sent', 'Tokens', 'Declines']
+const TABS = ['Overview', 'Corporates', 'Candidates', 'CVs Sent', 'Tokens', 'Declines', 'AI Failures']
 
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(false)
@@ -19,6 +19,7 @@ export default function AdminPanel() {
   const [candidates, setCandidates] = useState([])
   const [interests, setInterests] = useState([])
   const [jds, setJds] = useState([])
+  const [extractionFailures, setExtractionFailures] = useState([])
   const [tokenModal, setTokenModal] = useState(null)
   const [tokenAmount, setTokenAmount] = useState('')
   const [addingTokens, setAddingTokens] = useState(false)
@@ -35,18 +36,21 @@ export default function AdminPanel() {
       { data: cands },
       { data: corps },
       { data: ints },
-      { data: jds }
+      { data: jds },
+      { data: failures }
     ] = await Promise.all([
       supabase.from('candidates').select('*').order('created_at', { ascending: false }),
       supabase.from('corporates').select('*').order('created_at', { ascending: false }),
       supabase.from('interests').select('*').order('created_at', { ascending: false }),
-      supabase.from('jds').select('*').order('created_at', { ascending: false })
+      supabase.from('jds').select('*').order('created_at', { ascending: false }),
+      supabase.from('extraction_failures').select('*').order('created_at', { ascending: false }).limit(200)
     ])
 
     setCandidates(cands || [])
     setCorporates(corps || [])
     setInterests(ints || [])
     setJds(jds || [])
+    setExtractionFailures(failures || [])
 
     const cvSent = (ints || []).filter(i => i.status === 'cv_sent').length
     const totalTokensUsed = (ints || []).filter(i => i.status !== 'saved').length
@@ -421,6 +425,52 @@ export default function AdminPanel() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+        {!loading && activeTab === 'AI Failures' && (
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>AI Extraction Failures</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+              Every time CV or JD auto-fill fails and someone falls back to filling manually. Last 200 events.
+            </div>
+            {extractionFailures.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: 12, padding: 40, textAlign: 'center', color: '#9ca3af' }}>No failures logged yet — good sign.</div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+                  {['cv_prefill', 'jd_extraction', 'skill_autofill'].map(type => {
+                    const count = extractionFailures.filter(f => f.extraction_type === type).length
+                    return (
+                      <div key={type} style={{ background: 'white', borderRadius: 12, padding: 16, textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                        <div style={{ fontSize: 24, fontWeight: 800, color: '#374151' }}>{count}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>
+                          {type === 'cv_prefill' ? 'Candidate CV' : type === 'jd_extraction' ? 'JD Extraction' : 'Skill Auto-fill'}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                  {extractionFailures.map(f => (
+                    <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 12.5 }}>
+                      <div>
+                        <span style={{ fontWeight: 700, color: '#374151' }}>{f.extraction_type}</span>
+                        {f.file_type && <span style={{ color: '#9ca3af' }}> · {f.file_type}</span>}
+                        {f.contact && <span style={{ color: '#9ca3af' }}> · {f.contact}</span>}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, textTransform: 'uppercase',
+                          background: f.error_type === 'syntax_error' ? '#fef3c7' : '#fee2e2',
+                          color: f.error_type === 'syntax_error' ? '#92400e' : '#991b1b'
+                        }}>{f.error_type === 'syntax_error' ? 'AI response invalid' : 'other'}</span>
+                        <span style={{ color: '#9ca3af', fontSize: 11 }}>{new Date(f.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}

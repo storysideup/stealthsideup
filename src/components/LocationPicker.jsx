@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CITIES_BY_ZONE, SPECIAL_LOCATIONS, NCR_CITIES } from '../data/formData'
+import { CITIES_BY_ZONE, SPECIAL_LOCATIONS, NCR_CITIES, MUMBAI_REGION } from '../data/formData'
 
 // Corporate side — single city picker (specific)
 export function CityPicker({ value, onChange }) {
@@ -110,17 +110,38 @@ export function CandidateLocationPicker({ value = { cities: [], openToNearby: tr
         </div>
       )}
 
-      {/* Open to nearby toggle — only if NCR or Mumbai region cities selected */}
-      {selectedCities.some(c => ['Delhi', 'Noida', 'Gurgaon', 'Faridabad', 'Ghaziabad'].includes(c)) && (
+      {/* Open to nearby toggle — NCR */}
+      {selectedCities.some(c => NCR_CITIES.includes(c)) && (
         <div style={{ marginTop: 10, background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '10px 13px' }}>
           <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 8 }}>
-            You have selected an NCR city. Are you open to roles anywhere in NCR (Delhi / Noida / Gurgaon / Faridabad / Ghaziabad)?
+            You have selected an NCR city. Are you open to roles anywhere in NCR ({NCR_CITIES.join(' / ')})?
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button"
               className={`tag ${value.openToNearby ? 'selected' : ''}`}
               onClick={() => onChange({ ...value, openToNearby: true })}>
               Yes, open to all NCR
+            </button>
+            <button type="button"
+              className={`tag ${!value.openToNearby ? 'selected' : ''}`}
+              onClick={() => onChange({ ...value, openToNearby: false })}>
+              No, specific city only
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Open to nearby toggle — Mumbai region */}
+      {selectedCities.some(c => MUMBAI_REGION.includes(c)) && (
+        <div style={{ marginTop: 10, background: 'var(--teal-light)', border: '1px solid var(--teal-border)', borderRadius: 8, padding: '10px 13px' }}>
+          <div style={{ fontSize: 12, color: 'var(--grey-600)', marginBottom: 8 }}>
+            You have selected a Mumbai region city. Are you open to roles anywhere in the Mumbai region ({MUMBAI_REGION.join(' / ')})?
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button"
+              className={`tag ${value.openToNearby ? 'selected' : ''}`}
+              onClick={() => onChange({ ...value, openToNearby: true })}>
+              Yes, open to Mumbai region
             </button>
             <button type="button"
               className={`tag ${!value.openToNearby ? 'selected' : ''}`}

@@ -24,7 +24,7 @@ async function verifyPasswordServer(password, hash) {
   if (!res.ok) throw new Error(data.error || 'Could not verify password')
   return data // { valid, needsRehash, newHash? }
 }
-import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES } from '../data/formData'
+import { FUNCTIONS, INDUSTRIES, SKILLS_BY_FUNCTION, SENIORITY_LEVELS, ORG_TYPES, NOTICE_PERIODS, LANGUAGES, NCR_CITIES, MUMBAI_REGION } from '../data/formData'
 import mammoth from 'mammoth'
 import { lakhsToWordsDisplay } from '../lib/numberToWords'
 import { logExtractionFailure } from '../lib/logExtractionFailure'
@@ -1433,7 +1433,14 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Open to Locations</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                       {c.preferred_locations.cities.map(city => <span key={city} className="badge badge-grey">{city}</span>)}
-                      {c.preferred_locations.openToNearby && <span className="badge badge-teal">Open to nearby</span>}
+                      {(() => {
+                        if (!c.preferred_locations.openToNearby) return null
+                        const cities = c.preferred_locations.cities
+                        const badges = []
+                        if (NCR_CITIES.some(city => cities.includes(city))) badges.push('Open to all of NCR')
+                        if (MUMBAI_REGION.some(city => cities.includes(city))) badges.push('Open to Mumbai region')
+                        return badges.map(b => <span key={b} className="badge badge-teal">{b}</span>)
+                      })()}
                     </div>
                   </div>
                 )}
@@ -1775,15 +1782,15 @@ async function matchCandidates(jd, corporate) {
 
     // Location filter
     if (jd.location && c.preferred_locations?.cities?.length > 0) {
-      const NCR = ['Delhi', 'Noida', 'Gurgaon', 'Faridabad', 'Ghaziabad']
       const candidateCities = c.preferred_locations.cities
       const openToNearby = c.preferred_locations.openToNearby
       const isSpecialLocation = ['Pan-India / National Role', 'Remote / Work from Home', 'Flexible / Any Location'].includes(jd.location)
       if (!isSpecialLocation) {
         const candidateWantsAny = candidateCities.includes('Pan-India / National Role') || candidateCities.includes('Flexible / Any Location') || candidateCities.includes('Remote / Work from Home')
         const directMatch = candidateCities.includes(jd.location)
-        const ncrMatch = NCR.includes(jd.location) && openToNearby && NCR.some(city => candidateCities.includes(city))
-        if (!candidateWantsAny && !directMatch && !ncrMatch) return false
+        const ncrMatch = NCR_CITIES.includes(jd.location) && openToNearby && NCR_CITIES.some(city => candidateCities.includes(city))
+        const mumbaiMatch = MUMBAI_REGION.includes(jd.location) && openToNearby && MUMBAI_REGION.some(city => candidateCities.includes(city))
+        if (!candidateWantsAny && !directMatch && !ncrMatch && !mumbaiMatch) return false
       }
     }
 

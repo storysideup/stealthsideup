@@ -185,7 +185,7 @@ export const CITIES_BY_ZONE = {
     "Chandigarh", "Jaipur", "Lucknow", "Agra", "Amritsar", "Dehradun"
   ],
   "West India": [
-    "Mumbai", "Pune", "Ahmedabad", "Surat", "Nagpur",
+    "Mumbai", "Thane", "Navi Mumbai", "Pune", "Ahmedabad", "Surat", "Nagpur",
     "Indore", "Vadodara", "Nashik", "Aurangabad"
   ],
   "South India": [
@@ -217,7 +217,7 @@ Object.entries(CITIES_BY_ZONE).forEach(([zone, cities]) => {
 })
 
 export const NCR_CITIES = ["Delhi", "Noida", "Gurgaon", "Faridabad", "Ghaziabad"]
-export const MUMBAI_REGION = ["Mumbai", "Pune", "Nashik"]
+export const MUMBAI_REGION = ["Mumbai", "Thane", "Navi Mumbai"]
 export const BENGALURU_REGION = ["Bengaluru", "Mysuru"]
 
 export const ROLE_TENURES = [

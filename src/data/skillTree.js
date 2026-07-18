@@ -41,8 +41,18 @@ export const SKILL_TREE = {
       depth: {
         "Business Partnering — Sales / Commercial": ["Frontline HR", "Large Sales Teams (200+)", "Channel Partner HR", "Revenue-linked HR Metrics"],
         "Talent Reviews & Succession": ["9-box Grid", "Succession Pipeline", "Hi-Po Programmes", "Talent Calibration"],
-        "Performance Management": ["Goal Setting / OKRs", "Mid-year Reviews", "Annual Appraisal Design", "PIP Management", "Rating Distribution"],
+        "Performance Management": ["Goal Setting / OKRs", "Mid-year Reviews", "Annual Appraisal Design", "PIP Management", "Rating Distribution", "PMS Tool Configuration (SuccessFactors, Lattice, Culture Amp, PeopleStrong)"],
         "Workforce Planning": ["Headcount Planning", "Org Design", "Role Rationalisation", "FTE vs Contract Mix"],
+      }
+    },
+    "HR Strategy": {
+      specialisations: ["People Strategy & Business Alignment", "HR Budgeting & AOP", "HR Function Structuring / Operating Model", "M&A HR Integration", "Total Rewards Strategy", "Board & Leadership Reporting"],
+      depth: {
+        "People Strategy & Business Alignment": ["3-5 Year People Plan", "Business-HR Strategy Alignment", "OKRs for HR Function", "CEO / Promoter Partnership"],
+        "HR Budgeting & AOP": ["Manpower Cost Budgeting", "HR Function P&L Ownership", "Annual Operating Plan Submission", "Cost-per-Hire / Cost-per-Employee Optimisation", "Vendor Contract Negotiation"],
+        "HR Function Structuring / Operating Model": ["Centre of Excellence Design", "HR Business Partner Model", "Shared Services vs COE Split", "Global Capability Centre HR Setup"],
+        "M&A HR Integration": ["Cultural Due Diligence", "Org Harmonisation", "Compensation Harmonisation", "Retention During M&A"],
+        "Board & Leadership Reporting": ["Board HR Deck Preparation", "People Committee Reporting", "HR Metrics for Investors", "Quarterly Business Review — HR"],
       }
     },
     "Learning & Development": {
@@ -56,10 +66,11 @@ export const SKILL_TREE = {
       }
     },
     "HR Operations": {
-      specialisations: ["Payroll Management", "HRIS / HRMS Implementation", "HR Compliance & Labour Law", "HR Policy Design", "Onboarding & Offboarding", "HR Shared Services"],
+      specialisations: ["Payroll Management", "HRIS / HRMS Implementation", "HR Technology Strategy", "HR Compliance & Labour Law", "HR Policy Design", "Onboarding & Offboarding", "HR Shared Services"],
       depth: {
         "Payroll Management": ["SAP Payroll", "ADP / Keka / Darwinbox", "TDS on Salary", "Full & Final Settlement", "Multi-state Payroll"],
         "HRIS / HRMS Implementation": ["Darwinbox", "SuccessFactors", "Workday", "Keka", "greytHR", "System Migration"],
+        "HR Technology Strategy": ["HR Tech Stack Evaluation & RFP", "Vendor Selection & Management", "HR Digital Transformation Roadmap", "AI in HR / HR Chatbots", "Build vs Buy Decisions"],
         "HR Compliance & Labour Law": ["PF / ESI / PT", "Shops & Establishments", "Contract Labour Act", "Maternity Benefit Act", "Factory Act"],
       }
     },

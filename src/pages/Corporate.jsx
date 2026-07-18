@@ -1249,6 +1249,17 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
     return interests.find(i => i.candidate_id === candidateId)?.status || null
   }
 
+  const interestStatusLabel = (status) => {
+    switch (status) {
+      case 'notified': return { label: 'Pending with candidate', bg: '#fff4ec', color: '#c45f00' }
+      case 'interested': return { label: 'Accepted — CV pending', bg: '#eff6ff', color: '#1d4ed8' }
+      case 'cv_pending': return { label: 'Accepted — CV pending', bg: '#eff6ff', color: '#1d4ed8' }
+      case 'cv_sent': return { label: 'CV shared with you', bg: '#d1fae5', color: '#065f46' }
+      case 'not_interested': return { label: 'Candidate declined', bg: '#fee2e2', color: '#991b1b' }
+      default: return { label: status || 'Unknown', bg: '#f3f4f6', color: '#6b7280' }
+    }
+  }
+
   const handleExpressInterest = async (jd, candidate) => {
     // Hard guard against rapid double-clicks / duplicate submissions
     if (processingInterestFor === candidate.id) return
@@ -1357,15 +1368,40 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
           const reviewedCount = candidateList.filter(c => getInterestStatus(c.id)).length
 
           if (pendingIndex === -1) {
+            const expressedInterests = candidateList
+              .map((c, i) => ({ candidate: c, index: i, status: getInterestStatus(c.id) }))
+              .filter(x => x.status && x.status !== 'saved' && x.status !== 'not_fit')
+
             return (
               <div className="card" style={{ textAlign: 'center', padding: 32 }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>✅</div>
                 <p style={{ color: 'var(--grey-800)', fontSize: 15, fontWeight: 700, marginBottom: 6 }}>You've reviewed all {candidateList.length} matches</p>
-                <p style={{ color: 'var(--grey-600)', fontSize: 13 }}>
+                <p style={{ color: 'var(--grey-600)', fontSize: 13, marginBottom: expressedInterests.length ? 20 : 0 }}>
                   {candidateList.filter(c => getInterestStatus(c.id) === 'notified').length} interest{candidateList.filter(c => getInterestStatus(c.id) === 'notified').length !== 1 ? 's' : ''} expressed ·{' '}
                   {candidateList.filter(c => getInterestStatus(c.id) === 'saved').length} saved for later ·{' '}
                   {candidateList.filter(c => getInterestStatus(c.id) === 'not_fit').length} marked not a fit
                 </p>
+
+                {expressedInterests.length > 0 && (
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Your Expressed Interests</div>
+                    {expressedInterests.map(({ candidate, index, status }) => {
+                      const s = interestStatusLabel(status)
+                      return (
+                        <div key={candidate.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--grey-50, #f9fafb)', borderRadius: 8, marginBottom: 8 }}>
+                          <div>
+                            <span className="badge badge-teal" style={{ marginRight: 8 }}>SSU-{String(index + 1001).padStart(4, '0')}</span>
+                            <span style={{ fontSize: 12.5, color: 'var(--grey-600)' }}>{candidate.headline?.slice(0, 60)}{candidate.headline?.length > 60 ? '…' : ''}</span>
+                          </div>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 10, whiteSpace: 'nowrap', background: s.bg, color: s.color }}>{s.label}</span>
+                        </div>
+                      )
+                    })}
+                    <div style={{ fontSize: 11.5, color: 'var(--grey-400)', marginTop: 6, lineHeight: 1.5 }}>
+                      CVs are emailed to you directly the moment a candidate accepts, this list is just to track where each one stands.
+                    </div>
+                  </div>
+                )}
               </div>
             )
           }

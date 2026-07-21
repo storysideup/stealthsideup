@@ -1816,6 +1816,17 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
 }
 
 // ── MATCHING LOGIC ───────────────────────────────────────
+// Parses a seniority_level string like "Mid (5–12 yrs, may lead small teams)" into
+// { min: 5, max: 12 }. Handles the open-ended "Leadership (20+ yrs...)" band as max: Infinity.
+function parseSeniorityRange(seniorityLevel) {
+  if (!seniorityLevel) return null
+  const plusMatch = seniorityLevel.match(/(\d+)\+/)
+  if (plusMatch) return { min: parseInt(plusMatch[1]), max: Infinity }
+  const rangeMatch = seniorityLevel.match(/(\d+)\s*[–-]\s*(\d+)/)
+  if (rangeMatch) return { min: parseInt(rangeMatch[1]), max: parseInt(rangeMatch[2]) }
+  return null
+}
+
 async function matchCandidates(jd, corporate) {
   const { data: candidates } = await supabase.from('candidates').select('*').eq('is_active', true)
   if (!candidates) return []
@@ -1848,6 +1859,19 @@ async function matchCandidates(jd, corporate) {
     // Minimum years in function filter
     if (jd.min_years_in_function && c.years_in_function) {
       if (c.years_in_function < parseInt(jd.min_years_in_function)) return false
+    }
+
+    // Seniority / experience-range filter — a hard check based on the candidate's actual
+    // years of experience against the JD's stated band, not just the softer self-declared
+    // seniority_open_to preference used in scoring. A 3-year buffer on each side allows
+    // reasonable edge cases (e.g. 13 yrs for a role capped at 12) without letting through
+    // a stark mismatch like 18 years for a role explicitly scoped as 5-12.
+    if (jd.seniority_level && typeof c.years_experience === 'number') {
+      const range = parseSeniorityRange(jd.seniority_level)
+      if (range) {
+        const BUFFER = 3
+        if (c.years_experience < range.min - BUFFER || c.years_experience > range.max + BUFFER) return false
+      }
     }
 
     // Languages filter — candidate must know all required languages

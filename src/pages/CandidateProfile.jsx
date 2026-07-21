@@ -39,6 +39,19 @@ export default function CandidateProfile({ onNavigate }) {
   useEffect(() => {
     if (!candidate) return
 
+    // Fetch fresh interests on every mount, not just after a fresh OTP verification —
+    // a returning candidate using a cached session was previously stuck seeing whatever
+    // interests existed at their last fresh login, since only handleVerifyOtp fetched them.
+    const refreshInterests = async () => {
+      const { data } = await supabase
+        .from('interests')
+        .select('*, jds(*), corporates(*)')
+        .eq('candidate_id', candidate.id)
+        .order('created_at', { ascending: false })
+      setInterests(data || [])
+    }
+    refreshInterests()
+
     const computeIntelligence = async () => {
       const result = { function: candidate.primary_function }
 

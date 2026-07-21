@@ -1123,6 +1123,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [interests, setInterests] = useState([])
   const [processingInterestFor, setProcessingInterestFor] = useState(null)
   const [expandedSkillsFor, setExpandedSkillsFor] = useState({})
+  const [viewingIndex, setViewingIndex] = useState(null) // revisit a specific already-reviewed candidate, outside the active sequential review
   const [closedJds, setClosedJds] = useState([])
   const [jdInterestCounts, setJdInterestCounts] = useState({})
   const [extendingJd, setExtendingJd] = useState(null)
@@ -1132,6 +1133,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
 
   const handleViewMatches = async (jd) => {
     setActiveJd(jd)
+    setViewingIndex(null)
     await loadInterests(jd.id)
 
     const candidateList = matches[jd.id] || []
@@ -1366,8 +1368,10 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
         ) : (() => {
           const pendingIndex = candidateList.findIndex(c => !getInterestStatus(c.id))
           const reviewedCount = candidateList.filter(c => getInterestStatus(c.id)).length
+          const isViewing = viewingIndex !== null
+          const displayIndex = isViewing ? viewingIndex : pendingIndex
 
-          if (pendingIndex === -1) {
+          if (!isViewing && pendingIndex === -1) {
             const expressedInterests = candidateList
               .map((c, i) => ({ candidate: c, index: i, status: getInterestStatus(c.id) }))
               .filter(x => x.status && x.status !== 'saved' && x.status !== 'not_fit')
@@ -1388,7 +1392,8 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     {expressedInterests.map(({ candidate, index, status }) => {
                       const s = interestStatusLabel(status)
                       return (
-                        <div key={candidate.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--grey-50, #f9fafb)', borderRadius: 8, marginBottom: 8 }}>
+                        <div key={candidate.id} onClick={() => setViewingIndex(index)}
+                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--grey-50, #f9fafb)', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}>
                           <div>
                             <span className="badge badge-teal" style={{ marginRight: 8 }}>SSU-{String(index + 1001).padStart(4, '0')}</span>
                             <span style={{ fontSize: 12.5, color: 'var(--grey-600)' }}>{candidate.headline?.slice(0, 60)}{candidate.headline?.length > 60 ? '…' : ''}</span>
@@ -1408,13 +1413,17 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
 
           return (
             <>
-              <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 16 }}>
-                Reviewing candidate <strong style={{ color: 'var(--teal)' }}>{reviewedCount + 1}</strong> of <strong style={{ color: 'var(--teal)' }}>{candidateList.length}</strong> matches
-                <div style={{ height: 6, background: 'var(--grey-100)', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(reviewedCount / candidateList.length) * 100}%`, background: 'var(--teal)', borderRadius: 3, transition: 'width 0.3s' }} />
+              {isViewing ? (
+                <button className="btn-secondary btn-sm" style={{ marginBottom: 16 }} onClick={() => setViewingIndex(null)}>← Back to Summary</button>
+              ) : (
+                <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 16 }}>
+                  Reviewing candidate <strong style={{ color: 'var(--teal)' }}>{reviewedCount + 1}</strong> of <strong style={{ color: 'var(--teal)' }}>{candidateList.length}</strong> matches
+                  <div style={{ height: 6, background: 'var(--grey-100)', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(reviewedCount / candidateList.length) * 100}%`, background: 'var(--teal)', borderRadius: 3, transition: 'width 0.3s' }} />
+                  </div>
                 </div>
-              </div>
-              {[{ c: candidateList[pendingIndex], i: pendingIndex }].map(({ c, i }) => (
+              )}
+              {[{ c: candidateList[displayIndex], i: displayIndex }].map(({ c, i }) => (
               <div key={c.id} className="card" style={{ marginBottom: 16 }}>
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>

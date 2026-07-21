@@ -1,3 +1,20 @@
+import { supabase } from './supabase'
+
+// Fire-and-forget logging, mirrors logExtractionFailure.js — never blocks or breaks the
+// actual notification flow, even if the log write itself fails.
+function logWhatsAppSend({ templateName, phone, success, errorMessage, responseData }) {
+  supabase.from('whatsapp_send_log').insert({
+    template_name: templateName,
+    phone: phone || null,
+    success,
+    error_message: errorMessage ? String(errorMessage).slice(0, 500) : null,
+    response_data: responseData ? JSON.stringify(responseData).slice(0, 1000) : null
+  }).then(
+    () => {},
+    e => console.error('Failed to log WhatsApp send (non-critical):', e)
+  )
+}
+
 const sendWhatsApp = async (phone, templateName, bodyValues, buttonValues = []) => {
   try {
     const response = await fetch('/api/send-whatsapp', {
@@ -8,12 +25,15 @@ const sendWhatsApp = async (phone, templateName, bodyValues, buttonValues = []) 
     const data = await response.json()
     if (!response.ok) {
       console.error('WhatsApp send failed:', templateName, data.error)
+      logWhatsAppSend({ templateName, phone, success: false, errorMessage: data.error })
       return
     }
     console.log('WhatsApp sent:', templateName, data)
+    logWhatsAppSend({ templateName, phone, success: true, responseData: data })
     return data
   } catch (e) {
     console.error('WhatsApp error:', e)
+    logWhatsAppSend({ templateName, phone, success: false, errorMessage: e.message || String(e) })
   }
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendMatchNotification, sendLowTokenAlert, sendCorporateWelcome, sendProfileNudge } from '../lib/whatsapp'
+import { computeProfileStrength } from '../lib/profileStrength'
 import { sendCorporateWelcomeEmail, sendLowTokenAlertEmail, sendPasswordResetEmail } from '../lib/email'
 
 async function hashPasswordServer(password) {
@@ -1288,7 +1289,8 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
     if (candidate.contact_type !== 'phone') return
     setNudgingFor(candidate.id)
     try {
-      const result = await sendProfileNudge(candidate.contact, 'there', null, missingDimensions.join(', '))
+      const { percent } = computeProfileStrength(candidate)
+      const result = await sendProfileNudge(candidate.contact, 'there', percent, missingDimensions.join(', '))
       setNudgeResult(r => ({ ...r, [candidate.id]: result ? 'sent' : 'failed' }))
     } catch (e) {
       console.error('Nudge failed:', e)
@@ -1310,17 +1312,21 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
         return
       }
 
-      // Re-check against the latest saved status before inserting — closes the race
-      // where interests state might be momentarily stale from a prior action
-      const { data: existing } = await supabase.from('interests').select('id').eq('jd_id', jd.id).eq('candidate_id', candidate.id).maybeSingle()
-      if (existing) {
+      // Re-check against the latest saved status before proceeding — closes the race
+      // where interests state might be momentarily stale from a prior action. If a row
+      // already exists but is just 'saved' or 'not_fit' (not yet a real expressed
+      // interest), this is someone revisiting and changing their mind — update that row
+      // rather than silently no-oping, which is what happened before this fix.
+      const { data: existing } = await supabase.from('interests').select('id, status').eq('jd_id', jd.id).eq('candidate_id', candidate.id).maybeSingle()
+      const alreadyExpressed = existing && !['saved', 'not_fit'].includes(existing.status)
+      if (alreadyExpressed) {
         await loadInterests(jd.id)
         return
       }
 
-      const { error } = await supabase.from('interests').insert({
-        jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'notified'
-      })
+      const { error } = existing
+        ? await supabase.from('interests').update({ status: 'notified' }).eq('id', existing.id)
+        : await supabase.from('interests').insert({ jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'notified' })
       if (error) return
 
       // Deduct 1 token and sync it back to shared app state
@@ -1362,16 +1368,22 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   }
 
   const handleSave = async (jd, candidate) => {
-    await supabase.from('interests').insert({
-      jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'saved'
-    })
+    const { data: existing } = await supabase.from('interests').select('id').eq('jd_id', jd.id).eq('candidate_id', candidate.id).maybeSingle()
+    if (existing) {
+      await supabase.from('interests').update({ status: 'saved' }).eq('id', existing.id)
+    } else {
+      await supabase.from('interests').insert({ jd_id: jd.id, candidate_id: candidate.id, corporate_id: corporate.id, status: 'saved' })
+    }
     await loadInterests(activeJd?.id || jd.id)
   }
 
   const handleNotFit = async (jdId, candidateId) => {
-    await supabase.from('interests').insert({
-      jd_id: jdId, candidate_id: candidateId, corporate_id: corporate.id, status: 'not_fit'
-    })
+    const { data: existing } = await supabase.from('interests').select('id').eq('jd_id', jdId).eq('candidate_id', candidateId).maybeSingle()
+    if (existing) {
+      await supabase.from('interests').update({ status: 'not_fit' }).eq('id', existing.id)
+    } else {
+      await supabase.from('interests').insert({ jd_id: jdId, candidate_id: candidateId, corporate_id: corporate.id, status: 'not_fit' })
+    }
     await loadInterests(jdId)
   }
 
@@ -1705,14 +1717,29 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                         <span className="badge badge-yellow">📌 Saved for Later</span>
                       </div>
-                      <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
-                        {processingInterestFor === c.id ? 'Sending...' : 'Express Interest Now'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
+                          {processingInterestFor === c.id ? 'Sending...' : 'Express Interest Now'}
+                        </button>
+                        <button className="btn-secondary btn-sm" onClick={() => handleNotFit(activeJd.id, c.id)}>
+                          Mark as Not a Fit
+                        </button>
+                      </div>
                     </div>
                   )
                   if (actionStatus === 'not_fit') return (
                     <div style={{ paddingTop: 12, borderTop: '1px solid var(--grey-200)' }}>
-                      <span className="badge badge-grey">✗ Marked Not a Fit</span>
+                      <div style={{ marginBottom: 8 }}>
+                        <span className="badge badge-grey">✗ Marked Not a Fit</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn-primary btn-sm" onClick={() => handleExpressInterest(activeJd, c)} disabled={processingInterestFor === c.id}>
+                          {processingInterestFor === c.id ? 'Sending...' : 'Actually, Express Interest'}
+                        </button>
+                        <button className="btn-secondary btn-sm" onClick={() => handleSave(activeJd, c)}>
+                          Save for Later Instead
+                        </button>
+                      </div>
                     </div>
                   )
                   if (actionStatus === 'cv_sent' || actionStatus === 'interested' || actionStatus === 'cv_pending') return (

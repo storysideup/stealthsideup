@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendTokenCreditConfirmationEmail } from '../lib/email'
 import { sendProfileNudge } from '../lib/whatsapp'
+import { computeProfileStrength } from '../lib/profileStrength'
 
 const ADMIN_PASSWORD = 'SSU@Admin2026'
 
@@ -25,26 +26,15 @@ export default function AdminPanel() {
   const [nudgingFor, setNudgingFor] = useState(null)
   const [nudgeResult, setNudgeResult] = useState({}) // candidateId -> 'sent' | 'failed'
 
-  const getMissingCandidateFields = (c) => {
-    const checks = [
-      { label: 'CTC', filled: !!(c.ctc_total || c.min_expected_ctc) },
-      { label: 'Highest Degree', filled: !!c.highest_degree },
-      { label: 'Role Type', filled: !!c.role_type },
-      { label: 'Notice Period', filled: !!c.notice_period },
-      { label: 'Skills', filled: !!(c.skill_tree && Object.keys(c.skill_tree).length > 0) },
-      { label: 'Career History', filled: !!(c.career_history?.length > 0) },
-      { label: 'Preferred Locations', filled: !!(c.preferred_locations?.cities?.length > 0) },
-    ]
-    return checks.filter(x => !x.filled).map(x => x.label)
-  }
+  const getMissingCandidateFields = (c) => computeProfileStrength(c).missing
 
   const handleNudgeCandidate = async (candidate) => {
     if (candidate.contact_type !== 'phone') return
-    const missing = getMissingCandidateFields(candidate)
+    const { percent, missing } = computeProfileStrength(candidate)
     if (missing.length === 0) return
     setNudgingFor(candidate.id)
     try {
-      const result = await sendProfileNudge(candidate.contact, 'there', null, missing.join(', '))
+      const result = await sendProfileNudge(candidate.contact, 'there', percent, missing.join(', '))
       setNudgeResult(r => ({ ...r, [candidate.id]: result ? 'sent' : 'failed' }))
     } catch (e) {
       console.error('Nudge failed:', e)

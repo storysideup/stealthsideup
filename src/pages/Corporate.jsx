@@ -1926,6 +1926,34 @@ async function matchCandidates(jd, corporate) {
   if (!candidates) return []
 
   return candidates.filter(c => {
+    // Function match — a hard requirement. Previously this was only a 30-point scoring
+    // contributor, meaning a candidate with zero relevance to the JD's function could
+    // still qualify purely by scoring well on unrelated dimensions (Seniority 25 +
+    // Employment Type 15 + Org Type 10 = 50, hitting the threshold with no function or
+    // industry alignment at all — confirmed live: an HR leader matched a Data Scientist
+    // role this way). Function is required on both sides, so this is safe to gate on
+    // unconditionally, unlike the optional fields other filters have to guard around.
+    if (c.primary_function !== jd.function) return false
+
+    // Employment type — a hard requirement now too. A candidate who's explicitly said
+    // they only want Freelance/Consulting engagements isn't going to take a Full-time
+    // role just because everything else lines up, and vice versa. Only excludes when
+    // the candidate actually specified preferences (consistent with how every other
+    // filter treats missing/optional data).
+    if (jd.employment_type && c.desired_employment_type?.length > 0) {
+      const compatible = c.desired_employment_type.some(d => d.toLowerCase().includes(jd.employment_type.toLowerCase().split('/')[0].trim()))
+      if (!compatible) return false
+    }
+
+    // Must-have skills — a JD listing must-have skills means at least one of them should
+    // genuinely be present. Previously these only added bonus points (8 each) without
+    // ever being required, so a candidate with zero overlap on the JD's own "must-have"
+    // list could still qualify — directly contradicting what "must-have" is supposed to mean.
+    if (jd.must_have_skills?.length > 0 && c.skill_keywords?.length > 0) {
+      const hasAnyMustHave = jd.must_have_skills.some(s => c.skill_keywords.includes(s))
+      if (!hasAnyMustHave) return false
+    }
+
     // Block check — don't show if corporate is in blocked list
     if (c.blocked_companies?.some(b => b.toLowerCase().includes(corporate.company_name.toLowerCase()))) return false
 
@@ -2013,6 +2041,8 @@ async function matchCandidates(jd, corporate) {
     if (jd.languages_required?.length > 0 && !(c.languages?.length > 0)) missingDimensions.push('Languages')
     if (jd.ctc_fixed_max && !c.min_expected_ctc) missingDimensions.push('CTC')
     if (jd.location && !['Pan-India / National Role', 'Remote / Work from Home', 'Flexible / Any Location'].includes(jd.location) && !(c.preferred_locations?.cities?.length > 0)) missingDimensions.push('Location Preference')
+    if (jd.employment_type && !(c.desired_employment_type?.length > 0)) missingDimensions.push('Employment Type')
+    if (jd.must_have_skills?.length > 0 && !(c.skill_keywords?.length > 0)) missingDimensions.push('Skills')
 
     c._matchComplete = missingDimensions.length === 0
     c._missingDimensions = missingDimensions

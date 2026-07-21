@@ -13,9 +13,11 @@ export default async function handler(req, res) {
   const INTERAKT_API_KEY = process.env.INTERAKT_API_KEY
   if (!INTERAKT_API_KEY) return res.status(500).json({ error: 'WhatsApp service not configured' })
 
-  // Format Indian number
-  const digits = phone.replace(/\D/g, '')
-  const e164 = digits.startsWith('91') ? digits : `91${digits}`
+  // Interakt expects phoneNumber as just the 10-digit local number, with countryCode
+  // carrying the prefix separately — NOT the country code baked into phoneNumber too.
+  // Always take the last 10 digits, which correctly handles every input variation
+  // (91 prefix, +91 prefix, leading 0, or an already-clean 10-digit number).
+  const digits = phone.replace(/\D/g, '').slice(-10)
 
   try {
     const response = await fetch('https://api.interakt.ai/v1/public/message/', {
@@ -26,7 +28,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         countryCode: '+91',
-        phoneNumber: e164,
+        phoneNumber: digits,
         type: 'Template',
         template: {
           name: templateName,

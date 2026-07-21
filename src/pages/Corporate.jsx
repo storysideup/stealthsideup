@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { sendMatchNotification, sendLowTokenAlert, sendCorporateWelcome } from '../lib/whatsapp'
+import { sendMatchNotification, sendLowTokenAlert, sendCorporateWelcome, sendProfileNudge } from '../lib/whatsapp'
 import { sendCorporateWelcomeEmail, sendLowTokenAlertEmail, sendPasswordResetEmail } from '../lib/email'
 
 async function hashPasswordServer(password) {
@@ -1126,6 +1126,8 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [viewingIndex, setViewingIndex] = useState(null) // revisit a specific already-reviewed candidate, outside the active sequential review
   const [resendingFor, setResendingFor] = useState(null)
   const [resendResult, setResendResult] = useState({}) // candidateId -> 'sent' | 'failed'
+  const [nudgingFor, setNudgingFor] = useState(null)
+  const [nudgeResult, setNudgeResult] = useState({}) // candidateId -> 'sent' | 'failed'
   const [closedJds, setClosedJds] = useState([])
   const [jdInterestCounts, setJdInterestCounts] = useState({})
   const [extendingJd, setExtendingJd] = useState(null)
@@ -1278,6 +1280,19 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
       setResendResult(r => ({ ...r, [candidate.id]: 'failed' }))
     }
     setResendingFor(null)
+  }
+
+  const handleNudgeCandidate = async (candidate, missingDimensions) => {
+    if (candidate.contact_type !== 'phone') return
+    setNudgingFor(candidate.id)
+    try {
+      const result = await sendProfileNudge(candidate.contact, 'there', null, missingDimensions.join(', '))
+      setNudgeResult(r => ({ ...r, [candidate.id]: result ? 'sent' : 'failed' }))
+    } catch (e) {
+      console.error('Nudge failed:', e)
+      setNudgeResult(r => ({ ...r, [candidate.id]: 'failed' }))
+    }
+    setNudgingFor(null)
   }
 
   const handleExpressInterest = async (jd, candidate) => {
@@ -1465,10 +1480,34 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span className="badge badge-teal">SSU-{String(i + 1001).padStart(4, '0')}</span>
+                    {c._matchComplete ? (
+                      <span className="badge" style={{ background: '#d1fae5', color: '#065f46' }}>✓ Complete Match</span>
+                    ) : (
+                      <span className="badge" style={{ background: '#fef3c7', color: '#92400e' }}>Partial Match</span>
+                    )}
                     {c.job_search_status?.includes('Actively') && <span className="badge badge-green">Active</span>}
                     {c.current_employment_type && <span className="badge badge-grey">{c.current_employment_type}</span>}
                   </div>
                 </div>
+                {!c._matchComplete && c._missingDimensions?.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, marginTop: -4 }}>
+                    <div style={{ fontSize: 11.5, color: '#92400e' }}>
+                      Not disclosed by candidate: {c._missingDimensions.join(', ')}
+                    </div>
+                    {c.contact_type === 'phone' && (
+                      nudgeResult[c.id] === 'sent' ? (
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: '#065f46', whiteSpace: 'nowrap' }}>✓ Nudge sent</span>
+                      ) : (
+                        <button type="button"
+                          onClick={() => handleNudgeCandidate(c, c._missingDimensions)}
+                          disabled={nudgingFor === c.id}
+                          style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 10, border: '1px solid #92400e', background: 'white', color: '#92400e', cursor: 'pointer', whiteSpace: 'nowrap', marginLeft: 8 }}>
+                          {nudgingFor === c.id ? 'Sending...' : nudgeResult[c.id] === 'failed' ? 'Failed — retry' : 'Nudge to complete'}
+                        </button>
+                      )
+                    )}
+                  </div>
+                )}
 
                 {/* Headline */}
                 <p style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--grey-600)', lineHeight: 1.5, marginBottom: 12, borderLeft: '3px solid var(--orange)', paddingLeft: 10 }}>"{c.headline}"</p>
@@ -1498,10 +1537,10 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     { label: 'B2B / B2C', value: c.career_b2b_b2c || null },
                     { label: 'Travel', value: c.open_to_travel || null },
                     { label: 'Relocation', value: c.relocation || null },
-                  ].filter(item => item.value).map(({ label, value }) => (
-                    <div key={label} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '7px 10px' }}>
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ background: value ? 'var(--grey-50)' : '#fafafa', borderRadius: 7, padding: '7px 10px', border: value ? 'none' : '1px dashed #e5e7eb' }}>
                       <div style={{ fontSize: 10, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>{label}</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--grey-800)' }}>{value}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: value ? 'var(--grey-800)' : 'var(--grey-400)' }}>{value || '—'}</div>
                     </div>
                   ))}
                 </div>
@@ -1803,6 +1842,11 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--teal)' }}>{matched.length}</div>
                     <div style={{ fontSize: 11, color: 'var(--grey-600)' }}>Matched profiles</div>
                   </div>
+                  {matched.length > 0 && (
+                    <div style={{ fontSize: 11, color: 'var(--grey-400)' }}>
+                      {matched.filter(c => c._matchComplete).length} complete · {matched.filter(c => !c._matchComplete).length} partial
+                    </div>
+                  )}
                 </div>
 
                 {confirmingCloseJd === jd.id ? (
@@ -1885,8 +1929,10 @@ async function matchCandidates(jd, corporate) {
     // Block check — don't show if corporate is in blocked list
     if (c.blocked_companies?.some(b => b.toLowerCase().includes(corporate.company_name.toLowerCase()))) return false
 
-    // Gender preference filter
-    if (jd.gender_preference && jd.gender_preference !== 'No preference — open to all') {
+    // Gender preference filter — only exclude when the candidate actually specified a
+    // gender that conflicts, matching how every other filter treats missing data (skip
+    // the check, don't penalize someone for leaving an optional field blank).
+    if (jd.gender_preference && jd.gender_preference !== 'No preference — open to all' && c.gender) {
       const needsWomen = jd.gender_preference.toLowerCase().includes('women')
       const needsMen = jd.gender_preference.toLowerCase().includes('men')
       if (needsWomen && c.gender !== 'Female') return false
@@ -1952,8 +1998,30 @@ async function matchCandidates(jd, corporate) {
     const score = calcScore(c, jd, corporate)
 
     // Minimum threshold to show — roughly two solid categories aligning, not just one
-    return score >= 50
-  }).sort((a, b) => calcScore(b, jd, corporate) - calcScore(a, jd, corporate))
+    if (score < 50) return false
+
+    // Match completeness — a candidate can clear every filter above simply because a
+    // filter had nothing to check (e.g. no CTC on file, so the CTC filter never ran).
+    // That's correct behavior (don't penalize missing optional data), but it leaves the
+    // recruiter with no way to tell "confirmed fit" apart from "fit on what we know."
+    // Track that distinction explicitly rather than leaving it invisible.
+    const missingDimensions = []
+    if (jd.gender_preference && jd.gender_preference !== 'No preference — open to all' && !c.gender) missingDimensions.push('Gender')
+    if (jd.max_notice_period && jd.max_notice_period !== 'No restriction' && !c.notice_period) missingDimensions.push('Notice Period')
+    if (jd.min_years_in_function && !c.years_in_function) missingDimensions.push('Years in Function')
+    if (jd.seniority_level && typeof c.years_experience !== 'number') missingDimensions.push('Years of Experience')
+    if (jd.languages_required?.length > 0 && !(c.languages?.length > 0)) missingDimensions.push('Languages')
+    if (jd.ctc_fixed_max && !c.min_expected_ctc) missingDimensions.push('CTC')
+    if (jd.location && !['Pan-India / National Role', 'Remote / Work from Home', 'Flexible / Any Location'].includes(jd.location) && !(c.preferred_locations?.cities?.length > 0)) missingDimensions.push('Location Preference')
+
+    c._matchComplete = missingDimensions.length === 0
+    c._missingDimensions = missingDimensions
+    return true
+  }).sort((a, b) => {
+    // Complete matches first, then by score within each group
+    if (a._matchComplete !== b._matchComplete) return a._matchComplete ? -1 : 1
+    return calcScore(b, jd, corporate) - calcScore(a, jd, corporate)
+  })
 }
 
 function calcScore(c, jd, corporate) {

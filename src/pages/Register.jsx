@@ -526,7 +526,7 @@ export default function Register({ onNavigate }) {
     job_search_status: '', seniority_open_to: [], org_type_open_to: [],
     preferred_locations: { cities: [], openToNearby: true },
     notice_period: '', min_expected_ctc: '', years_in_function: '',
-    languages: [], open_to_travel: '', has_passport: '',
+    languages: [], open_to_travel: '',
     work_preference: '', relocation: '', relocation_cities: '', blocked_companies: ''
   })
 
@@ -680,7 +680,6 @@ export default function Register({ onNavigate }) {
         years_in_function: parseInt(form.years_in_function) || null,
         languages: asArray(form.languages),
         open_to_travel: form.open_to_travel,
-        has_passport: form.has_passport,
         is_active: true,
         // Only attach UTM fields when we actually captured one — this way, if an existing
         // candidate comes back later to edit their profile via a plain (untagged) link, we
@@ -1137,11 +1136,6 @@ export default function Register({ onNavigate }) {
           <div className="form-group">
             <label className="form-label">Open to International Travel?</label>
             <TagSelect options={['Yes, frequently', 'Occasionally', 'No']} value={form.open_to_travel ? [form.open_to_travel] : []} onChange={v => set('open_to_travel', v[v.length-1] || '')} max={1} />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Valid Passport?</label>
-            <TagSelect options={['Yes', 'No']} value={form.has_passport ? [form.has_passport] : []} onChange={v => set('has_passport', v[v.length-1] || '')} max={1} />
           </div>
 
           <div className="form-group">

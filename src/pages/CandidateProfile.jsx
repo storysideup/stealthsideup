@@ -55,13 +55,22 @@ export default function CandidateProfile({ onNavigate }) {
     const computeIntelligence = async () => {
       const result = { function: candidate.primary_function }
 
-      // 1. Market pay comparison — peers with the same primary function
-      const { data: peers } = await supabase
+      // 1. Market pay comparison — peers with the same primary function AND a similar
+      // experience band, so a 4-year candidate isn't compared against 20+ year CXOs
+      // in the same function, which was producing meaninglessly wide ranges before.
+      const SENIORITY_BANDS = [{ min: 0, max: 5 }, { min: 5, max: 12 }, { min: 12, max: 20 }, { min: 20, max: Infinity }]
+      const myBand = SENIORITY_BANDS.find(b => candidate.years_experience >= b.min && candidate.years_experience < b.max) || SENIORITY_BANDS[0]
+
+      let peerQuery = supabase
         .from('candidates')
         .select('ctc_total')
         .eq('primary_function', candidate.primary_function)
         .eq('is_active', true)
         .not('ctc_total', 'is', null)
+        .gte('years_experience', myBand.min)
+      if (myBand.max !== Infinity) peerQuery = peerQuery.lt('years_experience', myBand.max)
+      const { data: peers } = await peerQuery
+      result.experienceBandLabel = myBand.max === Infinity ? `${myBand.min}+ years` : `${myBand.min}-${myBand.max} years`
 
       const ctcValues = (peers || []).map(p => p.ctc_total).filter(v => v > 0).sort((a, b) => a - b)
       if (ctcValues.length >= 3 && candidate.ctc_total > 0) {
@@ -652,7 +661,7 @@ export default function CandidateProfile({ onNavigate }) {
               <div className="card" style={{ marginBottom: 10, borderLeft: '3px solid var(--teal)' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', marginBottom: 6 }}>💰 How your CTC compares to the market</div>
                 <div style={{ fontSize: 13, color: 'var(--grey-600)', lineHeight: 1.7 }}>
-                  {intelligence.function} professionals on StealthSideUp are earning between <strong>₹{intelligence.marketMin}L–₹{intelligence.marketMax}L</strong>.
+                  {intelligence.function} professionals with similar experience ({intelligence.experienceBandLabel}) on StealthSideUp are earning between <strong>₹{intelligence.marketMin}L–₹{intelligence.marketMax}L</strong>.
                   {intelligence.ctcPercentile < 90
                     ? ` Your current CTC of ₹${intelligence.myCtc}L is ${intelligence.ctcPercentile < 100 ? 'below' : 'at'} market median — you may be undervalued.`
                     : ` Your current CTC of ₹${intelligence.myCtc}L is at or above market median.`}

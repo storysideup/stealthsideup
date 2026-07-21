@@ -157,7 +157,6 @@ export default function EditProfile({ onNavigate }) {
       years_in_function: c.years_in_function || '',
       languages: c.languages || [],
       open_to_travel: c.open_to_travel || '',
-      has_passport: c.has_passport || '',
       blocked_companies: c.blocked_companies?.join(', ') || '',
     })
   }
@@ -264,7 +263,6 @@ export default function EditProfile({ onNavigate }) {
       years_in_function: parseInt(form.years_in_function) || null,
       languages: form.languages,
       open_to_travel: form.open_to_travel,
-      has_passport: form.has_passport,
       blocked_companies: Array.isArray(form.blocked_companies) ? form.blocked_companies : (form.blocked_companies ? form.blocked_companies.split(',').map(s => s.trim()).filter(Boolean) : []),
     }).eq('id', candidate.id)
 

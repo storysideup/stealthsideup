@@ -1483,12 +1483,21 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   {[
                     { label: 'Experience', value: c.years_experience ? c.years_experience + ' years' : null },
                     { label: 'In Function', value: c.years_in_function ? c.years_in_function + ' yrs in role' : null },
+                    { label: 'Avg Tenure/Role', value: c.average_tenure || null },
                     { label: 'Current CTC', value: c.ctc_total ? '₹' + c.ctc_total + 'L' : null },
                     { label: 'Min Expected', value: c.min_expected_ctc ? '₹' + c.min_expected_ctc + 'L' : null },
                     { label: 'Notice Period', value: c.notice_period || null },
+                    { label: 'Role Type', value: c.role_type || null },
+                    { label: 'Team Size', value: c.team_size || null },
+                    { label: 'Geography Managed', value: c.geography_managed || null },
+                    { label: 'Highest Degree', value: c.highest_degree || null },
+                    { label: 'Institute', value: c.institute || null },
+                    { label: 'Gender', value: c.gender || null },
+                    { label: 'Age Range', value: c.age_range || null },
                     { label: 'Work Pref', value: c.work_preference || null },
                     { label: 'B2B / B2C', value: c.career_b2b_b2c || null },
                     { label: 'Travel', value: c.open_to_travel || null },
+                    { label: 'Relocation', value: c.relocation || null },
                   ].filter(item => item.value).map(({ label, value }) => (
                     <div key={label} style={{ background: 'var(--grey-50)', borderRadius: 7, padding: '7px 10px' }}>
                       <div style={{ fontSize: 10, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 }}>{label}</div>
@@ -1496,6 +1505,39 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     </div>
                   ))}
                 </div>
+
+                {/* Certifications */}
+                {c.certifications && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Certifications</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--grey-800)' }}>{c.certifications}</div>
+                  </div>
+                )}
+
+                {/* Desired Employment Type */}
+                {c.desired_employment_type?.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Seeking</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {c.desired_employment_type.map(t => <span key={t} className="badge badge-grey">{t}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Freelance background — only relevant for freelance/consultant candidates */}
+                {(c.freelance_sector?.length > 0 || c.freelance_engagement_size || c.freelance_years) && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Freelance Background</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 4 }}>
+                      {c.freelance_sector?.map(s => <span key={s} className="badge badge-grey">{s}</span>)}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--grey-600)' }}>
+                      {c.freelance_years && `${c.freelance_years} years freelancing`}
+                      {c.freelance_years && c.freelance_engagement_size && ' · '}
+                      {c.freelance_engagement_size && `Typical engagement: ${c.freelance_engagement_size}`}
+                    </div>
+                  </div>
+                )}
 
                 {/* Industries */}
                 {((c.current_industry?.length > 0) || c.previous_industries?.length > 0) && (
@@ -1523,6 +1565,14 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                         return badges.map(b => <span key={b} className="badge badge-teal">{b}</span>)
                       })()}
                     </div>
+                    {c.relocation_cities?.length > 0 && (
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ fontSize: 10.5, color: 'var(--grey-400)', marginBottom: 4 }}>Also open to relocating to:</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {c.relocation_cities.map(city => <span key={city} className="badge badge-grey">{city}</span>)}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

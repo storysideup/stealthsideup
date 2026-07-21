@@ -1262,6 +1262,8 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
       case 'cv_pending': return { label: 'Accepted — CV pending', bg: '#eff6ff', color: '#1d4ed8' }
       case 'cv_sent': return { label: 'CV shared with you', bg: '#d1fae5', color: '#065f46' }
       case 'not_interested': return { label: 'Candidate declined', bg: '#fee2e2', color: '#991b1b' }
+      case 'saved': return { label: 'Saved for later', bg: '#eef2ff', color: '#4338ca' }
+      case 'not_fit': return { label: 'Marked not a fit', bg: '#f3f4f6', color: '#6b7280' }
       default: return { label: status || 'Unknown', bg: '#f3f4f6', color: '#6b7280' }
     }
   }
@@ -1405,24 +1407,24 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
           const displayIndex = isViewing ? viewingIndex : pendingIndex
 
           if (!isViewing && pendingIndex === -1) {
-            const expressedInterests = candidateList
+            const reviewedCandidates = candidateList
               .map((c, i) => ({ candidate: c, index: i, status: getInterestStatus(c.id) }))
-              .filter(x => x.status && x.status !== 'saved' && x.status !== 'not_fit')
+              .filter(x => x.status)
 
             return (
               <div className="card" style={{ textAlign: 'center', padding: 32 }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>✅</div>
                 <p style={{ color: 'var(--grey-800)', fontSize: 15, fontWeight: 700, marginBottom: 6 }}>You've reviewed all {candidateList.length} matches</p>
-                <p style={{ color: 'var(--grey-600)', fontSize: 13, marginBottom: expressedInterests.length ? 20 : 0 }}>
+                <p style={{ color: 'var(--grey-600)', fontSize: 13, marginBottom: reviewedCandidates.length ? 20 : 0 }}>
                   {candidateList.filter(c => getInterestStatus(c.id) === 'notified').length} interest{candidateList.filter(c => getInterestStatus(c.id) === 'notified').length !== 1 ? 's' : ''} expressed ·{' '}
                   {candidateList.filter(c => getInterestStatus(c.id) === 'saved').length} saved for later ·{' '}
                   {candidateList.filter(c => getInterestStatus(c.id) === 'not_fit').length} marked not a fit
                 </p>
 
-                {expressedInterests.length > 0 && (
+                {reviewedCandidates.length > 0 && (
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Your Expressed Interests</div>
-                    {expressedInterests.map(({ candidate, index, status }) => {
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>All Reviewed Candidates</div>
+                    {reviewedCandidates.map(({ candidate, index, status }) => {
                       const s = interestStatusLabel(status)
                       const resendState = resendResult[candidate.id]
                       return (
@@ -1454,7 +1456,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                       )
                     })}
                     <div style={{ fontSize: 11.5, color: 'var(--grey-400)', marginTop: 6, lineHeight: 1.5 }}>
-                      CVs are emailed to you directly the moment a candidate accepts, this list is just to track where each one stands.
+                      Click any candidate to view their full profile again. CVs are emailed to you directly the moment a candidate accepts.
                     </div>
                   </div>
                 )}

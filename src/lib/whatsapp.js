@@ -15,7 +15,7 @@ function logWhatsAppSend({ templateName, phone, success, errorMessage, responseD
   )
 }
 
-const sendWhatsApp = async (phone, templateName, bodyValues, buttonValues = []) => {
+const sendWhatsApp = async (phone, templateName, bodyValues, buttonValues = {}) => {
   try {
     const response = await fetch('/api/send-whatsapp', {
       method: 'POST',

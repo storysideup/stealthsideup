@@ -1065,15 +1065,15 @@ export default function Register({ onNavigate }) {
         {formStep === 4 && <>
           <div className="section-header">F — What You Are Open To</div>
 
-          <div className="form-group">
+          {!seekingFreelance && <div className="form-group">
             <label className="form-label">Job Search Status <span className="required">*</span></label>
             <TagSelect options={JOB_SEARCH_STATUSES} value={form.job_search_status ? [form.job_search_status] : []} onChange={v => set('job_search_status', v[v.length-1] || '')} max={1} />
-          </div>
+          </div>}
 
-          <div className="form-group">
+          {!seekingFreelance && <div className="form-group">
             <label className="form-label">Seniority of Role Open To</label>
             <TagSelect options={SENIORITY_LEVELS} value={form.seniority_open_to} onChange={v => set('seniority_open_to', v)} />
-          </div>
+          </div>}
 
           <div className="form-group">
             <label className="form-label">Organisation Type Open To</label>
@@ -1094,10 +1094,10 @@ export default function Register({ onNavigate }) {
             />
           </div>
 
-          <div className="form-group">
+          {!seekingFreelance && <div className="form-group">
             <label className="form-label">Notice Period <span className="required">*</span></label>
             <TagSelect options={NOTICE_PERIODS} value={form.notice_period ? [form.notice_period] : []} onChange={v => set('notice_period', v[v.length-1] || '')} max={1} />
-          </div>
+          </div>}
 
           {!seekingFreelance && (
             <div className="form-group">
@@ -1133,10 +1133,10 @@ export default function Register({ onNavigate }) {
             <TagSelect options={LANGUAGES} value={form.languages} onChange={v => set('languages', v)} />
           </div>
 
-          <div className="form-group">
+          {!seekingFreelance && <div className="form-group">
             <label className="form-label">Open to International Travel?</label>
             <TagSelect options={['Yes, frequently', 'Occasionally', 'No']} value={form.open_to_travel ? [form.open_to_travel] : []} onChange={v => set('open_to_travel', v[v.length-1] || '')} max={1} />
-          </div>
+          </div>}
 
           <div className="form-group">
             <label className="form-label">Companies to Block</label>
@@ -1155,7 +1155,7 @@ export default function Register({ onNavigate }) {
           {(() => {
             const missing = []
             if (!form.headline.trim()) missing.push('headline')
-            if (!form.job_search_status) missing.push('jobstatus')
+            if (!seekingFreelance && !form.job_search_status) missing.push('jobstatus')
             if (!form.primary_function) missing.push('function')
             if (!form.years_experience) missing.push('experience')
             if (Object.keys(form.skill_tree).length === 0) missing.push('skills')
@@ -1218,7 +1218,7 @@ export default function Register({ onNavigate }) {
           </div>
 
           {/* JOB SEARCH STATUS — editable inline if missing */}
-          {!form.job_search_status && (
+          {!seekingFreelance && !form.job_search_status && (
             <div className="form-group">
               <label className="form-label" style={{ color: 'var(--orange)' }}>
                 Job Search Status <span className="required">*</span>
@@ -1285,7 +1285,7 @@ export default function Register({ onNavigate }) {
 
           {error && <div className="error-msg">{error}</div>}
 
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !form.headline.trim() || !form.job_search_status || !form.declaration_agreed || !form.privacy_consent_agreed}>
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading || !form.headline.trim() || (!seekingFreelance && !form.job_search_status) || !form.declaration_agreed || !form.privacy_consent_agreed}>
             {loading ? 'Saving your profile...' : '\u2713 Submit My Profile'}
           </button>
         </>}

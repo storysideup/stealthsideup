@@ -1124,6 +1124,8 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [processingInterestFor, setProcessingInterestFor] = useState(null)
   const [expandedSkillsFor, setExpandedSkillsFor] = useState({})
   const [viewingIndex, setViewingIndex] = useState(null) // revisit a specific already-reviewed candidate, outside the active sequential review
+  const [resendingFor, setResendingFor] = useState(null)
+  const [resendResult, setResendResult] = useState({}) // candidateId -> 'sent' | 'failed'
   const [closedJds, setClosedJds] = useState([])
   const [jdInterestCounts, setJdInterestCounts] = useState({})
   const [extendingJd, setExtendingJd] = useState(null)
@@ -1262,6 +1264,22 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
     }
   }
 
+  const handleResendNotification = async (candidate, jd) => {
+    if (candidate.contact_type !== 'phone') return
+    setResendingFor(candidate.id)
+    try {
+      const roleDetails = jd.stealth_mode
+        ? `${jd.function} role, ${jd.seniority_level || ''}`.trim()
+        : `${jd.role_title} at ${corporate.company_name}`
+      const result = await sendMatchNotification(candidate.contact, 'there', jd.function, roleDetails)
+      setResendResult(r => ({ ...r, [candidate.id]: result ? 'sent' : 'failed' }))
+    } catch (e) {
+      console.error('Resend failed:', e)
+      setResendResult(r => ({ ...r, [candidate.id]: 'failed' }))
+    }
+    setResendingFor(null)
+  }
+
   const handleExpressInterest = async (jd, candidate) => {
     // Hard guard against rapid double-clicks / duplicate submissions
     if (processingInterestFor === candidate.id) return
@@ -1391,6 +1409,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }}>Your Expressed Interests</div>
                     {expressedInterests.map(({ candidate, index, status }) => {
                       const s = interestStatusLabel(status)
+                      const resendState = resendResult[candidate.id]
                       return (
                         <div key={candidate.id} onClick={() => setViewingIndex(index)}
                           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--grey-50, #f9fafb)', borderRadius: 8, marginBottom: 8, cursor: 'pointer' }}>
@@ -1398,7 +1417,24 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                             <span className="badge badge-teal" style={{ marginRight: 8 }}>SSU-{String(index + 1001).padStart(4, '0')}</span>
                             <span style={{ fontSize: 12.5, color: 'var(--grey-600)' }}>{candidate.headline?.slice(0, 60)}{candidate.headline?.length > 60 ? '…' : ''}</span>
                           </div>
-                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 10, whiteSpace: 'nowrap', background: s.bg, color: s.color }}>{s.label}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {status === 'notified' && candidate.contact_type === 'phone' && (
+                              resendState === 'sent' ? (
+                                <span style={{ fontSize: 10.5, fontWeight: 700, color: '#065f46' }}>✓ Resent</span>
+                              ) : resendState === 'failed' ? (
+                                <span style={{ fontSize: 10.5, fontWeight: 700, color: '#991b1b' }}>Failed — try again</span>
+                              ) : null
+                            )}
+                            {status === 'notified' && candidate.contact_type === 'phone' && resendState !== 'sent' && (
+                              <button type="button"
+                                onClick={(e) => { e.stopPropagation(); handleResendNotification(candidate, activeJd) }}
+                                disabled={resendingFor === candidate.id}
+                                style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 10, border: '1px solid var(--teal)', background: 'white', color: 'var(--teal)', cursor: 'pointer' }}>
+                                {resendingFor === candidate.id ? 'Sending...' : 'Resend'}
+                              </button>
+                            )}
+                            <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 10, whiteSpace: 'nowrap', background: s.bg, color: s.color }}>{s.label}</span>
+                          </div>
                         </div>
                       )
                     })}

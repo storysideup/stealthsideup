@@ -1481,9 +1481,18 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
               {isViewing ? (
                 <button className="btn-secondary btn-sm" style={{ marginBottom: 16 }} onClick={() => setViewingIndex(null)}>← Back to Summary</button>
               ) : (
-                <div style={{ fontSize: 13, color: 'var(--grey-600)', marginBottom: 16 }}>
-                  Reviewing candidate <strong style={{ color: 'var(--teal)' }}>{reviewedCount + 1}</strong> of <strong style={{ color: 'var(--teal)' }}>{candidateList.length}</strong> matches
-                  <div style={{ height: 6, background: 'var(--grey-100)', borderRadius: 3, marginTop: 8, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--teal-pale)', border: '1px solid var(--teal-border, var(--teal))', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--teal)' }}>
+                      Candidate {reviewedCount + 1} of {candidateList.length}
+                    </span>
+                    {candidateList.length - reviewedCount - 1 > 0 && (
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)' }}>
+                        {candidateList.length - reviewedCount - 1} more waiting →
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ height: 6, background: 'white', borderRadius: 3, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${(reviewedCount / candidateList.length) * 100}%`, background: 'var(--teal)', borderRadius: 3, transition: 'width 0.3s' }} />
                   </div>
                 </div>
@@ -1568,7 +1577,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 )}
 
                 {/* Desired Employment Type */}
-                {c.desired_employment_type?.length > 0 && (
+                {Array.isArray(c.desired_employment_type) && c.desired_employment_type.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Seeking</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -1578,11 +1587,11 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 )}
 
                 {/* Freelance background — only relevant for freelance/consultant candidates */}
-                {(c.freelance_sector?.length > 0 || c.freelance_engagement_size || c.freelance_years) && (
+                {((Array.isArray(c.freelance_sector) && c.freelance_sector.length > 0) || c.freelance_engagement_size || c.freelance_years) && (
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Freelance Background</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 4 }}>
-                      {c.freelance_sector?.map(s => <span key={s} className="badge badge-grey">{s}</span>)}
+                      {Array.isArray(c.freelance_sector) && c.freelance_sector.map(s => <span key={s} className="badge badge-grey">{s}</span>)}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--grey-600)' }}>
                       {c.freelance_years && `${c.freelance_years} years freelancing`}
@@ -1593,18 +1602,18 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 )}
 
                 {/* Industries */}
-                {((c.current_industry?.length > 0) || c.previous_industries?.length > 0) && (
+                {((c.current_industry?.length > 0) || (Array.isArray(c.previous_industries) && c.previous_industries.length > 0)) && (
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Industry Background</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                       {(Array.isArray(c.current_industry) ? c.current_industry : (c.current_industry ? [c.current_industry] : [])).map(ind => <span key={ind} className="badge badge-teal">{ind} (current)</span>)}
-                      {c.previous_industries?.slice(0, 3).map(ind => <span key={ind} className="badge badge-grey">{ind}</span>)}
+                      {Array.isArray(c.previous_industries) && c.previous_industries.slice(0, 3).map(ind => <span key={ind} className="badge badge-grey">{ind}</span>)}
                     </div>
                   </div>
                 )}
 
                 {/* Location preferences */}
-                {c.preferred_locations?.cities?.length > 0 && (
+                {Array.isArray(c.preferred_locations?.cities) && c.preferred_locations.cities.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Open to Locations</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -1618,7 +1627,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                         return badges.map(b => <span key={b} className="badge badge-teal">{b}</span>)
                       })()}
                     </div>
-                    {c.relocation_cities?.length > 0 && (
+                    {Array.isArray(c.relocation_cities) && c.relocation_cities.length > 0 && (
                       <div style={{ marginTop: 6 }}>
                         <div style={{ fontSize: 10.5, color: 'var(--grey-400)', marginBottom: 4 }}>Also open to relocating to:</div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -1630,7 +1639,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 )}
 
                 {/* Languages */}
-                {c.languages?.length > 0 && (
+                {Array.isArray(c.languages) && c.languages.length > 0 && (
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Languages</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -1683,7 +1692,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 })()}
 
                 {/* Career arc */}
-                {c.career_history?.length > 0 && (
+                {Array.isArray(c.career_history) && c.career_history.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 }}>Career Arc</div>
                     <CareerHistoryDisplay careerHistory={c.career_history} />
@@ -1691,7 +1700,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                 )}
 
                 {/* Org type open to */}
-                {c.org_type_open_to?.length > 0 && (
+                {Array.isArray(c.org_type_open_to) && c.org_type_open_to.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--grey-400)', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>Open to Org Types</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>

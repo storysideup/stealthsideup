@@ -235,7 +235,7 @@ export default function CareerHistory({ value = [], onChange }) {
 
 // Export a display component for the corporate match view
 export function CareerHistoryDisplay({ careerHistory = [] }) {
-  if (!careerHistory || careerHistory.length === 0) return (
+  if (!Array.isArray(careerHistory) || careerHistory.length === 0) return (
     <div style={{ fontSize: 12, color: 'var(--grey-400)', fontStyle: 'italic' }}>Career history not provided</div>
   )
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { logEmailSend } from '../lib/logEmailSend'
 
 export default function CandidateProfile({ onNavigate }) {
   const [step, setStep] = useState(() => {
@@ -282,7 +283,20 @@ export default function CandidateProfile({ onNavigate }) {
         })
       })
 
-      if (!response.ok) throw new Error('Failed to send')
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        // No recruiter email on file for this JD (exactly what happened with the Manager
+        // Total Rewards case) shows up clearly here now, instead of only being
+        // discoverable by manually checking the JD's stored recruiter_email.
+        logEmailSend({
+          emailType: 'cv_to_recruiter',
+          recipient: recruiterEmail,
+          success: false,
+          errorMessage: !recruiterEmail ? 'No recruiter email on file for this JD' : (errData.error || 'Failed to send')
+        })
+        throw new Error('Failed to send')
+      }
+      logEmailSend({ emailType: 'cv_to_recruiter', recipient: recruiterEmail, success: true })
 
       // Also store the CV in Supabase Storage — so it's recoverable platform-side
       // even if the recruiter's email is missed, bounces, or gets filtered as spam

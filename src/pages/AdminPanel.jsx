@@ -6,7 +6,7 @@ import { computeProfileStrength } from '../lib/profileStrength'
 
 const ADMIN_PASSWORD = 'SSU@Admin2026'
 
-const TABS = ['Overview', 'Corporates', 'Candidates', 'CVs Sent', 'Tokens', 'Declines', 'AI Failures', 'WhatsApp Log']
+const TABS = ['Overview', 'Corporates', 'Candidates', 'CVs Sent', 'Tokens', 'Declines', 'AI Failures', 'WhatsApp Log', 'Email Log']
 
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(false)
@@ -23,6 +23,7 @@ export default function AdminPanel() {
   const [jds, setJds] = useState([])
   const [extractionFailures, setExtractionFailures] = useState([])
   const [whatsappLog, setWhatsappLog] = useState([])
+  const [emailLog, setEmailLog] = useState([])
   const [nudgingFor, setNudgingFor] = useState(null)
   const [nudgeResult, setNudgeResult] = useState({}) // candidateId -> 'sent' | 'failed'
 
@@ -60,14 +61,16 @@ export default function AdminPanel() {
       { data: ints },
       { data: jds },
       { data: failures },
-      { data: waLog }
+      { data: waLog },
+      { data: emLog }
     ] = await Promise.all([
       supabase.from('candidates').select('*').order('created_at', { ascending: false }),
       supabase.from('corporates').select('*').order('created_at', { ascending: false }),
       supabase.from('interests').select('*').order('created_at', { ascending: false }),
       supabase.from('jds').select('*').order('created_at', { ascending: false }),
       supabase.from('extraction_failures').select('*').order('created_at', { ascending: false }).limit(200),
-      supabase.from('whatsapp_send_log').select('*').order('created_at', { ascending: false }).limit(200)
+      supabase.from('whatsapp_send_log').select('*').order('created_at', { ascending: false }).limit(200),
+      supabase.from('email_send_log').select('*').order('created_at', { ascending: false }).limit(200)
     ])
 
     setCandidates(cands || [])
@@ -76,6 +79,7 @@ export default function AdminPanel() {
     setJds(jds || [])
     setExtractionFailures(failures || [])
     setWhatsappLog(waLog || [])
+    setEmailLog(emLog || [])
 
     const cvSent = (ints || []).filter(i => i.status === 'cv_sent').length
     const totalTokensUsed = (ints || []).filter(i => i.status !== 'saved').length
@@ -547,6 +551,54 @@ export default function AdminPanel() {
                         <div>
                           <span style={{ fontWeight: 700, color: '#374151' }}>{w.template_name}</span>
                           {w.phone && <span style={{ color: '#9ca3af' }}> · {w.phone}</span>}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, textTransform: 'uppercase',
+                            background: w.success ? '#d1fae5' : '#fee2e2',
+                            color: w.success ? '#065f46' : '#991b1b'
+                          }}>{w.success ? 'sent ok' : 'failed'}</span>
+                          <span style={{ color: '#9ca3af', fontSize: 11 }}>{new Date(w.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      </div>
+                      {w.error_message && (
+                        <div style={{ marginTop: 4, color: '#991b1b', fontSize: 11.5, fontFamily: 'monospace' }}>{w.error_message}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {!loading && activeTab === 'Email Log' && (
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#374151', marginBottom: 6 }}>Email Send Log</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+              Every email attempt (CV to recruiter, welcome, low-token alert, password reset, etc.), whether it actually succeeded, and the real error when it didn't. Last 200 events.
+            </div>
+            {emailLog.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: 12, padding: 40, textAlign: 'center', color: '#9ca3af' }}>No sends logged yet.</div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
+                  <div style={{ background: 'white', borderRadius: 12, padding: 16, textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#065f46' }}>{emailLog.filter(w => w.success).length}</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>Sent OK</div>
+                  </div>
+                  <div style={{ background: 'white', borderRadius: 12, padding: 16, textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#991b1b' }}>{emailLog.filter(w => !w.success).length}</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>Failed</div>
+                  </div>
+                </div>
+                <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                  {emailLog.map(w => (
+                    <div key={w.id} style={{ padding: '10px 16px', borderBottom: '1px solid #f3f4f6', fontSize: 12.5 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontWeight: 700, color: '#374151' }}>{w.email_type === 'cv_to_recruiter' ? 'CV to Recruiter' : 'Notification'}</span>
+                          {w.recipient && <span style={{ color: '#9ca3af' }}> · {w.recipient}</span>}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{

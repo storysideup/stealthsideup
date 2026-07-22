@@ -1,3 +1,5 @@
+import { logEmailSend } from './logEmailSend'
+
 const sendEmail = async (to, subject, html) => {
   try {
     const response = await fetch('/api/send-notification-email', {
@@ -6,10 +8,16 @@ const sendEmail = async (to, subject, html) => {
       body: JSON.stringify({ to, subject, html })
     })
     const data = await response.json()
-    if (!response.ok) console.error('Email send failed:', subject, data.error)
+    if (!response.ok) {
+      console.error('Email send failed:', subject, data.error)
+      logEmailSend({ emailType: 'notification', recipient: to, success: false, errorMessage: data.error })
+      return data
+    }
+    logEmailSend({ emailType: 'notification', recipient: to, success: true })
     return data
   } catch (e) {
     console.error('Email error:', e)
+    logEmailSend({ emailType: 'notification', recipient: to, success: false, errorMessage: e.message || String(e) })
   }
 }
 

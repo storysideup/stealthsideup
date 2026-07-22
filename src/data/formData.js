@@ -53,7 +53,7 @@ export const INDUSTRIES = [
   { sector: "Consumer", items: ["FMCG / Food & Beverage", "Retail — Organised / E-commerce", "Luxury / Premium Fashion & Lifestyle", "Consumer Durables / Electronics", "D2C Brands", "Agri / Food Processing / Agritech"] },
   { sector: "Technology", items: ["IT Services / ITES / BPO", "SaaS / Product Companies", "E-commerce / Marketplace", "Emerging Tech (AI / Deeptech / Healthtech)", "Telecom", "Telco Infrastructure (Towers / Fibre / Passive Infra)"] },
   { sector: "Industrial / Manufacturing", items: ["Automotive / Auto Ancillary", "Chemicals / Pharma / Life Sciences", "Infrastructure / Real Estate / Construction", "Energy / Oil & Gas / Renewables", "Industrial Manufacturing", "Logistics / Supply Chain / 3PL", "Packaging / Paper / Textiles", "Defence / Aerospace"] },
-  { sector: "Services", items: ["Consulting / Professional Services", "Events / Entertainment / Sports", "Hospitality / Travel & Tourism", "Education / EdTech", "Healthcare / Hospitals / Diagnostics", "Media / Advertising / PR", "Legal / Law Firms", "Staffing / Recruitment / HR Services"] },
+  { sector: "Services", items: ["Consulting / Professional Services", "Events / Entertainment / Sports", "Hospitality / Travel & Tourism", "Aviation / Airlines / Airports", "Education / EdTech", "Healthcare / Hospitals / Diagnostics", "Media / Advertising / PR", "Legal / Law Firms", "Staffing / Recruitment / HR Services"] },
   { sector: "Social / Development", items: ["NGO / Development Sector", "Government / PSU"] },
   { sector: "Other", items: ["Other (please specify)"] }
 ]

@@ -1131,6 +1131,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
   const [nudgeResult, setNudgeResult] = useState({}) // candidateId -> 'sent' | 'failed'
   const [closedJds, setClosedJds] = useState([])
   const [jdInterestCounts, setJdInterestCounts] = useState({})
+  const [reviewedCandidatesByJd, setReviewedCandidatesByJd] = useState({})
   const [extendingJd, setExtendingJd] = useState(null)
   const [confirmingCloseJd, setConfirmingCloseJd] = useState(null)
   const [jdActionError, setJdActionError] = useState('')
@@ -1188,10 +1189,16 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
     setClosedJds(closed)
     if (all?.length) {
       await loadMatches(active)
-      const { data: interestRows } = await supabase.from('interests').select('jd_id').in('jd_id', all.map(jd => jd.id))
+      const { data: interestRows } = await supabase.from('interests').select('jd_id, candidate_id').in('jd_id', all.map(jd => jd.id))
       const counts = {}
-      ;(interestRows || []).forEach(r => { counts[r.jd_id] = (counts[r.jd_id] || 0) + 1 })
+      const reviewedByJd = {}
+      ;(interestRows || []).forEach(r => {
+        counts[r.jd_id] = (counts[r.jd_id] || 0) + 1
+        if (!reviewedByJd[r.jd_id]) reviewedByJd[r.jd_id] = new Set()
+        reviewedByJd[r.jd_id].add(r.candidate_id)
+      })
       setJdInterestCounts(counts)
+      setReviewedCandidatesByJd(reviewedByJd)
     }
     setLoading(false)
   }
@@ -1393,7 +1400,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
     const candidateList = matches[activeJd.id] || []
     return (
       <div className="page">
-        <button className="btn-secondary btn-sm" style={{ marginBottom: 16 }} onClick={() => setActiveJd(null)}>← Back</button>
+        <button className="btn-secondary btn-sm" style={{ marginBottom: 16 }} onClick={() => { setActiveJd(null); loadJds() }}>← Back</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
           <h3 style={{ fontWeight: 800, color: 'var(--teal)' }}>{activeJd.role_title}</h3>
           {activeJd.stealth_mode && (
@@ -1864,12 +1871,18 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
             </div>
           ) : jds.map(jd => {
             const matched = matches[jd.id] || []
+            const newCount = matched.filter(c => !reviewedCandidatesByJd[jd.id]?.has(c.id)).length
             return (
               <div key={jd.id} className="card" style={{ marginBottom: 12 }}>
                 <div className="flex-between" style={{ marginBottom: 6 }}>
                   <h3 style={{ fontWeight: 700, fontSize: 15 }}>{jd.role_title}</h3>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {jd.stealth_mode && <span style={{ background: '#1f2937', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4 }}>🕵️ STEALTH</span>}
+                    {newCount > 0 && (
+                      <span style={{ background: '#FF9D52', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                        🔔 {newCount} new
+                      </span>
+                    )}
                     <span className="badge badge-green">Active</span>
                   </div>
                 </div>
@@ -1901,7 +1914,7 @@ export function CorporateDashboard({ corporate, onNavigate, onCorporateUpdate })
                   </div>
                 ) : (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button className="btn-primary btn-sm" onClick={() => handleViewMatches(jd)}>View Matches →</button>
+                    <button className="btn-primary btn-sm" onClick={() => handleViewMatches(jd)}>{newCount > 0 ? `View ${newCount} New →` : 'View Matches →'}</button>
                     {extendingJd === jd.id ? (
                       <>
                         <button className="btn-secondary btn-sm" onClick={() => handleExtendJd(jd, 10)}>+10 days</button>
